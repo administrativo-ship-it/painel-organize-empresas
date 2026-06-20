@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organize Empresas — Painel Gerencial</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{--navy:#000080;--navy-light:#0a0a9e;--teal:#8BD4E0;--teal-dark:#5bbece;--slate:#41546A;--white:#fff;--off:#f4f6fb;--border:#e2e8f4;--txt:#0d1526;--txt2:#41546A;--muted:#8a9bb5;--green:#1a7a4a;--green-bg:#e8f5ee;--yellow:#b45309;--yellow-bg:#fef3cd;--red:#c0392b;--red-bg:#fdf0ee;--orange:#d35400;--orange-bg:#fef0e6;--trello:#0052CC;--trello-bg:#e8f0ff;--sh:0 4px 16px rgba(0,0,80,.08);--r:12px;--r2:8px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min-height:100vh;display:flex;}
+
+/* SIDEBAR */
+.sidebar{width:252px;min-height:100vh;background:var(--navy);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;overflow-y:auto;}
+.logo-area{padding:24px 20px 16px;border-bottom:1px solid rgba(139,212,224,.15);cursor:pointer;position:relative;}
+.logo-area:hover{background:rgba(139,212,224,.05);}
+.logo-svg{width:152px;height:auto;}
+.logo-tagline{font-size:10px;color:rgba(139,212,224,.7);letter-spacing:.8px;text-transform:uppercase;font-weight:500;margin-top:4px;}
+.nav-label{font-size:9.5px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(139,212,224,.45);padding:18px 20px 5px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;cursor:pointer;color:rgba(255,255,255,.7);font-size:13px;font-weight:500;transition:all .2s;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(139,212,224,.08);color:#fff;}
+.nav-item.active{background:rgba(139,212,224,.13);color:#fff;border-left-color:var(--teal);}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px;min-width:18px;text-align:center;}
+.nav-badge.blue{background:var(--trello);}
+.sidebar-footer{margin-top:auto;padding:14px 20px;border-top:1px solid rgba(139,212,224,.15);display:flex;flex-direction:column;gap:7px;}
+.cfg-btn{width:100%;background:rgba(139,212,224,.1);border:1px solid rgba(139,212,224,.2);color:var(--teal);padding:8px 12px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .2s;}
+.cfg-btn:hover{background:rgba(139,212,224,.2);}
+
+/* MAIN */
+.main{margin-left:252px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-title{font-size:16px;font-weight:700;color:var(--navy);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.sync-info{font-size:11.5px;color:var(--muted);}
+.sync-btn{display:flex;align-items:center;gap:7px;background:var(--navy);color:#fff;border:none;padding:8px 16px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.sync-btn:hover{background:var(--navy-light);}
+.sync-btn.loading svg{animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* SOURCE PILLS */
+.source-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:600;}
+.source-flowup{background:#e8f5ff;color:#0066cc;}
+.source-trello{background:var(--trello-bg);color:var(--trello);}
+
+/* FILTER BAR */
+.filter-bar{background:var(--white);border-bottom:1px solid var(--border);padding:10px 28px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.f-sel{padding:6px 10px;border:1px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt2);background:var(--off);cursor:pointer;outline:none;transition:border-color .2s;}
+.f-sel:focus{border-color:var(--navy);}
+.f-inp{padding:6px 10px;border:1px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt);background:var(--off);outline:none;min-width:200px;transition:border-color .2s;}
+.f-inp:focus{border-color:var(--navy);}
+.f-clr{padding:6px 10px;border:1px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--muted);background:var(--white);cursor:pointer;transition:all .2s;}
+.f-clr:hover{color:var(--red);border-color:var(--red);}
+
+/* PAGE */
+.page{display:none;padding:24px 28px;flex:1;}
+.page.active{display:block;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px;margin-bottom:24px;}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:0 1px 4px rgba(0,0,80,.05);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--sh);}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--navy));}
+.kpi.green{--ac:var(--green)}.kpi.teal{--ac:var(--teal-dark)}.kpi.red{--ac:var(--red)}.kpi.orange{--ac:var(--orange)}.kpi.slate{--ac:var(--slate)}.kpi.trello{--ac:var(--trello)}
+.kpi-lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px;}
+.kpi-val{font-size:30px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:3px;}
+.kpi-sub{font-size:11.5px;color:var(--muted);}
+.kpi-ico{position:absolute;right:14px;top:14px;width:34px;height:34px;background:var(--off);border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.kpi-ico svg{width:17px;height:17px;}
+
+/* SECTION */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sec-ttl{font-size:14.5px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.sec-ttl span{background:var(--teal);color:var(--navy);font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;}
+
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;}
+.chart-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:0 1px 4px rgba(0,0,80,.05);}
+.chart-ttl{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px;}
+.chart-sub{font-size:11px;color:var(--muted);margin-bottom:16px;}
+.chart-wrap{position:relative;height:200px;}
+
+/* PROJECT CARDS */
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;margin-bottom:24px;}
+.proj-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.proj-card:hover{box-shadow:var(--sh);transform:translateY(-2px);}
+.proj-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--rc,var(--slate));}
+.proj-card.risk-low{--rc:var(--green)}.proj-card.risk-moderate{--rc:var(--yellow)}.proj-card.risk-high{--rc:var(--orange)}.proj-card.risk-critical{--rc:var(--red)}
+.proj-name{font-size:13px;font-weight:700;color:var(--navy);line-height:1.3;}
+.proj-client{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:600;white-space:nowrap;}
+.b-active{background:var(--green-bg);color:var(--green)}.b-done{background:#e8f0fb;color:var(--navy)}.b-paused{background:var(--yellow-bg);color:var(--yellow)}.b-inactive{background:#f0f0f0;color:#666}.b-over{background:var(--red-bg);color:var(--red)}
+.risk-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.rb-low{background:var(--green-bg);color:var(--green)}.rb-moderate{background:var(--yellow-bg);color:var(--yellow)}.rb-high{background:var(--orange-bg);color:var(--orange)}.rb-critical{background:var(--red-bg);color:var(--red)}
+.meta-row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);background:var(--off);padding:3px 8px;border-radius:6px;}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;}
+.prog-bar{height:5px;background:var(--border);border-radius:999px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:999px;background:var(--navy);transition:width .5s;}
+.prog-fill.g{background:var(--green)}.prog-fill.r{background:var(--red)}.prog-fill.t{background:var(--trello)}
+.task-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.ts-val{font-size:15px;font-weight:700;color:var(--navy);text-align:center;}
+.ts-val.r{color:var(--red)}.ts-val.g{color:var(--green)}
+.ts-lbl{font-size:10px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.4px;}
+
+/* TRELLO BOARD CARDS */
+.trello-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;margin-bottom:24px;}
+.trello-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.trello-card:hover{box-shadow:var(--sh);transform:translateY(-2px);}
+.trello-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--trello);}
+.trello-board-name{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.trello-lists{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+.trello-list-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--txt2);}
+.trello-list-count{background:var(--off);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700;color:var(--navy);}
+
+/* TABLE */
+.table-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,80,.05);}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--off);padding:10px 14px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody td{padding:11px 14px;font-size:12.5px;color:var(--txt);border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--off);}
+
+/* MEMBER CARDS */
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-bottom:24px;}
+.member-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:0 1px 4px rgba(0,0,80,.05);}
+.avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;}
+
+/* ALERTS */
+.alert-list{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;}
+.alert-item{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:13px 16px;display:flex;align-items:flex-start;gap:12px;border-left:4px solid var(--ac,var(--slate));}
+.alert-item.critical{--ac:var(--red)}.alert-item.high{--ac:var(--orange)}.alert-item.moderate{--ac:var(--yellow)}
+.alert-ttl{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px;}
+.alert-desc{font-size:11.5px;color:var(--muted);}
+
+/* UPCOMING */
+.upcoming-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:0 1px 4px rgba(0,0,80,.05);margin-bottom:24px;}
+.dl-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.dl-row:last-child{border-bottom:none;}
+.dl-date{min-width:68px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;background:var(--off);border-radius:6px;padding:5px 6px;}
+.dl-date.today{background:var(--navy);color:#fff;}.dl-date.over{background:var(--red-bg);color:var(--red);}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,80,.45);z-index:200;align-items:flex-start;justify-content:center;padding:36px 20px;overflow-y:auto;}
+.modal-ov.open{display:flex;}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:760px;box-shadow:0 12px 48px rgba(0,0,80,.18);animation:mIn .2s ease;}
+@keyframes mIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
+.modal-hdr{background:var(--navy);color:#fff;padding:22px 26px 18px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:flex-start;}
+.modal-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s;}
+.modal-close:hover{background:rgba(255,255,255,.25);}
+.modal-body{padding:24px;}
+
+/* CONFIG MODAL */
+.cfg-ov{display:none;position:fixed;inset:0;background:rgba(0,0,80,.5);z-index:300;align-items:center;justify-content:center;}
+.cfg-ov.open{display:flex;}
+.cfg-modal{background:var(--white);border-radius:14px;width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,80,.2);}
+.cfg-hdr{background:var(--navy);padding:18px 22px;color:#fff;display:flex;justify-content:space-between;align-items:center;border-radius:14px 14px 0 0;position:sticky;top:0;z-index:5;}
+.cfg-hdr h2{font-size:14.5px;font-weight:700;}
+.cfg-body{padding:22px;}
+.cfg-field{margin-bottom:14px;}
+.cfg-lbl{display:block;font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;}
+.cfg-inp{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r2);font-family:'DM Mono',monospace;font-size:12.5px;color:var(--txt);background:var(--off);outline:none;transition:border-color .2s;}
+.cfg-inp:focus{border-color:var(--navy);}
+.cfg-inp.sans{font-family:'DM Sans',sans-serif;}
+.cfg-save{width:100%;background:var(--navy);color:#fff;border:none;padding:11px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:4px;}
+.cfg-save:hover{background:var(--navy-light);}
+.cfg-note{background:var(--off);border:1px solid var(--border);border-radius:var(--r2);padding:10px 13px;font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.5;}
+.tab-row{display:flex;gap:2px;background:var(--off);border-radius:var(--r2);padding:3px;margin-bottom:18px;}
+.tab-btn{flex:1;padding:7px;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;background:none;color:var(--muted);transition:all .2s;}
+.tab-btn.active{background:var(--white);color:var(--navy);box-shadow:0 1px 4px rgba(0,0,80,.1);}
+.divider{height:1px;background:var(--border);margin:16px 0;}
+
+/* LOADING */
+.loading-ov{display:none;position:fixed;inset:0;background:rgba(255,255,255,.82);z-index:400;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+.loading-ov.show{display:flex;}
+.spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin 1s linear infinite;}
+.loading-txt{font-size:13.5px;color:var(--navy);font-weight:600;}
+
+/* PRIORITY DOT */
+.pdot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;}
+.pdot.critical{background:var(--red)}.pdot.high{background:var(--orange)}.pdot.medium{background:#e9c46a}.pdot.low{background:var(--green)}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty svg{width:44px;height:44px;margin-bottom:14px;opacity:.35;}
+.empty h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+
+/* TRELLO BOARD DETAIL */
+.board-lists-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.list-col{background:var(--off);border:1px solid var(--border);border-radius:var(--r2);padding:12px;}
+.list-col-name{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.trello-card-item{background:var(--white);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:12px;color:var(--txt);}
+.trello-card-item:last-child{margin-bottom:0;}
+.card-due{font-size:10px;color:var(--muted);margin-top:3px;}
+.card-due.over{color:var(--red);font-weight:600;}
+.card-chk{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* PROGRESS CIRCLE */
+.pcircle{position:relative;width:52px;height:52px;flex-shrink:0;}
+.pcircle svg{transform:rotate(-90deg);}
+.pcircle-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--navy);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+@media(max-width:1024px){.sidebar{width:210px}.main{margin-left:210px}.charts-grid{grid-template-columns:1fr}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo-area" onclick="openLogoConfig()" title="Clique para personalizar">
+    <svg class="logo-svg" id="logo-svg" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="26" width="7" height="14" rx="1.5" fill="#8BD4E0"/>
+      <rect x="11" y="18" width="7" height="22" rx="1.5" fill="#8BD4E0"/>
+      <rect x="20" y="10" width="7" height="30" rx="1.5" fill="#8BD4E0"/>
+      <ellipse cx="37" cy="20" rx="7" ry="10" transform="rotate(-35 37 20)" fill="white" opacity=".85"/>
+      <ellipse cx="37" cy="20" rx="5" ry="8" transform="rotate(-35 37 20)" fill="#8BD4E0"/>
+      <path d="M44 11 Q50 6 52 10 Q47 13 44 11Z" fill="white" opacity=".8"/>
+      <path d="M30 29 Q28 34 32 35 Q34 31 30 29Z" fill="#F4A800" opacity=".9"/>
+      <text x="60" y="29" font-family="DM Sans,sans-serif" font-size="18" font-weight="800" fill="#8BD4E0" letter-spacing="-0.5">Organize</text>
+      <text x="62" y="44" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.72)" letter-spacing="3">EMPRESAS</text>
+    </svg>
+    <img id="logo-custom" style="display:none;max-width:175px;max-height:60px;object-fit:contain;" alt="Logo">
+    <div class="logo-tagline" id="logo-tagline">Painel Gerencial de Projetos</div>
+  </div>
+
+  <div class="nav-label">Principal</div>
+  <div class="nav-item active" onclick="showPage('overview',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Visão Geral
+  </div>
+  <div class="nav-item" onclick="showPage('projects',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+    Projetos (FlowUp)
+    <span class="nav-badge" id="badge-active">—</span>
+  </div>
+  <div class="nav-item" onclick="showPage('tasks',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    Tarefas
+    <span class="nav-badge" id="badge-over">—</span>
+  </div>
+  <div class="nav-item" onclick="showPage('trello',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
+    Planejamento Trello
+    <span class="nav-badge blue" id="badge-trello">—</span>
+  </div>
+  <div class="nav-item" onclick="showPage('members',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+    Responsáveis
+  </div>
+  <div class="nav-item" onclick="showPage('dashboard',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    Dashboard
+  </div>
+
+  <div class="nav-label">Alertas</div>
+  <div class="nav-item" onclick="showPage('alerts',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    Pontos de Atenção
+    <span class="nav-badge" id="badge-alerts">—</span>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="cfg-btn" onclick="openConfig('flowup')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+      Config FlowUp
+    </button>
+    <button class="cfg-btn" onclick="openConfig('trello')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
+      Config Trello
+    </button>
+    <button class="cfg-btn" onclick="openLogoConfig()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Personalizar
+    </button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Visão Geral</div>
+    <div class="topbar-right">
+      <span class="sync-info" id="sync-lbl">Não sincronizado</span>
+      <button class="sync-btn" id="sync-btn" onclick="syncAll()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Sincronizar Tudo
+      </button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <select class="f-sel" id="f-status" onchange="applyFilters()">
+      <option value="">Todos — Status</option>
+      <option value="active">Ativo</option>
+      <option value="done">Concluído</option>
+      <option value="paused">Pausado</option>
+      <option value="inactive">Inativo</option>
+    </select>
+    <select class="f-sel" id="f-service" onchange="applyFilters()">
+      <option value="">Todos — Serviço</option>
+      <option value="Organize Master">Organize Master</option>
+      <option value="Organize Mentoring">Organize Mentoring</option>
+      <option value="Organize Estratégico">Organize Estratégico</option>
+      <option value="Organize Finance">Organize Finance</option>
+      <option value="Organize Marketing">Organize Marketing</option>
+    </select>
+    <select class="f-sel" id="f-risk" onchange="applyFilters()">
+      <option value="">Todos — Risco</option>
+      <option value="low">Baixo</option>
+      <option value="moderate">Moderado</option>
+      <option value="high">Alto</option>
+      <option value="critical">Crítico</option>
+    </select>
+    <select class="f-sel" id="f-member" onchange="applyFilters()">
+      <option value="">Todos — Responsável</option>
+    </select>
+    <input class="f-inp" id="f-search" placeholder="🔍 Buscar projeto, cliente ou tarefa..." oninput="applyFilters()">
+    <button class="f-clr" onclick="clearFilters()">✕ Limpar</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="page active" id="page-overview">
+    <div class="kpi-grid" id="kpi-overview"></div>
+    <div class="sec-hdr"><div class="sec-ttl">⚠️ Alertas e Projetos em Risco</div></div>
+    <div class="alert-list" id="alerts-overview"></div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-ttl">Projetos por Status (FlowUp)</div>
+        <div class="chart-sub">Distribuição da carteira atual</div>
+        <div class="chart-wrap"><canvas id="ch-status"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-ttl">Cards Trello por Lista</div>
+        <div class="chart-sub">Progresso dos planejamentos</div>
+        <div class="chart-wrap"><canvas id="ch-trello-lists"></canvas></div>
+      </div>
+    </div>
+    <div class="sec-hdr"><div class="sec-ttl">📅 Próximas Entregas (7 dias) <span id="upcoming-count">0</span></div></div>
+    <div class="upcoming-card" id="upcoming-list"></div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="page" id="page-projects">
+    <div class="sec-hdr"><div class="sec-ttl">Projetos FlowUp <span id="proj-count">0</span></div></div>
+    <div class="proj-grid" id="proj-grid"></div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="page" id="page-tasks">
+    <div class="kpi-grid" id="kpi-tasks"></div>
+    <div class="sec-hdr"><div class="sec-ttl">Todas as Tarefas</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tarefa</th><th>Projeto / Cliente</th><th>Responsável</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th>Fonte</th></tr></thead>
+        <tbody id="tasks-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TRELLO -->
+  <div class="page" id="page-trello">
+    <div class="kpi-grid" id="kpi-trello"></div>
+    <div class="sec-hdr"><div class="sec-ttl">Boards Trello <span id="trello-count">0</span></div></div>
+    <div class="trello-grid" id="trello-boards-grid"></div>
+    <div id="trello-board-detail"></div>
+  </div>
+
+  <!-- MEMBERS -->
+  <div class="page" id="page-members">
+    <div class="sec-hdr"><div class="sec-ttl">Análise por Responsável</div></div>
+    <div class="member-grid" id="member-grid"></div>
+    <div class="sec-hdr"><div class="sec-ttl">Volume de Tarefas por Responsável</div></div>
+    <div class="chart-card" style="margin-bottom:24px">
+      <div class="chart-wrap" style="height:250px"><canvas id="ch-members"></canvas></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page" id="page-dashboard">
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-ttl">Tarefas FlowUp por Status</div>
+        <div class="chart-sub">Consolidado atual</div>
+        <div class="chart-wrap"><canvas id="ch-task-status"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-ttl">Tarefas Atrasadas por Cliente</div>
+        <div class="chart-sub">Ranking de pendências</div>
+        <div class="chart-wrap"><canvas id="ch-over-client"></canvas></div>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-ttl">Distribuição de Risco (FlowUp)</div>
+        <div class="chart-sub">Projetos por criticidade</div>
+        <div class="chart-wrap"><canvas id="ch-risk"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-ttl">Cards Trello: Concluídos vs Abertos</div>
+        <div class="chart-sub">Por board/planejamento</div>
+        <div class="chart-wrap"><canvas id="ch-trello-progress"></canvas></div>
+      </div>
+    </div>
+    <div class="sec-hdr"><div class="sec-ttl">Progresso por Projeto</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Projeto</th><th>Cliente</th><th>Concluídas</th><th>Atrasadas</th><th>Pendentes</th><th>Progresso</th></tr></thead>
+        <tbody id="prog-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="page" id="page-alerts">
+    <div class="sec-hdr"><div class="sec-ttl">⚠️ Pontos de Atenção</div></div>
+    <div class="alert-list" id="alerts-full"></div>
+    <div class="sec-hdr" style="margin-top:8px"><div class="sec-ttl">📋 Tarefas Atrasadas (FlowUp)</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tarefa</th><th>Projeto</th><th>Responsável</th><th>Prazo</th><th>Atraso</th><th>Prioridade</th></tr></thead>
+        <tbody id="over-body"></tbody>
+      </table>
+    </div>
+    <div class="sec-hdr" style="margin-top:8px"><div class="sec-ttl">🟦 Cards Trello Vencidos</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Card</th><th>Board</th><th>Lista</th><th>Vencimento</th><th>Atraso</th></tr></thead>
+        <tbody id="trello-over-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="modal-ov" id="proj-modal" onclick="if(event.target===this)closeModal('proj-modal')">
+  <div class="modal" id="proj-modal-content"></div>
+</div>
+
+<!-- TRELLO BOARD MODAL -->
+<div class="modal-ov" id="trello-modal" onclick="if(event.target===this)closeModal('trello-modal')">
+  <div class="modal" id="trello-modal-content" style="max-width:900px"></div>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="cfg-ov" id="cfg-overlay">
+  <div class="cfg-modal">
+    <div class="cfg-hdr">
+      <h2 id="cfg-title">⚙️ Configurações</h2>
+      <button class="modal-close" onclick="closeConfig()">✕</button>
+    </div>
+    <div class="cfg-body">
+      <div class="tab-row">
+        <button class="tab-btn active" id="tab-flowup" onclick="switchCfgTab('flowup')">FlowUp</button>
+        <button class="tab-btn" id="tab-trello" onclick="switchCfgTab('trello')">Trello</button>
+        <button class="tab-btn" id="tab-general" onclick="switchCfgTab('general')">Geral</button>
+      </div>
+
+      <!-- FlowUp -->
+      <div id="cfg-flowup">
+        <div class="cfg-field">
+          <label class="cfg-lbl">Subdomínio FlowUp</label>
+          <input class="cfg-inp" id="fu-subdomain" placeholder="ex: organizementoring">
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-lbl">API Key FlowUp</label>
+          <input class="cfg-inp" id="fu-apikey" type="password" placeholder="Cole sua API Key">
+        </div>
+      </div>
+
+      <!-- Trello -->
+      <div id="cfg-trello" style="display:none">
+        <div class="cfg-field">
+          <label class="cfg-lbl">Trello API Key</label>
+          <input class="cfg-inp" id="tr-apikey" placeholder="Sua API Key do Trello">
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Obtenha em: <a href="https://trello.com/power-ups/admin" target="_blank" style="color:var(--navy)">trello.com/power-ups/admin</a></div>
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-lbl">Trello Token</label>
+          <input class="cfg-inp" id="tr-token" type="password" placeholder="Token de acesso">
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Gere em: <a href="https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=PainelOrganize&key=SEU_API_KEY" target="_blank" id="trello-auth-link" style="color:var(--navy)">Gerar Token</a></div>
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-lbl">Filtrar por Organização (opcional)</label>
+          <input class="cfg-inp sans" id="tr-org" placeholder="ID ou slug da organização">
+        </div>
+      </div>
+
+      <!-- General -->
+      <div id="cfg-general" style="display:none">
+        <div class="cfg-field">
+          <label class="cfg-lbl">Atualização Automática</label>
+          <select class="cfg-inp sans" id="cfg-refresh">
+            <option value="0">Manual</option>
+            <option value="5">A cada 5 min</option>
+            <option value="15">A cada 15 min</option>
+            <option value="30">A cada 30 min</option>
+          </select>
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-lbl">Boards Trello incluídos (um por linha)</label>
+          <textarea class="cfg-inp sans" id="tr-boards-filter" rows="5" placeholder="Deixe vazio para incluir todos&#10;ou cole IDs/nomes de boards (um por linha)" style="resize:vertical;font-size:12px;"></textarea>
+        </div>
+      </div>
+
+      <button class="cfg-save" onclick="saveConfig()">✅ Salvar e Reconectar</button>
+      <div class="cfg-note">🔒 Credenciais salvas apenas no navegador (localStorage). Nunca enviadas a terceiros.</div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGO CONFIG -->
+<div class="cfg-ov" id="logo-overlay" onclick="if(event.target===this)document.getElementById('logo-overlay').classList.remove('open')">
+  <div class="cfg-modal" style="width:440px">
+    <div class="cfg-hdr"><h2>🖼️ Personalizar Painel</h2><button class="modal-close" onclick="document.getElementById('logo-overlay').classList.remove('open')">✕</button></div>
+    <div class="cfg-body">
+      <div class="cfg-field">
+        <label class="cfg-lbl">Nome da Empresa</label>
+        <input class="cfg-inp sans" id="lc-name" placeholder="Organize Empresas">
+      </div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Tagline / Subtítulo</label>
+        <input class="cfg-inp sans" id="lc-tagline" placeholder="Painel Gerencial de Projetos">
+      </div>
+      <div class="cfg-field">
+        <label class="cfg-lbl">Upload da Logo</label>
+        <div onclick="document.getElementById('logo-file').click()" style="border:2px dashed var(--border);border-radius:var(--r2);padding:24px;text-align:center;cursor:pointer;background:var(--off);transition:border-color .2s;" ondragover="event.preventDefault();this.style.borderColor='var(--navy)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handleLogoDrop(event)">
+          <div style="font-size:24px;margin-bottom:6px">📁</div>
+          <div style="font-size:13px;font-weight:600;color:var(--navy)">Clique ou arraste sua logo</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">PNG, JPG, SVG, WEBP</div>
+        </div>
+        <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="handleLogoFile(event)">
+      </div>
+      <div id="logo-preview" style="display:none;margin-bottom:12px">
+        <div style="background:var(--navy);border-radius:var(--r2);padding:14px;display:flex;align-items:center;gap:10px">
+          <img id="logo-prev-img" style="max-height:48px;max-width:150px;object-fit:contain;">
+          <div><div id="logo-prev-name" style="color:#fff;font-weight:700;font-size:14px"></div><div id="logo-prev-tagline" style="color:rgba(139,212,224,.7);font-size:11px;margin-top:1px"></div></div>
+        </div>
+        <button onclick="removeLogo()" style="margin-top:6px;background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:5px 11px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Remover logo</button>
+      </div>
+      <button class="cfg-save" onclick="saveLogoConfig()">✅ Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-ov" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-txt" id="loading-txt">Sincronizando...</div>
+</div>
+
+<script>
+// ═══════════════ STATE ═══════════════
+const S = {
+  projects: [], tasks: [], members: [],
+  trelloBoards: [], trelloCards: [], trelloLists: [],
+  config: { fuSubdomain:'', fuKey:'', trKey:'', trToken:'', trOrg:'', refresh:0, boardsFilter:[] },
+  logoConfig: { img:null, name:'', tagline:'Painel Gerencial de Projetos' },
+  filters: { status:'', service:'', risk:'', member:'', search:'' },
+  charts: {},
+  timer: null,
+  _logoPending: null
+};
+
+// ═══════════════ FLOWUP API ═══════════════
+const FU = {
+  base: 'https://time.flowup.me/api/v1',
+  h() { return { 'Authorization': `Token ${S.config.fuKey}`, 'Content-Type': 'application/json', 'X-Account': S.config.fuSubdomain }; },
+  async get(ep) {
+    const r = await fetch(`${this.base}${ep}`, { headers: this.h() });
+    if (!r.ok) throw new Error(`FlowUp ${r.status}: ${r.statusText}`);
+    return r.json();
+  },
+  async projects() {
+    const d = await this.get('/projects/?limit=100&offset=0');
+    return d.results || d || [];
+  },
+  async tasks() {
+    const d = await this.get('/tasks/?limit=300&offset=0');
+    return d.results || d || [];
+  },
+  async members() {
+    try { const d = await this.get('/members/'); return d.results || d || []; } catch { return []; }
+  }
+};
+
+// ═══════════════ TRELLO API ═══════════════
+const TR = {
+  base: 'https://api.trello.com/1',
+  q() { return `key=${S.config.trKey}&token=${S.config.trToken}`; },
+  async get(ep) {
+    const r = await fetch(`${this.base}${ep}${ep.includes('?')?'&':'?'}${this.q()}`);
+    if (!r.ok) throw new Error(`Trello ${r.status}: ${r.statusText}`);
+    return r.json();
+  },
+  async boards() {
+    const all = await this.get('/members/me/boards?filter=open&fields=id,name,desc,shortUrl,prefs,idOrganization');
+    if (S.config.boardsFilter.length > 0) {
+      const bf = S.config.boardsFilter.map(x => x.toLowerCase().trim());
+      return all.filter(b => bf.some(f => b.id.includes(f) || b.name.toLowerCase().includes(f)));
+    }
+    if (S.config.trOrg) return all.filter(b => b.idOrganization === S.config.trOrg);
+    return all;
+  },
+  async boardLists(boardId) {
+    return this.get(`/boards/${boardId}/lists?fields=id,name,pos`);
+  },
+  async boardCards(boardId) {
+    return this.get(`/boards/${boardId}/cards?checklists=all&members=true&fields=id,name,desc,due,dueComplete,idList,labels,members,checklists,shortUrl`);
+  }
+};
+
+// ═══════════════ NORMALIZE ═══════════════
+function normProject(p) {
+  const tasks = S.tasks.filter(t => t.projectId == p.id);
+  const done = tasks.filter(t => t.isDone).length;
+  const over = tasks.filter(t => t.isOver).length;
+  const total = tasks.length;
+  const progress = total > 0 ? Math.round(done / total * 100) : 0;
+  const lastUp = new Date(p.updated_at || p.created_at || Date.now());
+  const daysSince = Math.floor((Date.now() - lastUp) / 86400000);
+  const risk = calcRisk(p, over, total, done, daysSince);
+  return {
+    id: p.id, name: p.name || 'Sem nome',
+    client: p.client_name || p.client || extractClient(p.name || ''),
+    service: extractService(p.tags || [], p.name || ''),
+    status: normStatus(p.status || ''),
+    responsible: p.owner_name || p.owner || '—',
+    deadline: p.due_date || p.end_date || null,
+    start: p.start_date || p.created_at || null,
+    progress, risk, tasks: { total, done, over, pending: total-done-over },
+    daysSince, tags: p.tags || [], raw: p
+  };
+}
+
+function normTask(t) {
+  const done = isDone(t), over = isOver(t);
+  return {
+    id: t.id, name: t.name || 'Sem nome',
+    project: t.project_name || '', projectId: t.project || t.project_id || '',
+    client: t.client_name || extractClient(t.project_name || ''),
+    responsible: t.assigned_to_name || t.owner || t.assignee || '—',
+    deadline: t.due_date || t.deadline || null,
+    priority: normPrio(t.priority || ''),
+    status: done ? 'done' : (over ? 'overdue' : normStatus(t.status || '')),
+    isDone: done, isOver: over,
+    daysLate: over ? Math.floor((Date.now() - new Date(t.due_date||t.deadline)) / 86400000) : 0,
+    tags: t.tags || [], source: 'flowup', raw: t
+  };
+}
+
+function normTrelloCard(card, board, listMap) {
+  const due = card.due ? new Date(card.due) : null;
+  const over = due && !card.dueComplete && due < new Date();
+  const totalChk = (card.checklists||[]).reduce((a,cl) => a + cl.checkItems.length, 0);
+  const doneChk = (card.checklists||[]).reduce((a,cl) => a + cl.checkItems.filter(i => i.state==='complete').length, 0);
+  return {
+    id: card.id, name: card.name,
+    boardId: board.id, boardName: board.name,
+    listId: card.idList, listName: listMap[card.idList] || '—',
+    due: card.due, dueComplete: card.dueComplete, isOver: over,
+    members: (card.members||[]).map(m => m.fullName||m.username||''),
+    labels: (card.labels||[]).map(l => l.name||l.color),
+    totalChk, doneChk, chkPct: totalChk > 0 ? Math.round(doneChk/totalChk*100) : null,
+    shortUrl: card.shortUrl, source: 'trello'
+  };
+}
+
+function isDone(t) {
+  return ['done','completed','concluido','concluído','finished','closed'].some(x => (t.status||t.state||'').toLowerCase().includes(x));
+}
+function isOver(t) {
+  if (isDone(t)) return false;
+  const d = t.due_date || t.deadline;
+  return d ? new Date(d) < new Date() : false;
+}
+function normStatus(s) {
+  s = s.toLowerCase();
+  if (['done','completed','concluido','concluído','finished','closed'].some(x=>s.includes(x))) return 'done';
+  if (['inactive','inativo','archived'].some(x=>s.includes(x))) return 'inactive';
+  if (['paused','pausado','hold'].some(x=>s.includes(x))) return 'paused';
+  return 'active';
+}
+function normPrio(p) {
+  p = p.toLowerCase();
+  if (['critical','critico','urgente'].some(x=>p.includes(x))) return 'critical';
+  if (['high','alta','alto'].some(x=>p.includes(x))) return 'high';
+  if (['low','baixa','baixo'].some(x=>p.includes(x))) return 'low';
+  return 'medium';
+}
+function extractClient(name) {
+  const parts = name.split(/[-–|]/);
+  return parts.length > 1 ? parts[parts.length-1].trim() : name;
+}
+function extractService(tags, name) {
+  const services = ['Organize Master','Organize Mentoring','Organize Estratégico','Organize Finance','Organize Marketing'];
+  for (const s of services) {
+    const kw = s.split(' ')[1];
+    if (tags.some(t=>(typeof t==='string'?t:t.name||'').includes(kw))) return s;
+    if (name.includes(kw)) return s;
+  }
+  return 'Outros';
+}
+function calcRisk(p, over, total, done, daysSince) {
+  if (total === 0) return 'low';
+  const pct = over / total;
+  const dl = p.due_date || p.end_date;
+  const daysLeft = dl ? Math.floor((new Date(dl) - Date.now()) / 86400000) : 999;
+  if (pct > .5 || daysLeft < 0) return 'critical';
+  if (pct > .3 || (daysLeft < 7 && done < total * .75)) return 'high';
+  if (pct > .1 || daysSince > 14) return 'moderate';
+  return 'low';
+}
+
+// ═══════════════ SYNC ═══════════════
+async function syncAll() {
+  const hasFlowUp = S.config.fuKey && S.config.fuSubdomain;
+  const hasTrello = S.config.trKey && S.config.trToken;
+
+  if (!hasFlowUp && !hasTrello) { openConfig('flowup'); return; }
+
+  const btn = document.getElementById('sync-btn');
+  btn.classList.add('loading');
+  showLoading('Sincronizando FlowUp e Trello...');
+
+  const errors = [];
+
+  if (hasFlowUp) {
+    try {
+      setLoadingText('Carregando projetos FlowUp...');
+      const [rawProj, rawTasks, rawMembers] = await Promise.all([FU.projects(), FU.tasks(), FU.members()]);
+      S.tasks = rawTasks.map(normTask);
+      S.projects = rawProj.map(normProject);
+      S.members = rawMembers.length ? rawMembers : deriveMembers();
+    } catch(e) { errors.push('FlowUp: ' + e.message); }
+  }
+
+  if (hasTrello) {
+    try {
+      setLoadingText('Carregando boards Trello...');
+      const allBoards = await TR.boards();
+
+      // Prioridade: boards de organizações (excluir quadros pessoais)
+      // idOrganization preenchido = board de workspace
+      let boards = allBoards.filter(b => b.idOrganization);
+
+      // Se não houver nenhum org board, pega todos (mas limita a 20)
+      if (boards.length === 0) boards = allBoards.slice(0, 20);
+
+      // Limita a 30 boards para não sobrecarregar
+      boards = boards.slice(0, 30);
+
+      S.trelloBoards = boards;
+      S.trelloCards = [];
+      S.trelloLists = [];
+
+      setLoadingText(`Carregando ${boards.length} boards Trello em paralelo...`);
+
+      // Carrega todos os boards em paralelo (muito mais rápido)
+      const results = await Promise.allSettled(
+        boards.map(async board => {
+          const [lists, cards] = await Promise.all([
+            TR.boardLists(board.id),
+            TR.boardCards(board.id)
+          ]);
+          const listMap = {};
+          lists.forEach(l => { listMap[l.id] = l.name; });
+          board._lists = lists;
+          board._listMap = listMap;
+          return { board, lists, cards, listMap };
+        })
+      );
+
+      results.forEach(r => {
+        if (r.status === 'fulfilled') {
+          const { board, lists, cards, listMap } = r.value;
+          S.trelloLists.push(...lists.map(l => ({...l, boardId: board.id, boardName: board.name})));
+          S.trelloCards.push(...cards.map(c => normTrelloCard(c, board, listMap)));
+        }
+      });
+
+    } catch(e) { errors.push('Trello: ' + e.message); }
+  }
+
+  populateMemberFilter();
+  updateBadges();
+  renderAll();
+
+  const now = new Date();
+  const timeStr = `Atualizado ${now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}`;
+  const lbl = document.getElementById('sync-lbl');
+  lbl.dataset.lastSync = timeStr;
+  lbl.textContent = timeStr;
+
+  btn.classList.remove('loading');
+  hideLoading();
+
+  if (errors.length) alert('Erros na sincronização:\n\n' + errors.join('\n'));
+}
+
+function deriveMembers() {
+  const m = {};
+  S.tasks.forEach(t => { if (t.responsible && t.responsible !== '—') m[t.responsible] = true; });
+  return Object.keys(m).map(n => ({name:n, id:n}));
+}
+
+function populateMemberFilter() {
+  const sel = document.getElementById('f-member');
+  sel.innerHTML = '<option value="">Todos — Responsável</option>';
+  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='—'))].sort();
+  names.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
+}
+
+function updateBadges() {
+  document.getElementById('badge-active').textContent = S.projects.filter(p=>p.status==='active').length;
+  document.getElementById('badge-over').textContent = S.tasks.filter(t=>t.isOver).length;
+  document.getElementById('badge-trello').textContent = S.trelloBoards.length;
+  document.getElementById('badge-alerts').textContent = S.projects.filter(p=>p.risk==='critical'||p.risk==='high').length;
+}
+
+// ═══════════════ FILTERS ═══════════════
+function applyFilters() {
+  S.filters.status  = document.getElementById('f-status').value;
+  S.filters.service = document.getElementById('f-service').value;
+  S.filters.risk    = document.getElementById('f-risk').value;
+  S.filters.member  = document.getElementById('f-member').value;
+  S.filters.search  = document.getElementById('f-search').value.toLowerCase();
+  renderAll();
+}
+function clearFilters() {
+  ['f-status','f-service','f-risk','f-member'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-search').value = '';
+  S.filters = { status:'', service:'', risk:'', member:'', search:'' };
+  renderAll();
+}
+function filteredProjects() {
+  return S.projects.filter(p => {
+    if (S.filters.status && p.status !== S.filters.status) return false;
+    if (S.filters.service && p.service !== S.filters.service) return false;
+    if (S.filters.risk && p.risk !== S.filters.risk) return false;
+    if (S.filters.member && p.responsible !== S.filters.member) return false;
+    if (S.filters.search) {
+      const s = S.filters.search;
+      if (!p.name.toLowerCase().includes(s) && !p.client.toLowerCase().includes(s)) return false;
+    }
+    return true;
+  });
+}
+function filteredTasks() {
+  return S.tasks.filter(t => {
+    if (S.filters.status === 'done' && !t.isDone) return false;
+    if (S.filters.status === 'active' && (t.isDone||t.isOver)) return false;
+    if (S.filters.member && t.responsible !== S.filters.member) return false;
+    if (S.filters.search) {
+      const s = S.filters.search;
+      if (!t.name.toLowerCase().includes(s) && !t.project.toLowerCase().includes(s)) return false;
+    }
+    return true;
+  });
+}
+
+// ═══════════════ RENDER ALL ═══════════════
+function renderAll() {
+  renderOverview();
+  renderProjects();
+  renderTasks();
+  renderTrello();
+  renderMembers();
+  renderDashboard();
+  renderAlerts();
+}
+
+// ─── OVERVIEW ───
+function renderOverview() {
+  const ps = filteredProjects(), ts = filteredTasks();
+  const active = ps.filter(p=>p.status==='active').length;
+  const done = ps.filter(p=>p.status==='done').length;
+  const over = ts.filter(t=>t.isOver).length;
+  const taskDone = ts.filter(t=>t.isDone).length;
+  const totalT = ts.length;
+  const atRisk = ps.filter(p=>p.risk==='high'||p.risk==='critical').length;
+  const trCards = S.trelloCards.length;
+  const trDone = S.trelloCards.filter(c=>c.dueComplete).length;
+
+  document.getElementById('kpi-overview').innerHTML = `
+    ${kpi('Projetos Ativos', active, 'teal', 'FlowUp em andamento', '📂')}
+    ${kpi('Projetos Concluídos', done, 'green', 'Finalizados', '✅')}
+    ${kpi('Tarefas Atrasadas', over, 'red', 'Ação imediata', '⚠️')}
+    ${kpi('Conclusão Geral', totalT>0?Math.round(taskDone/totalT*100)+'%':'—', 'navy', `${taskDone} de ${totalT} tarefas`, '📊')}
+    ${kpi('Em Risco / Crítico', atRisk, 'orange', 'Projetos críticos', '🔴')}
+    ${kpi('Boards Trello', S.trelloBoards.length, 'trello', 'Planejamentos ativos', '🟦')}
+    ${kpi('Cards Trello', trCards, 'trello', `${trDone} concluídos`, '📋')}
+    ${kpi('Cards Vencidos', S.trelloCards.filter(c=>c.isOver).length, 'red', 'Trello em atraso', '🕐')}
+  `;
+
+  // Upcoming (FlowUp + Trello due)
+  const upcoming = [];
+  ts.filter(t => {
+    if (t.isDone) return false;
+    const d = t.deadline; if (!d) return false;
+    const days = Math.floor((new Date(d) - Date.now()) / 86400000);
+    return days >= 0 && days <= 7;
+  }).forEach(t => upcoming.push({ name:t.name, project:t.project, responsible:t.responsible, deadline:t.deadline, source:'flowup', isOver:false }));
+
+  S.trelloCards.filter(c => {
+    if (!c.due || c.dueComplete) return false;
+    const days = Math.floor((new Date(c.due) - Date.now()) / 86400000);
+    return days >= 0 && days <= 7;
+  }).forEach(c => upcoming.push({ name:c.name, project:c.boardName, responsible:c.members.join(', ')||'—', deadline:c.due, source:'trello', isOver:c.isOver }));
+
+  upcoming.sort((a,b) => new Date(a.deadline)-new Date(b.deadline));
+  document.getElementById('upcoming-count').textContent = upcoming.length;
+
+  const upEl = document.getElementById('upcoming-list');
+  if (upcoming.length === 0) {
+    upEl.innerHTML = `<div style="padding:22px;text-align:center;color:var(--muted);font-size:13px">Nenhuma entrega nos próximos 7 dias</div>`;
+  } else {
+    upEl.innerHTML = upcoming.slice(0,12).map(t => {
+      const d = new Date(t.deadline);
+      const days = Math.floor((d - Date.now()) / 86400000);
+      const cls = days === 0 ? 'today' : '';
+      return `<div class="dl-row">
+        <div class="dl-date ${cls}">${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}<br><small>${days===0?'Hoje':days+'d'}</small></div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--navy)">${t.name}</div><div style="font-size:11px;color:var(--muted)">${t.project} · ${t.responsible}</div></div>
+        <span class="source-pill source-${t.source}">${t.source==='trello'?'🟦 Trello':'⚙️ FlowUp'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Charts
+  mkChart('ch-status','doughnut',
+    ['Ativo','Concluído','Inativo/Pausado','Em Risco'],
+    [active, done, ps.filter(p=>p.status==='inactive'||p.status==='paused').length, atRisk],
+    ['#000080','#1a7a4a','#41546A','#c0392b']
+  );
+
+  // Trello lists chart
+  if (S.trelloBoards.length > 0) {
+    const listCounts = {};
+    S.trelloCards.forEach(c => { listCounts[c.listName] = (listCounts[c.listName]||0)+1; });
+    const entries = Object.entries(listCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    mkChart('ch-trello-lists','bar',
+      entries.map(([k])=>k), entries.map(([,v])=>v),
+      ['#0052CC','#0065FF','#2684FF','#4C9AFF','#B3D4FF']
+    );
+  }
+
+  renderAlertsList(ps, 'alerts-overview', 4);
+}
+
+// ─── PROJECTS ───
+function renderProjects() {
+  const ps = filteredProjects();
+  document.getElementById('proj-count').textContent = ps.length;
+  const grid = document.getElementById('proj-grid');
+  if (!ps.length) { grid.innerHTML = empty('Nenhum projeto encontrado', 'Ajuste os filtros ou sincronize.'); return; }
+  grid.innerHTML = ps.map(projCard).join('');
+}
+
+function projCard(p) {
+  const sL = {active:'Ativo',done:'Concluído',paused:'Pausado',inactive:'Inativo'};
+  const sC = {active:'b-active',done:'b-done',paused:'b-paused',inactive:'b-inactive'};
+  const rL = {low:'Baixo',moderate:'Moderado',high:'Alto',critical:'Crítico'};
+  const pColor = p.progress > 70 ? 'g' : (p.tasks.over > 0 && p.progress < 30 ? 'r' : '');
+  const dl = p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '—';
+  return `<div class="proj-card risk-${p.risk}" onclick="openProjModal('${p.id}')">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+      <div><div class="proj-name">${p.name}</div><div class="proj-client">${p.client}</div></div>
+      <span class="badge ${sC[p.status]||'b-active'}">${sL[p.status]||p.status}</span>
+    </div>
+    <div class="meta-row">
+      <span class="chip">👤 ${p.responsible}</span>
+      <span class="chip">📅 ${dl}</span>
+      <span class="chip">🏷️ ${p.service}</span>
+    </div>
+    <div><div class="prog-lbl"><span>Progresso</span><strong>${p.progress}%</strong></div>
+    <div class="prog-bar"><div class="prog-fill ${pColor}" style="width:${p.progress}%"></div></div></div>
+    <div class="task-stats">
+      <div><div class="ts-val g">${p.tasks.done}</div><div class="ts-lbl">Conc.</div></div>
+      <div><div class="ts-val r">${p.tasks.over}</div><div class="ts-lbl">Atras.</div></div>
+      <div><div class="ts-val">${p.tasks.pending}</div><div class="ts-lbl">Pend.</div></div>
+    </div>
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span class="risk-badge rb-${p.risk}">● ${rL[p.risk]}</span>
+      <span style="font-size:10.5px;color:var(--muted)">${p.daysSince > 0 ? `Sem atualização há ${p.daysSince}d` : 'Hoje'}</span>
+    </div>
+  </div>`;
+}
+
+// ─── TASKS ───
+function renderTasks() {
+  const ts = filteredTasks();
+  const done = ts.filter(t=>t.isDone).length;
+  const over = ts.filter(t=>t.isOver).length;
+  document.getElementById('kpi-tasks').innerHTML = `
+    ${kpi('Total', ts.length, 'navy', 'Tarefas filtradas', '📋')}
+    ${kpi('Concluídas', done, 'green', `${ts.length>0?Math.round(done/ts.length*100):0}%`, '✅')}
+    ${kpi('Atrasadas', over, 'red', 'Urgente', '⚠️')}
+    ${kpi('Em Andamento', ts.length-done-over, 'teal', 'Ativas', '⚡')}
+  `;
+  const pL = {critical:'Crítica',high:'Alta',medium:'Média',low:'Baixa'};
+  const pC = {critical:'var(--red)',high:'var(--orange)',medium:'#e9c46a',low:'var(--green)'};
+  const body = document.getElementById('tasks-body');
+  if (!ts.length) { body.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">Nenhuma tarefa</td></tr>`; return; }
+  body.innerHTML = ts.slice(0,300).map(t => {
+    const dl = t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '—';
+    return `<tr style="${t.isOver?'background:var(--red-bg)':''}${t.isDone?';opacity:.7':''}">
+      <td style="font-weight:600;color:var(--navy)">${t.name}</td>
+      <td><div style="font-size:12px">${t.project}</div><div style="font-size:11px;color:var(--muted)">${t.client}</div></td>
+      <td>${t.responsible}</td>
+      <td style="color:${t.isOver?'var(--red)':'inherit'}">${dl}</td>
+      <td><span class="pdot ${t.priority}"></span>${pL[t.priority]}</td>
+      <td><span class="badge ${t.isOver?'b-over':t.isDone?'b-done':'b-active'}">${t.isOver?'Atrasada':t.isDone?'Concluída':'Ativa'}</span></td>
+      <td><span class="source-pill source-flowup">FlowUp</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── TRELLO ───
+function renderTrello() {
+  const boards = S.trelloBoards;
+  document.getElementById('trello-count').textContent = boards.length;
+  const kpiEl = document.getElementById('kpi-trello');
+  const totalCards = S.trelloCards.length;
+  const doneCards = S.trelloCards.filter(c=>c.dueComplete).length;
+  const overCards = S.trelloCards.filter(c=>c.isOver).length;
+  const withChk = S.trelloCards.filter(c=>c.totalChk>0);
+  const avgChk = withChk.length > 0 ? Math.round(withChk.reduce((a,c)=>a+c.chkPct,0)/withChk.length) : 0;
+
+  kpiEl.innerHTML = `
+    ${kpi('Boards Ativos', boards.length, 'trello', 'Planejamentos Trello', '🟦')}
+    ${kpi('Total de Cards', totalCards, 'navy', 'Em todos os boards', '📋')}
+    ${kpi('Cards Concluídos', doneCards, 'green', `${totalCards>0?Math.round(doneCards/totalCards*100):0}% do total`, '✅')}
+    ${kpi('Cards Vencidos', overCards, 'red', 'Requerem atenção', '⚠️')}
+    ${kpi('Progresso Médio', avgChk+'%', 'teal', 'Checklists', '📊')}
+  `;
+
+  if (!boards.length) {
+    document.getElementById('trello-boards-grid').innerHTML = empty('Nenhum board Trello', 'Configure sua API Key e Token do Trello.');
+    return;
+  }
+
+  document.getElementById('trello-boards-grid').innerHTML = boards.map(board => {
+    const cards = S.trelloCards.filter(c=>c.boardId===board.id);
+    const done = cards.filter(c=>c.dueComplete).length;
+    const over = cards.filter(c=>c.isOver).length;
+    const withDue = cards.filter(c=>c.due).length;
+    const lists = board._lists || [];
+
+    return `<div class="trello-card" onclick="openTrelloBoard('${board.id}')">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <div class="trello-board-name">${board.name}</div>
+        ${over > 0 ? `<span class="badge b-over">⚠️ ${over} vencido(s)</span>` : `<span class="badge b-active">✓ OK</span>`}
+      </div>
+      <div class="meta-row">
+        <span class="chip">📋 ${cards.length} cards</span>
+        <span class="chip">✅ ${done} concluídos</span>
+        ${withDue > 0 ? `<span class="chip">📅 ${withDue} com prazo</span>` : ''}
+      </div>
+      <div class="trello-lists">
+        ${lists.slice(0,5).map(l => {
+          const cnt = cards.filter(c=>c.listId===l.id).length;
+          return `<div class="trello-list-row"><span>${l.name}</span><span class="trello-list-count">${cnt}</span></div>`;
+        }).join('')}
+      </div>
+      ${cards.filter(c=>c.totalChk>0).length > 0 ? (() => {
+        const chkCards = cards.filter(c=>c.totalChk>0);
+        const avg = Math.round(chkCards.reduce((a,c)=>a+c.chkPct,0)/chkCards.length);
+        return `<div style="margin-top:12px">
+          <div class="prog-lbl"><span>Progresso checklists</span><strong>${avg}%</strong></div>
+          <div class="prog-bar"><div class="prog-fill t" style="width:${avg}%"></div></div>
+        </div>`;
+      })() : ''}
+    </div>`;
+  }).join('');
+}
+
+function openTrelloBoard(boardId) {
+  const board = S.trelloBoards.find(b=>b.id===boardId);
+  if (!board) return;
+  const cards = S.trelloCards.filter(c=>c.boardId===boardId);
+  const lists = board._lists || [];
+
+  document.getElementById('trello-modal-content').innerHTML = `
+    <div class="modal-hdr" style="background:var(--trello)">
+      <div>
+        <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Trello Board</div>
+        <h2 style="font-size:17px;font-weight:700">${board.name}</h2>
+        <div style="font-size:12px;opacity:.8">${cards.length} cards · ${lists.length} listas · ${cards.filter(c=>c.dueComplete).length} concluídos · ${cards.filter(c=>c.isOver).length} vencidos</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('trello-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="board-lists-grid">
+        ${lists.map(list => {
+          const listCards = cards.filter(c=>c.listId===list.id);
+          return `<div class="list-col">
+            <div class="list-col-name">${list.name} <span style="font-size:10px;color:var(--muted);font-weight:400">(${listCards.length})</span></div>
+            ${listCards.slice(0,15).map(card => {
+              const due = card.due ? new Date(card.due).toLocaleDateString('pt-BR') : null;
+              return `<div class="trello-card-item">
+                <div style="font-weight:${card.dueComplete?400:600};text-decoration:${card.dueComplete?'line-through':''};color:${card.dueComplete?'var(--muted)':'var(--txt)'}">${card.name}</div>
+                ${due ? `<div class="card-due ${card.isOver&&!card.dueComplete?'over':''}">📅 ${due}${card.isOver&&!card.dueComplete?' ⚠️':''}</div>` : ''}
+                ${card.totalChk > 0 ? `<div class="card-chk">☑️ ${card.doneChk}/${card.totalChk} (${card.chkPct}%)</div>` : ''}
+                ${card.members.length > 0 ? `<div class="card-chk">👤 ${card.members.join(', ')}</div>` : ''}
+              </div>`;
+            }).join('')}
+            ${listCards.length > 15 ? `<div style="text-align:center;font-size:11px;color:var(--muted);padding:6px">+${listCards.length-15} cards</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('trello-modal').classList.add('open');
+}
+
+// ─── MEMBERS ───
+function renderMembers() {
+  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='—'))].sort();
+  const colors = ['#000080','#41546A','#5bbece','#2c4a7a','#1a7a4a','#d35400','#0052CC'];
+  const grid = document.getElementById('member-grid');
+  if (!names.length) { grid.innerHTML = empty('Nenhum responsável', 'Sincronize os dados do FlowUp.'); return; }
+  grid.innerHTML = names.map((name, i) => {
+    const mt = S.tasks.filter(t=>t.responsible===name);
+    const done = mt.filter(t=>t.isDone).length;
+    const over = mt.filter(t=>t.isOver).length;
+    const act = mt.length - done - over;
+    const mp = [...new Set(mt.map(t=>t.projectId))].length;
+    const initials = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    const pct = mt.length > 0 ? Math.round(done/mt.length*100) : 0;
+    return `<div class="member-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div class="avatar" style="background:${colors[i%colors.length]}">${initials}</div>
+        <div><div style="font-size:14px;font-weight:700;color:var(--navy)">${name}</div><div style="font-size:11.5px;color:var(--muted)">${mp} projeto(s) · ${mt.length} tarefas</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding-top:10px;border-top:1px solid var(--border)">
+        <div class="task-stat"><div class="ts-val g">${done}</div><div class="ts-lbl">Conc.</div></div>
+        <div class="task-stat"><div class="ts-val r">${over}</div><div class="ts-lbl">Atras.</div></div>
+        <div class="task-stat"><div class="ts-val">${act}</div><div class="ts-lbl">Ativas</div></div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="prog-lbl" style="font-size:11px"><span>Conclusão</span><strong>${pct}%</strong></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const data = names.map(n=>S.tasks.filter(t=>t.responsible===n).length);
+  mkChart('ch-members','bar', names, data, colors, {indexAxis:'y'});
+}
+
+// ─── DASHBOARD ───
+function renderDashboard() {
+  const ts = S.tasks, ps = filteredProjects();
+  mkChart('ch-task-status','doughnut',
+    ['Concluídas','Atrasadas','Ativas'],
+    [ts.filter(t=>t.isDone).length, ts.filter(t=>t.isOver).length, ts.filter(t=>!t.isDone&&!t.isOver).length],
+    ['#1a7a4a','#c0392b','#8BD4E0']
+  );
+  const cm = {};
+  ts.filter(t=>t.isOver).forEach(t=>{ cm[t.client]=(cm[t.client]||0)+1; });
+  const top = Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  mkChart('ch-over-client','bar', top.map(([k])=>k), top.map(([,v])=>v), ['#c0392b']);
+  const rm = {low:0,moderate:0,high:0,critical:0};
+  ps.forEach(p=>rm[p.risk]++);
+  mkChart('ch-risk','doughnut', ['Baixo','Moderado','Alto','Crítico'],
+    [rm.low,rm.moderate,rm.high,rm.critical], ['#1a7a4a','#b45309','#d35400','#c0392b']);
+
+  // Trello progress per board
+  const boardNames = S.trelloBoards.map(b=>b.name.length>18?b.name.slice(0,18)+'…':b.name);
+  const donePerBoard = S.trelloBoards.map(b=>S.trelloCards.filter(c=>c.boardId===b.id&&c.dueComplete).length);
+  const openPerBoard = S.trelloBoards.map(b=>S.trelloCards.filter(c=>c.boardId===b.id&&!c.dueComplete).length);
+  mkChartStacked('ch-trello-progress', boardNames, donePerBoard, openPerBoard);
+
+  const tbody = document.getElementById('prog-body');
+  tbody.innerHTML = ps.map(p => {
+    const bw = Math.min(p.progress, 100);
+    const bc = p.progress > 70 ? '#1a7a4a' : (p.tasks.over > 2 ? '#c0392b' : '#000080');
+    return `<tr>
+      <td style="font-weight:600;color:var(--navy)">${p.name}</td>
+      <td style="font-size:12px;color:var(--muted)">${p.client}</td>
+      <td style="text-align:center"><strong style="color:var(--green)">${p.tasks.done}</strong></td>
+      <td style="text-align:center"><strong style="color:var(--red)">${p.tasks.over}</strong></td>
+      <td style="text-align:center">${p.tasks.pending}</td>
+      <td style="min-width:110px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div class="prog-bar" style="flex:1"><div style="height:100%;width:${bw}%;background:${bc};border-radius:999px"></div></div>
+          <span style="font-size:11px;font-weight:700;color:var(--navy)">${p.progress}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6" style="text-align:center;padding:22px;color:var(--muted)">Sem dados</td></tr>`;
+}
+
+// ─── ALERTS ───
+function renderAlerts() {
+  const ps = filteredProjects();
+  renderAlertsList(ps, 'alerts-full', 100);
+
+  const over = filteredTasks().filter(t=>t.isOver).sort((a,b)=>b.daysLate-a.daysLate);
+  const pL = {critical:'Crítica',high:'Alta',medium:'Média',low:'Baixa'};
+  const pC = {critical:'var(--red)',high:'var(--orange)',medium:'#e9c46a',low:'var(--green)'};
+  const tbody = document.getElementById('over-body');
+  tbody.innerHTML = over.slice(0,100).map(t => {
+    const dl = t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '—';
+    return `<tr style="background:var(--red-bg)">
+      <td style="font-weight:600">${t.name}</td><td>${t.project}</td><td>${t.responsible}</td>
+      <td style="color:var(--red);font-weight:600">${dl}</td>
+      <td><span style="background:var(--red-bg);color:var(--red);font-weight:700;padding:2px 8px;border-radius:6px;font-size:12px">${t.daysLate}d</span></td>
+      <td><span class="pdot ${t.priority}"></span>${pL[t.priority]}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6" style="text-align:center;padding:22px;color:var(--green);font-weight:600">✅ Nenhuma tarefa atrasada</td></tr>`;
+
+  const trOver = S.trelloCards.filter(c=>c.isOver).sort((a,b)=>new Date(a.due)-new Date(b.due));
+  const tbody2 = document.getElementById('trello-over-body');
+  tbody2.innerHTML = trOver.slice(0,50).map(c => {
+    const dl = new Date(c.due).toLocaleDateString('pt-BR');
+    const days = Math.floor((Date.now() - new Date(c.due)) / 86400000);
+    return `<tr style="background:var(--trello-bg)">
+      <td style="font-weight:600;color:var(--trello)">${c.name}</td>
+      <td>${c.boardName}</td><td>${c.listName}</td>
+      <td style="color:var(--trello);font-weight:600">${dl}</td>
+      <td><span style="background:var(--trello-bg);color:var(--trello);font-weight:700;padding:2px 8px;border-radius:6px;font-size:12px">${days}d</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--green);font-weight:600">✅ Nenhum card Trello vencido</td></tr>`;
+}
+
+function renderAlertsList(projects, id, limit) {
+  const el = document.getElementById(id);
+  const alerts = [];
+  projects.forEach(p => {
+    if (p.risk === 'critical') alerts.push({ level:'critical', title:`🔴 CRÍTICO — ${p.name}`, desc:`${p.tasks.over} tarefa(s) atrasada(s) · ${p.client} · ${p.responsible}` });
+    else if (p.risk === 'high') alerts.push({ level:'high', title:`🟠 ALTO RISCO — ${p.name}`, desc:`Pendências significativas · ${p.client} · Progresso: ${p.progress}%` });
+    else if (p.risk === 'moderate') alerts.push({ level:'moderate', title:`🟡 Atenção — ${p.name}`, desc:`${p.daysSince > 7 ? `Sem atualização há ${p.daysSince}d` : `${p.tasks.over} tarefa(s) em atraso`} · ${p.client}` });
+  });
+  if (!alerts.length) { el.innerHTML = `<div style="padding:22px;text-align:center;color:var(--green);font-weight:600;font-size:14px">✅ Nenhum alerta crítico identificado</div>`; return; }
+  el.innerHTML = alerts.slice(0,limit).map(a => `
+    <div class="alert-item ${a.level}">
+      <div style="font-size:20px">${a.level==='critical'?'🔴':a.level==='high'?'🟠':'🟡'}</div>
+      <div><div class="alert-ttl">${a.title}</div><div class="alert-desc">${a.desc}</div></div>
+    </div>`).join('');
+}
+
+// ═══════════════ PROJECT MODAL ═══════════════
+function openProjModal(id) {
+  const p = S.projects.find(x=>x.id==id);
+  if (!p) return;
+  const tasks = S.tasks.filter(t=>t.projectId==id);
+  const doneTasks = tasks.filter(t=>t.isDone);
+  const overTasks = tasks.filter(t=>t.isOver);
+  const activeTasks = tasks.filter(t=>!t.isDone&&!t.isOver);
+  const rL = {low:'Baixo',moderate:'Moderado',high:'Alto',critical:'Crítico'};
+
+  document.getElementById('proj-modal-content').innerHTML = `
+    <div class="modal-hdr">
+      <div>
+        <div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">${p.service}</div>
+        <h2 style="font-size:17px;font-weight:700;margin-bottom:3px">${p.name}</h2>
+        <div style="font-size:12px;opacity:.8">${p.client} · Responsável: ${p.responsible}</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('proj-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+        ${miniKpi('Progresso', p.progress+'%', '#000080')}
+        ${miniKpi('Concluídas', doneTasks.length, '#1a7a4a')}
+        ${miniKpi('Atrasadas', overTasks.length, '#c0392b')}
+        ${miniKpi('Pendentes', activeTasks.length, '#41546A')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:18px">
+        ${iRow('Status', `<span class="badge ${({active:'b-active',done:'b-done',paused:'b-paused',inactive:'b-inactive'})[p.status]||'b-active'}">${{active:'Ativo',done:'Concluído',paused:'Pausado',inactive:'Inativo'}[p.status]||p.status}</span>`)}
+        ${iRow('Nível de Risco', `<span class="risk-badge rb-${p.risk}">● ${rL[p.risk]}</span>`)}
+        ${iRow('Início', p.start ? new Date(p.start).toLocaleDateString('pt-BR') : '—')}
+        ${iRow('Prazo', p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '—')}
+      </div>
+      ${overTasks.length > 0 ? `<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--red);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">⚠️ Tarefas Atrasadas (${overTasks.length})</div>
+        ${overTasks.slice(0,8).map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--red-bg);border-radius:6px;margin-bottom:4px;font-size:12px">
+          <div style="flex:1;font-weight:600">${t.name}</div><div style="color:var(--red)">${t.daysLate}d</div><div style="color:var(--muted)">${t.responsible}</div>
+        </div>`).join('')}</div>` : ''}
+      ${activeTasks.length > 0 ? `<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">📋 Em Andamento / Pendentes (${activeTasks.length})</div>
+        ${activeTasks.slice(0,8).map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--off);border-radius:6px;margin-bottom:4px;font-size:12px">
+          <div style="flex:1">${t.name}</div>${t.deadline?`<div style="color:var(--muted)">${new Date(t.deadline).toLocaleDateString('pt-BR')}</div>`:''}
+          <div style="color:var(--muted)">${t.responsible}</div>
+        </div>`).join('')}</div>` : ''}
+      <div><div class="prog-lbl"><span>Progresso geral</span><strong>${p.progress}%</strong></div>
+      <div class="prog-bar" style="height:8px"><div class="prog-fill ${p.progress>70?'g':p.tasks.over>3?'r':''}" style="width:${p.progress}%"></div></div></div>
+    </div>
+  `;
+  document.getElementById('proj-modal').classList.add('open');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function miniKpi(l,v,c) { return `<div style="background:var(--off);border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:${c}">${v}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${l}</div></div>`; }
+function iRow(l,v) { return `<div style="background:var(--off);border-radius:7px;padding:9px 11px"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px">${l}</div><div style="font-size:13px;font-weight:600;color:var(--navy)">${v}</div></div>`; }
+
+// ═══════════════ CHARTS ═══════════════
+function mkChart(id, type, labels, data, colors, extra={}) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (S.charts[id]) { S.charts[id].destroy(); }
+  S.charts[id] = new Chart(canvas.getContext('2d'), {
+    type,
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: Array.isArray(colors) ? colors : [colors],
+        borderColor: type === 'doughnut' ? 'transparent' : (Array.isArray(colors) ? colors[0] : colors),
+        borderWidth: type === 'doughnut' ? 2 : 0,
+        borderRadius: type === 'bar' ? 5 : 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: type==='doughnut'?'right':'top', labels: { font:{family:'DM Sans',size:11}, boxWidth:12, padding:10 }},
+        tooltip: { bodyFont:{family:'DM Sans'}, titleFont:{family:'DM Sans'} }
+      },
+      scales: type !== 'doughnut' ? {
+        x: { grid:{color:'#f0f0f0'}, ticks:{font:{family:'DM Sans',size:11}} },
+        y: { grid:{color:'#f0f0f0'}, ticks:{font:{family:'DM Sans',size:11}}, beginAtZero:true }
+      } : {},
+      ...extra
+    }
+  });
+}
+
+function mkChartStacked(id, labels, done, open) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (S.charts[id]) { S.charts[id].destroy(); }
+  S.charts[id] = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Concluídos', data: done, backgroundColor: '#1a7a4a', borderRadius: 4 },
+        { label: 'Abertos', data: open, backgroundColor: '#0052CC', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{position:'top',labels:{font:{family:'DM Sans',size:11},boxWidth:12}}, tooltip:{bodyFont:{family:'DM Sans'},titleFont:{family:'DM Sans'}} },
+      scales: {
+        x: { stacked: true, grid:{color:'#f0f0f0'}, ticks:{font:{family:'DM Sans',size:11}} },
+        y: { stacked: true, grid:{color:'#f0f0f0'}, ticks:{font:{family:'DM Sans',size:11}}, beginAtZero:true }
+      }
+    }
+  });
+}
+
+// ═══════════════ CONFIG ═══════════════
+let _cfgTab = 'flowup';
+function openConfig(tab='flowup') {
+  const c = S.config;
+  document.getElementById('fu-subdomain').value = c.fuSubdomain || '';
+  document.getElementById('fu-apikey').value = c.fuKey || '';
+  document.getElementById('tr-apikey').value = c.trKey || '';
+  document.getElementById('tr-token').value = c.trToken || '';
+  document.getElementById('tr-org').value = c.trOrg || '';
+  document.getElementById('cfg-refresh').value = c.refresh || 0;
+  document.getElementById('tr-boards-filter').value = (c.boardsFilter||[]).join('\n');
+  // Update Trello auth link
+  if (c.trKey) document.getElementById('trello-auth-link').href = `https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=PainelOrganize&key=${c.trKey}`;
+  switchCfgTab(tab);
+  document.getElementById('cfg-overlay').classList.add('open');
+}
+function closeConfig() { document.getElementById('cfg-overlay').classList.remove('open'); }
+function switchCfgTab(tab) {
+  _cfgTab = tab;
+  ['flowup','trello','general'].forEach(t => {
+    document.getElementById('cfg-'+t).style.display = t === tab ? '' : 'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t === tab);
+  });
+}
+function saveConfig() {
+  S.config.fuSubdomain = document.getElementById('fu-subdomain').value.trim();
+  S.config.fuKey       = document.getElementById('fu-apikey').value.trim();
+  S.config.trKey       = document.getElementById('tr-apikey').value.trim();
+  S.config.trToken     = document.getElementById('tr-token').value.trim();
+  S.config.trOrg       = document.getElementById('tr-org').value.trim();
+  S.config.refresh     = parseInt(document.getElementById('cfg-refresh').value);
+  S.config.boardsFilter = document.getElementById('tr-boards-filter').value.split('\n').map(s=>s.trim()).filter(Boolean);
+
+  try { localStorage.setItem('oe_cfg2', JSON.stringify(S.config)); } catch(e) {}
+
+  if (S.timer) clearInterval(S.timer);
+  if (S.config.refresh > 0) S.timer = setInterval(syncAll, S.config.refresh * 60000);
+
+  closeConfig();
+  syncAll();
+}
+function loadConfig() {
+  try { const c = JSON.parse(localStorage.getItem('oe_cfg2')||'{}'); S.config = {...S.config,...c}; } catch(e) {}
+}
+
+// ═══════════════ LOGO ═══════════════
+function openLogoConfig() {
+  document.getElementById('lc-name').value = S.logoConfig.name || '';
+  document.getElementById('lc-tagline').value = S.logoConfig.tagline || '';
+  if (S.logoConfig.img) {
+    document.getElementById('logo-prev-img').src = S.logoConfig.img;
+    document.getElementById('logo-prev-name').textContent = S.logoConfig.name;
+    document.getElementById('logo-prev-tagline').textContent = S.logoConfig.tagline;
+    document.getElementById('logo-preview').style.display = 'block';
+  } else { document.getElementById('logo-preview').style.display = 'none'; }
+  document.getElementById('logo-overlay').classList.add('open');
+}
+function handleLogoFile(e) { const f=e.target.files[0]; if(f) readLogo(f); }
+function handleLogoDrop(e) { e.preventDefault(); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) readLogo(f); }
+function readLogo(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    S._logoPending = ev.target.result;
+    document.getElementById('logo-prev-img').src = ev.target.result;
+    document.getElementById('logo-prev-name').textContent = document.getElementById('lc-name').value || '';
+    document.getElementById('logo-prev-tagline').textContent = document.getElementById('lc-tagline').value || '';
+    document.getElementById('logo-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function removeLogo() { S.logoConfig.img = null; S._logoPending = null; applyLogo(); document.getElementById('logo-preview').style.display = 'none'; }
+function saveLogoConfig() {
+  S.logoConfig.name = document.getElementById('lc-name').value.trim();
+  S.logoConfig.tagline = document.getElementById('lc-tagline').value.trim();
+  if (S._logoPending) { S.logoConfig.img = S._logoPending; S._logoPending = null; }
+  try { localStorage.setItem('oe_logo2', JSON.stringify(S.logoConfig)); } catch(e) {}
+  applyLogo();
+  document.getElementById('logo-overlay').classList.remove('open');
+}
+function applyLogo() {
+  const lc = S.logoConfig;
+  document.getElementById('logo-tagline').textContent = lc.tagline || 'Painel Gerencial de Projetos';
+  if (lc.name) document.title = lc.name + ' — Painel Gerencial';
+  const svgEl = document.getElementById('logo-svg');
+  const imgEl = document.getElementById('logo-custom');
+  if (lc.img) { svgEl.style.display='none'; imgEl.src=lc.img; imgEl.style.display='block'; }
+  else { svgEl.style.display='block'; imgEl.style.display='none'; }
+}
+function loadLogo() {
+  try { const l=JSON.parse(localStorage.getItem('oe_logo2')||'{}'); S.logoConfig={...S.logoConfig,...l}; applyLogo(); } catch(e) {}
+}
+
+// ═══════════════ NAV ═══════════════
+const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Planejamento Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção' };
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[name]||name;
+}
+
+// ═══════════════ HELPERS ═══════════════
+function kpi(label, value, cls, sub, icon) {
+  return `<div class="kpi ${cls}"><div class="kpi-ico">${icon}</div><div class="kpi-lbl">${label}</div><div class="kpi-val">${value}</div><div class="kpi-sub">${sub}</div></div>`;
+}
+function empty(title, desc) {
+  return `<div class="empty" style="grid-column:1/-1"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><h3>${title}</h3><p>${desc}</p></div>`;
+}
+function showLoading(txt) { setLoadingText(txt); document.getElementById('loading').classList.add('show'); }
+function hideLoading() { document.getElementById('loading').classList.remove('show'); }
+function setLoadingText(t) { document.getElementById('loading-txt').textContent = t; }
+
+// ═══════════════ SETUP VIA URL HASH ═══════════════
+// Permite configurar credenciais via link de setup:
+// index.html#cfg:fuSubdomain=X;fuKey=Y;trKey=Z;trToken=W;refresh=5
+function applyHashSetup() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#cfg:')) return false;
+  try {
+    const pairs = hash.slice(5).split(';');
+    const cfg = {};
+    pairs.forEach(p => {
+      const [k, v] = p.split('=');
+      if (k && v) cfg[decodeURIComponent(k)] = decodeURIComponent(v);
+    });
+    if (cfg.refresh) cfg.refresh = parseInt(cfg.refresh);
+    cfg.boardsFilter = [];
+    S.config = { ...S.config, ...cfg };
+    try { localStorage.setItem('oe_cfg2', JSON.stringify(S.config)); } catch(e) {}
+    // Remove o hash da URL sem recarregar
+    history.replaceState(null, '', window.location.pathname);
+    return true;
+  } catch(e) { return false; }
+}
+
+// ═══════════════ INIT ═══════════════
+function init() {
+  loadConfig();
+  // Se veio via link de setup, aplica as credenciais
+  loadLogo();
+  renderAll();
+
+  // Sincroniza imediatamente se tiver credenciais
+  if (fromSetup) {
+    setTimeout(() => {
+      document.getElementById('kpi-overview').innerHTML = `
+        <div style="grid-column:1/-1;background:#e8f5ee;border:2px solid #1a7a4a;border-radius:var(--r);padding:28px;text-align:center">
+          <div style="font-size:32px;margin-bottom:10px">✅</div>
+          <h3 style="color:#1a7a4a;font-size:15px;margin-bottom:6px">Configuração aplicada com sucesso!</h3>
+          <p style="color:var(--muted);font-size:13px">Credenciais salvas. Iniciando sincronização...</p>
+        </div>`;
+      syncAll();
+    }, 300);
+  } else {
+    syncAll();
+  }
+
+  // Inicia timer de 5 minutos (usa o valor do config)
+  if (S.timer) clearInterval(S.timer);
+  const refreshMs = (S.config.refresh || 5) * 60 * 1000;
+  S.timer = setInterval(syncAll, refreshMs);
+
+  // Indicador visual de próxima atualização
+  startRefreshCountdown(S.config.refresh || 5);
+}
+
+// Contador regressivo no topbar
+function startRefreshCountdown(minutes) {
+  let secs = minutes * 60;
+  const lbl = document.getElementById('sync-lbl');
+  if (window._cdTimer) clearInterval(window._cdTimer);
+  window._cdTimer = setInterval(() => {
+    secs--;
+    if (secs <= 0) {
+      secs = minutes * 60;
+    }
+    const m = Math.floor(secs / 60);
+    const s = String(secs % 60).padStart(2, '0');
+    const lastSync = lbl.dataset.lastSync || '';
+    lbl.textContent = lastSync ? `${lastSync} · próxima em ${m}:${s}` : `Próxima atualização em ${m}:${s}`;
+  }, 1000);
+}
+
+init();
+</script>
+</body>
+</html>
