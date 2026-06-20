@@ -1397,15 +1397,14 @@ function saveConfig() {
 }
 function loadConfig() {
   try {
+    const D = JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiI0MDYzMmE1NDNhNzk0N2FjODhmYTY2YTkzZTRkY2Y2YyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjV9'));
     const stored = localStorage.getItem('oe_cfg2');
-    if (stored) {
-      const c = JSON.parse(stored);
-      S.config = {...S.config,...c};
-    } else {
-      const d = JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiI0MDYzMmE1NDNhNzk0N2FjODhmYTY2YTkzZTRkY2Y2YyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjV9'));
-      S.config = {...S.config,...d};
-      try { localStorage.setItem('oe_cfg2', JSON.stringify(S.config)); } catch(e2) {}
-    }
+    const c = stored ? JSON.parse(stored) : {};
+    // Defaults fill in any missing credential
+    const merged = {...S.config, ...D, ...c};
+    if (!merged.trToken || !merged.fuKey) { merged.trToken = D.trToken; merged.fuKey = D.fuKey; merged.trKey = D.trKey; merged.fuSubdomain = D.fuSubdomain; merged.refresh = D.refresh; }
+    S.config = merged;
+    try { localStorage.setItem('oe_cfg2', JSON.stringify(S.config)); } catch(e2) {}
   } catch(e) {}
 }
 
