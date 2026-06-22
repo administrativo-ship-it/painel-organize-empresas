@@ -567,29 +567,49 @@ const S = {
   _logoPending: null
 };
 
-// ═══════════════ FLOWUP API ═══════════════
-const FU = {
-  base: 'https://time.flowup.me/api/v1',
-  proxy: 'https://corsproxy.io/?url=',
-  h() { return { 'Authorization': `Token ${S.config.fuKey}`, 'Content-Type': 'application/json', 'X-Account': S.config.fuSubdomain }; },
-  async get(ep) {
-    const url = `${this.base}${ep}`;
-    const r = await fetch(`${this.proxy}${encodeURIComponent(url)}`, { headers: this.h() });
-    if (!r.ok) throw new Error(`FlowUp ${r.status}: ${r.statusText}`);
-    return r.json();
-  },
-  async projects() {
-    const d = await this.get('/projects/?limit=100&offset=0');
-    return d.results || d || [];
-  },
-  async tasks() {
-    const d = await this.get('/tasks/?limit=300&offset=0');
-    return d.results || d || [];
-  },
-  async members() {
-    try { const d = await this.get('/members/'); return d.results || d || []; } catch { return []; }
-  }
-};
+// ═══════════════ FLOWUP (dados estáticos via JSON) ═══════════════
+async function loadFlowUpData() {
+  const r = await fetch('./flowup-data.json?t=' + Date.now());
+  if (!r.ok) throw new Error('FlowUp: arquivo de dados não encontrado');
+  return r.json();
+}
+function normFlowUpTask(t) {
+  const finDate = t.FinalizationDate;
+  const endDate = t.EndDate;
+  const sn = (t.StatusName || '').toLowerCase();
+  const isDoneTask = !!finDate || sn.includes('conclu') || sn.includes('finaliz');
+  const isOverTask = !isDoneTask && endDate && new Date(endDate) < new Date();
+  return {
+    id: t.Id, name: t.Title || 'Sem nome',
+    project: t.ProjectName || '', projectId: t.ProjectId || '',
+    client: extractClient(t.ProjectName || ''),
+    responsible: t.UserName || '—',
+    deadline: endDate, priority: 'medium',
+    status: isDoneTask ? 'done' : (isOverTask ? 'overdue' : 'active'),
+    isDone: isDoneTask, isOver: isOverTask,
+    daysLate: isOverTask ? Math.floor((Date.now() - new Date(endDate)) / 86400000) : 0,
+    tags: [], source: 'flowup', raw: t
+  };
+}
+function normFlowUpProject(p) {
+  const tasks = S.tasks.filter(t => t.projectId == p.Id);
+  const done = tasks.filter(t => t.isDone).length;
+  const over = tasks.filter(t => t.isOver).length;
+  const total = tasks.length;
+  const progress = total > 0 ? Math.round(done / total * 100) : 0;
+  const sn = (p.StatusName || '').toLowerCase();
+  return {
+    id: p.Id, name: p.Name || 'Sem nome',
+    client: extractClient(p.Name || ''),
+    service: extractService([], p.Name || ''),
+    status: sn.includes('andamento') ? 'active' : sn.includes('conclu') ? 'done' : 'active',
+    responsible: p.OwnerName || '—',
+    deadline: p.FinalDate || null, start: p.InitialDate || null,
+    progress, risk: over > 0 ? 'high' : 'low',
+    tasks: { total, done, over, pending: total - done - over },
+    daysSince: 0, tags: [], raw: p
+  };
+}
 
 // ═══════════════ TRELLO API ═══════════════
 const TR = {
@@ -732,15 +752,16 @@ async function syncAll() {
 
   const errors = [];
 
-  if (hasFlowUp) {
-    try {
-      setLoadingText('Carregando projetos FlowUp...');
-      const [rawProj, rawTasks, rawMembers] = await Promise.all([FU.projects(), FU.tasks(), FU.members()]);
-      S.tasks = rawTasks.map(normTask);
-      S.projects = rawProj.map(normProject);
-      S.members = rawMembers.length ? rawMembers : deriveMembers();
-    } catch(e) { errors.push('FlowUp: ' + e.message); }
-  }
+  try {
+    setLoadingText('Carregando dados FlowUp...');
+    const fuData = await loadFlowUpData();
+    S.tasks = (fuData.tasks || []).map(normFlowUpTask);
+    S.projects = [];
+    S.tasks; // precisa das tarefas primeiro para calcular progresso dos projetos
+    S.projects = (fuData.projects || []).map(normFlowUpProject);
+    S.members = (fuData.members || []).map(u => ({ id: u.Id, name: u.Name, email: u.Email || '' }));
+    if (!S.members.length) S.members = deriveMembers();
+  } catch(e) { errors.push('FlowUp: ' + e.message); }
 
   if (hasTrello) {
     try {
