@@ -621,13 +621,10 @@ const TR = {
     return r.json();
   },
   async boards() {
-    const all = await this.get('/members/me/boards?filter=open&fields=id,name,desc,shortUrl,prefs,idOrganization');
-    if (S.config.boardsFilter.length > 0) {
-      const bf = S.config.boardsFilter.map(x => x.toLowerCase().trim());
-      return all.filter(b => bf.some(f => b.id.includes(f) || b.name.toLowerCase().includes(f)));
-    }
-    if (S.config.trOrg) return all.filter(b => b.idOrganization === S.config.trOrg);
-    return all;
+    return this.get('/members/me/boards?filter=open&fields=id,name,desc,shortUrl,prefs,idOrganization');
+  },
+  async organizations() {
+    return this.get('/members/me/organizations?fields=id,name,displayName');
   },
   async boardLists(boardId) {
     return this.get(`/boards/${boardId}/lists?fields=id,name,pos`);
@@ -766,17 +763,27 @@ async function syncAll() {
   if (hasTrello) {
     try {
       setLoadingText('Carregando boards Trello...');
-      const allBoards = await TR.boards();
+      const [allBoards, orgs] = await Promise.all([TR.boards(), TR.organizations()]);
 
-      // Prioridade: boards de organizações (excluir quadros pessoais)
-      // idOrganization preenchido = board de workspace
-      let boards = allBoards.filter(b => b.idOrganization);
+      // IDs das áreas de trabalho da Organize Empresas (excluir)
+      const excludeOrgIds = new Set(
+        orgs.filter(o => /organize\s*empresas/i.test(o.displayName || o.name || '')).map(o => o.id)
+      );
 
-      // Se não houver nenhum org board, pega todos (mas limita a 20)
-      if (boards.length === 0) boards = allBoards.slice(0, 20);
+      // Meses em português para validar padrão no nome
+      const MESES = ['JANEIRO','FEVEREIRO','MARÇO','MARCO','ABRIL','MAIO','JUNHO',
+                     'JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
 
-      // Limita a 30 boards para não sobrecarregar
-      boards = boards.slice(0, 30);
+      // Filtro: só planejamentos mensais de clientes, sem MODELO
+      let boards = allBoards.filter(b => {
+        if (!b.idOrganization) return false;                    // só workspaces
+        if (excludeOrgIds.has(b.idOrganization)) return false;  // não Organize Empresas
+        const n = b.name.toUpperCase();
+        if (n.includes('MODELO')) return false;                 // sem MODELO
+        if (!MESES.some(m => n.includes(m))) return false;     // deve ter mês
+        if (!/20\d{2}/.test(n)) return false;                  // deve ter ano 20XX
+        return true;
+      });
 
       S.trelloBoards = boards;
       S.trelloCards = [];
