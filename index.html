@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Organize Empresas — Painel Gerencial</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 :root{--navy:#000080;--navy-light:#0a0a9e;--teal:#8BD4E0;--teal-dark:#5bbece;--slate:#41546A;--white:#fff;--off:#f4f6fb;--border:#e2e8f4;--txt:#0d1526;--txt2:#41546A;--muted:#8a9bb5;--green:#1a7a4a;--green-bg:#e8f5ee;--yellow:#b45309;--yellow-bg:#fef3cd;--red:#c0392b;--red-bg:#fdf0ee;--orange:#d35400;--orange-bg:#fef0e6;--trello:#0052CC;--trello-bg:#e8f0ff;--sh:0 4px 16px rgba(0,0,80,.08);--r:12px;--r2:8px;}
@@ -257,7 +259,36 @@ tbody tr:hover{background:var(--off);}
 .rpt-ops-val{font-size:26px;font-weight:800;color:var(--navy);line-height:1;}
 .rpt-ops-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px;font-weight:600;}
 .rpt-modulo-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(139,212,224,.15);border:1px solid rgba(139,212,224,.3);border-radius:var(--r2);padding:6px 14px;font-size:11.5px;color:var(--teal-dark);font-weight:600;margin-bottom:4px;}
-@media print{.rpt-form-panel{display:none!important;}}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.sidebar,.topbar,.filter-bar,.rpt-top,.rpt-filters-row,.btn-pdf{display:none!important;}.main{margin-left:0!important;}.page{display:none!important;padding:0!important;}.page.active{display:block!important;}#page-reports{padding:0!important;}.report-preview{border:none!important;box-shadow:none!important;padding:20px 0!important;border-radius:0!important;}body{background:#fff!important;}.table-wrap{box-shadow:none!important;border:1px solid #ccc!important;}tr{page-break-inside:avoid;}.rpt-header{page-break-after:avoid;}.rpt-sec{page-break-after:avoid;}}
+@media print{.rpt-form-panel{display:none!important;}}
+/* ── Drive integration & reports v2 ── */
+.rpt-drive-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--off);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;flex-wrap:wrap;}
+.rpt-drive-status{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;}
+.rpt-drive-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);}
+.rpt-drive-dot.connected{background:#22c55e;}
+.rpt-drive-dot.loading{background:#f59e0b;animation:pulse 1s infinite;}
+.rpt-drive-btn{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11.5px;font-weight:600;cursor:pointer;}
+.rpt-drive-btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text);}
+.rpt-drive-btn:hover{opacity:.85;}
+.rpt-drive-cfg-link{font-size:11px;color:var(--muted);text-decoration:underline;cursor:pointer;margin-left:auto;}
+.rpt-pdf-btn{background:linear-gradient(135deg,#dc2626 0%,#991b1b 100%);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .15s;}
+.rpt-pdf-btn:hover{opacity:.88;}
+.rpt-pdf-btn svg{flex-shrink:0;}
+.rpt-action-bar{display:flex;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap;}
+@media print{.rpt-action-bar,.rpt-drive-bar{display:none!important;}}
+.rpt-chart-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px;}
+.rpt-chart-title{font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
+.rpt-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:600px){.rpt-charts-grid{grid-template-columns:1fr;}}
+.rpt-loading-overlay{display:flex;align-items:center;gap:10px;padding:20px;background:var(--off);border-radius:var(--r);font-size:13px;color:var(--muted);font-style:italic;margin-bottom:16px;}
+.gdrive-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.gdrive-modal{background:#fff;border-radius:12px;padding:28px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.gdrive-modal h3{margin:0 0 8px;font-size:16px;color:var(--navy);}
+.gdrive-modal p,.gdrive-modal li{font-size:13px;color:var(--muted);line-height:1.6;}
+.gdrive-modal ol{padding-left:18px;margin:12px 0;}
+.gdrive-modal input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:10px;}
+.gdrive-modal .modal-btns{display:flex;gap:8px;margin-top:16px;}
+.gdrive-modal .modal-btn-save{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;}
+.gdrive-modal .modal-btn-cancel{background:transparent;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.sidebar,.topbar,.filter-bar,.rpt-top,.rpt-filters-row,.btn-pdf{display:none!important;}.main{margin-left:0!important;}.page{display:none!important;padding:0!important;}.page.active{display:block!important;}#page-reports{padding:0!important;}.report-preview{border:none!important;box-shadow:none!important;padding:20px 0!important;border-radius:0!important;}body{background:#fff!important;}.table-wrap{box-shadow:none!important;border:1px solid #ccc!important;}tr{page-break-inside:avoid;}.rpt-header{page-break-after:avoid;}.rpt-sec{page-break-after:avoid;}}
 </style>
 </head>
 <body>
@@ -1589,6 +1620,524 @@ function loadLogo() {
 // ═══════════════ NAV ═══════════════
 
 
+
+// ═══════════════ GOOGLE DRIVE INTEGRATION ═══════════════
+
+var _gToken = null;
+var _gTokenClient = null;
+var _gDrivePendingCb = null;
+var _gCharts = {}; // track Chart instances by canvas ID
+
+// ── Client → Spreadsheet IDs (known mappings) ──
+// Add more clients here or configure via painel settings
+var CLIENT_SHEETS = {
+  'Falcão Motos': {
+    programa: 'mentoring',
+    comercial: '1p6hYeAkzWc6qlcfLNMwE8EINXYmRRV1I',
+    financeiro: '1yUVD-SKnV9-Pv3V1HXlxI1tBfmAHnfue',
+    fluxo: '1DhQgt5V7FGKHiyOtvWTaywGt0skmk_sl'
+  }
+  // Additional clients: configure via Drive Settings button or add here
+};
+
+function gClientId() {
+  return localStorage.getItem('oe_gdrive_clientid') || '';
+}
+
+function gDriveInitClient() {
+  if (!window.google || !window.google.accounts) return false;
+  var cid = gClientId();
+  if (!cid) return false;
+  try {
+    _gTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: cid,
+      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/drive.readonly',
+      callback: function(resp) {
+        if (resp.error) { console.error('Google OAuth error', resp.error); return; }
+        _gToken = resp.access_token;
+        updateDriveBar();
+        if (_gDrivePendingCb) { var cb = _gDrivePendingCb; _gDrivePendingCb = null; cb(); }
+      }
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+function gDriveSignIn(callback) {
+  _gDrivePendingCb = callback || null;
+  if (_gToken) { if (callback) callback(); return; }
+  if (!_gTokenClient) {
+    if (!gDriveInitClient()) { showGDriveConfigModal(callback); return; }
+  }
+  _gTokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function gDriveSignOut() {
+  if (_gToken && window.google) google.accounts.oauth2.revoke(_gToken);
+  _gToken = null;
+  updateDriveBar();
+}
+
+function updateDriveBar() {
+  document.querySelectorAll('.rpt-drive-dot').forEach(function(d){
+    d.className = 'rpt-drive-dot' + (_gToken ? ' connected' : '');
+  });
+  document.querySelectorAll('.rpt-drive-status-txt').forEach(function(el){
+    el.textContent = _gToken ? 'Drive conectado' : 'Drive não conectado';
+  });
+  document.querySelectorAll('.rpt-connect-btn').forEach(function(btn){
+    btn.textContent = _gToken ? 'Desconectar' : 'Conectar Google Drive';
+    btn.onclick = _gToken ? gDriveSignOut : function(){ gDriveSignIn(); };
+  });
+}
+
+function showGDriveConfigModal(callback) {
+  var existing = document.getElementById('gdrive-modal-bg');
+  if (existing) existing.remove();
+  var bg = document.createElement('div');
+  bg.id = 'gdrive-modal-bg';
+  bg.className = 'gdrive-modal-bg';
+  bg.innerHTML = '<div class="gdrive-modal">' +
+    '<h3>Configurar integração com Google Drive</h3>' +
+    '<p>Para carregar dados das planilhas automaticamente, é necessário um <strong>Google OAuth2 Client ID</strong>.</p>' +
+    '<ol>' +
+    '<li>Acesse <strong>console.cloud.google.com</strong></li>' +
+    '<li>Crie um projeto → APIs e serviços → Credenciais</li>' +
+    '<li>Novo ID do cliente OAuth → <em>Aplicativo Web</em></li>' +
+    '<li>Origens autorizadas: <code>https://administrativo-ship-it.github.io</code></li>' +
+    '<li>Cole o Client ID abaixo e salve</li>' +
+    '</ol>' +
+    '<input id="gdrive-cid-input" placeholder="Cole o Client ID aqui (ex: 12345.apps.googleusercontent.com)" value="'+gClientId()+'">' +
+    '<div class="modal-btns">' +
+    '<button class="modal-btn-save" onclick="saveGDriveClientId()">Salvar e conectar</button>' +
+    '<button class="modal-btn-cancel" onclick="document.getElementById(\'gdrive-modal-bg\').remove()">Cancelar</button>' +
+    '</div></div>';
+  document.body.appendChild(bg);
+  window._gDriveModalCallback = callback;
+}
+
+function saveGDriveClientId() {
+  var cid = (document.getElementById('gdrive-cid-input')||{value:''}).value.trim();
+  if (!cid) return;
+  localStorage.setItem('oe_gdrive_clientid', cid);
+  var bg = document.getElementById('gdrive-modal-bg');
+  if (bg) bg.remove();
+  _gTokenClient = null;
+  gDriveSignIn(window._gDriveModalCallback);
+}
+
+// ── Sheets API helpers ──
+
+async function gSheetsGetAllSheets(spreadsheetId) {
+  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + spreadsheetId + '?fields=sheets.properties.title&access_token=' + _gToken;
+  var res = await fetch(url);
+  if (!res.ok) throw new Error('Sheets meta error: ' + res.status);
+  var data = await res.json();
+  return (data.sheets || []).map(function(s){ return s.properties.title; });
+}
+
+async function gSheetsRead(spreadsheetId, sheetName) {
+  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + spreadsheetId + '/values/' + encodeURIComponent(sheetName) + '?access_token=' + _gToken;
+  var res = await fetch(url);
+  if (!res.ok) return [];
+  var data = await res.json();
+  return data.values || [];
+}
+
+async function gDriveSearchSheet(clienteName, keyword) {
+  var q = "name contains '" + keyword + "' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false";
+  var url = 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&access_token=' + _gToken;
+  var res = await fetch(url);
+  if (!res.ok) return null;
+  var data = await res.json();
+  var files = (data.files || []).filter(function(f){ return f.name.toUpperCase().indexOf(clienteName.toUpperCase()) >= 0; });
+  return files.length ? files[0].id : null;
+}
+
+// ── Parse helpers ──
+
+function parseBRL(v) {
+  if (!v) return 0;
+  var s = String(v).replace(/R\$\s*/g,'').replace(/\./g,'').replace(',','.');
+  return parseFloat(s) || 0;
+}
+
+function parsePct(v) {
+  if (!v) return 0;
+  return parseFloat(String(v).replace(',','.').replace('%','').trim()) || 0;
+}
+
+var MES_NOMES_PT = ['janeiro','fevereiro','março','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+var MES_NOMES_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+function rowMatchesMes(rowVal, mesNum) {
+  var v = String(rowVal||'').toLowerCase().trim();
+  var fullName = MES_NOMES_PT[mesNum-1] || '';
+  var shortName = MES_NOMES_SHORT[mesNum-1] || '';
+  return v === fullName || v === shortName || v === String(mesNum) || v.startsWith(fullName.substring(0,3));
+}
+
+// Parse "Crescimento da Empresa" / "Definição de Meta" sheet rows
+// Returns { faturamento, meta, crescimento_pct, historico:[{mes,fat,meta}] }
+function parseComercial(rows, mesNum) {
+  var result = { faturamento: 0, meta: 0, crescimento_pct: 0, historico: [], ticket: 0, conversao: 0 };
+  // Find header row to understand column structure
+  var headerIdx = -1;
+  for (var i=0;i<Math.min(rows.length,5);i++) {
+    var r = rows[i] || [];
+    var joined = r.join('|').toUpperCase();
+    if (joined.indexOf('FATURAMENTO') >= 0 || joined.indexOf('MÊS') >= 0 || joined.indexOf('MES') >= 0) {
+      headerIdx = i; break;
+    }
+  }
+  if (headerIdx < 0) return result;
+  var headers = (rows[headerIdx]||[]).map(function(h){ return String(h||'').toUpperCase().trim(); });
+  var colMes = headers.findIndex(function(h){ return h.indexOf('MÊS')>=0||h.indexOf('MES')>=0||h===''; });
+  var colFat2026 = headers.findIndex(function(h){ return h.indexOf('2026')>=0&&h.indexOf('FAT')>=0||h.indexOf('REALIZADO')>=0||h.indexOf('2026')>=0; });
+  var colFat2025 = headers.findIndex(function(h){ return h.indexOf('2025')>=0; });
+  var colMeta = headers.findIndex(function(h){ return h.indexOf('META')>=0; });
+  var colCresc = headers.findIndex(function(h){ return h.indexOf('CRESCIMENTO')>=0||h.indexOf('(%)') >=0||h.indexOf('%')>=0; });
+
+  // If fat2026 not found, use col index 2 (common pattern)
+  if (colFat2026 < 0) colFat2026 = Math.min(2, headers.length-1);
+  if (colMeta < 0) colMeta = Math.min(3, headers.length-1);
+  if (colCresc < 0) colCresc = Math.min(4, headers.length-1);
+
+  for (var i=headerIdx+1; i<rows.length; i++) {
+    var r = rows[i] || [];
+    if (!r[0]) continue;
+    var fat = parseBRL(r[colFat2026]);
+    var meta = parseBRL(r[colMeta]);
+    var cresc = parsePct(r[colCresc]);
+    var mesLabel = String(r[0]||'').trim();
+    var mesIdx = MES_NOMES_PT.findIndex(function(m){ return mesLabel.toLowerCase().startsWith(m.substring(0,3)); });
+    if (mesIdx < 0) { mesIdx = MES_NOMES_SHORT.findIndex(function(m){ return mesLabel.toLowerCase().startsWith(m); }); }
+    if (fat > 0) result.historico.push({mes: mesLabel.substring(0,3), fat: fat, meta: meta, cresc: cresc});
+    if (mesIdx+1 === mesNum || rowMatchesMes(r[0], mesNum)) {
+      result.faturamento = fat;
+      result.meta = meta;
+      result.crescimento_pct = cresc;
+    }
+  }
+  return result;
+}
+
+// Parse "DRE" sheet for Master
+function parseDRE(rows, mesNum) {
+  var result = { faturamento: 0, cmv: 0, lucrobruto: 0, dfixas: 0, dvar: 0, impostos: 0, lucrolk: 0, margem: 0, pe: 0 };
+  // Find month column
+  var headerRow = null;
+  for (var i=0;i<Math.min(rows.length,5);i++) {
+    var r = rows[i]||[];
+    var joined = r.join('').toLowerCase();
+    if (joined.indexOf('jan')>=0||joined.indexOf('fev')>=0) { headerRow = r; break; }
+  }
+  if (!headerRow) return result;
+  var mesCol = -1;
+  for (var c=0;c<headerRow.length;c++) {
+    if (rowMatchesMes(headerRow[c], mesNum)) { mesCol = c; break; }
+  }
+  if (mesCol < 0) mesCol = mesNum; // fallback: col index = month number
+
+  var keywords = {
+    'FATURAMENTO BRUTO': 'faturamento', 'FATURAMENTO': 'faturamento',
+    'CMV': 'cmv', 'CUSTO': 'cmv',
+    'LUCRO BRUTO': 'lucrobruto',
+    'DESPESAS FIXAS': 'dfixas', 'FIXAS': 'dfixas',
+    'DESPESAS VARIÁVEIS': 'dvar', 'VARIÁVEIS': 'dvar', 'VARIAVEIS': 'dvar',
+    'IMPOSTOS': 'impostos',
+    'LUCRO LÍQUIDO': 'lucrolk', 'LUCRO LIQUIDO': 'lucrolk', '★ LUCRO': 'lucrolk',
+    'LUCRATIVIDADE': 'margem',
+    'PONTO DE EQUILÍBRIO': 'pe', 'PONTO DE EQUILIBRIO': 'pe', 'PONTO EQUILÍBRIO': 'pe'
+  };
+
+  rows.forEach(function(r) {
+    var label = String(r[0]||r[1]||'').toUpperCase().trim();
+    Object.keys(keywords).forEach(function(k) {
+      if (label.indexOf(k) >= 0) {
+        var field = keywords[k];
+        var val = r[mesCol];
+        if (val !== undefined && val !== '') {
+          result[field] = field === 'margem' ? parsePct(val) : parseBRL(val);
+        }
+      }
+    });
+  });
+  if (!result.lucrolk && result.faturamento) {
+    result.lucrolk = result.faturamento - result.cmv - result.dfixas - result.dvar - result.impostos;
+  }
+  if (!result.margem && result.faturamento) result.margem = +(result.lucrolk/result.faturamento*100).toFixed(1);
+  return result;
+}
+
+// Main auto-load function: loads data from Drive and fills form state
+async function autoLoadDriveData(tipo, onDone) {
+  var cache = tipo === 'mensal' ? _rmf : _ref;
+  var cliente = cache.cliente;
+  var programa = cache.programa || 'mentoring';
+  var mes = parseInt(cache.mes) || (new Date().getMonth()+1);
+  var ano = cache.ano || new Date().getFullYear();
+
+  var loadingEl = document.getElementById('rpt-drive-loading');
+  if (loadingEl) loadingEl.style.display = 'flex';
+
+  try {
+    // Get or search for sheet IDs
+    var known = CLIENT_SHEETS[cliente];
+    var comercialId = known ? known.comercial : null;
+    var financeiroId = known ? known.financeiro : null;
+
+    // If not in map, search Drive
+    if (!comercialId) {
+      comercialId = await gDriveSearchSheet(cliente, 'INDICADORES COMERCIAIS');
+      if (!comercialId) comercialId = await gDriveSearchSheet(cliente, 'Indicadores Comerciais');
+    }
+    if (!financeiroId && programa === 'master') {
+      financeiroId = await gDriveSearchSheet(cliente, 'INDICADORES FINANCEIROS');
+      if (!financeiroId) financeiroId = await gDriveSearchSheet(cliente, 'Controladoria');
+    }
+
+    if (programa === 'master' && financeiroId) {
+      // Read DRE sheet
+      var sheets = await gSheetsGetAllSheets(financeiroId);
+      var dreSheet = sheets.find(function(s){ return s.toUpperCase().indexOf('DRE') >= 0; }) || sheets[0];
+      if (dreSheet) {
+        var dreRows = await gSheetsRead(financeiroId, dreSheet);
+        var dre = parseDRE(dreRows, mes);
+        if (dre.faturamento) {
+          cache.fat = dre.faturamento.toFixed(2);
+          cache.cmv = dre.cmv.toFixed(2);
+          cache.dfixas = dre.dfixas.toFixed(2);
+          cache.dvar = dre.dvar.toFixed(2);
+          cache.impost = dre.impostos.toFixed(2);
+          cache.ll = dre.lucrolk.toFixed(2);
+          cache._dreData = dre;
+        }
+      }
+    } else if (comercialId) {
+      // Read comercial sheet
+      var sheets = await gSheetsGetAllSheets(comercialId);
+      // Try "Crescimento da Empresa" first, then first sheet
+      var crescSheet = sheets.find(function(s){ return s.toUpperCase().indexOf('CRESCIMENTO') >= 0; }) || sheets[0];
+      var metaSheet = sheets.find(function(s){ return s.toUpperCase().indexOf('META') >= 0 && s.toUpperCase().indexOf('DEFINI') >= 0; });
+      var mesSheet = sheets.find(function(s){ return s.toLowerCase().indexOf(MES_NOMES_PT[mes-1]) >= 0; });
+
+      if (crescSheet) {
+        var crescRows = await gSheetsRead(comercialId, crescSheet);
+        var c = parseComercial(crescRows, mes);
+        if (c.faturamento) { cache.fat = c.faturamento.toFixed(2); cache.cresc = c.crescimento_pct.toFixed(1); cache._historico = c.historico; }
+      }
+      if (metaSheet) {
+        var metaRows = await gSheetsRead(comercialId, metaSheet);
+        var m = parseComercial(metaRows, mes);
+        if (m.meta) cache.meta = m.meta.toFixed(2);
+        if (m.historico.length) {
+          // Merge meta into historico
+          cache._historico = cache._historico || m.historico;
+          (cache._historico||[]).forEach(function(h,i){ if(m.historico[i]) h.meta = m.historico[i].meta; });
+        }
+      }
+      if (mesSheet) {
+        var mesRows = await gSheetsRead(comercialId, mesSheet);
+        mesRows.forEach(function(r) {
+          var label = String(r[0]||'').toUpperCase();
+          if (label.indexOf('CONVERSÃO') >= 0 || label.indexOf('CONVERSAO') >= 0) cache.conv = parsePct(r[r.length-1]).toFixed(1);
+          if (label.indexOf('TICKET') >= 0) cache.ticket = parseBRL(r[r.length-1]).toFixed(2);
+          if (label.indexOf('ATIVOS') >= 0 || label.indexOf('CLIENTES') >= 0) cache.cativos = String(r[r.length-1]||'').trim();
+        });
+      }
+    }
+    cache._driveLoaded = true;
+  } catch(e) {
+    console.error('Drive load error', e);
+  }
+
+  if (loadingEl) loadingEl.style.display = 'none';
+  if (onDone) onDone();
+}
+
+function triggerDriveLoad(tipo) {
+  gDriveSignIn(function() {
+    autoLoadDriveData(tipo, function() {
+      if (tipo === 'mensal') rptGenerateMensal();
+      else rptGenerateEncerramento();
+    });
+  });
+}
+
+// ── Chart helpers ──
+
+function rptDestroyChart(id) {
+  if (_gCharts[id]) { try { _gCharts[id].destroy(); } catch(e) {} delete _gCharts[id]; }
+}
+
+function rptBarChart(canvasId, labels, datasets, opts) {
+  rptDestroyChart(canvasId);
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  _gCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels: labels, datasets: datasets },
+    options: Object.assign({
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } } },
+      scales: { y: { beginAtZero: true, ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+    }, opts||{})
+  });
+}
+
+function rptDoughnutChart(canvasId, labels, data, colors) {
+  rptDestroyChart(canvasId);
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  _gCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{ data: data, backgroundColor: colors||['#22c55e','#000080','#ef4444'], borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true, cutout: '65%',
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10, padding: 8 } } }
+    }
+  });
+}
+
+function rptHorizBarChart(canvasId, labels, data, color) {
+  rptDestroyChart(canvasId);
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  _gCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ label: 'R$', data: data, backgroundColor: color||'rgba(0,0,128,0.7)', borderRadius: 4 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } }
+    }
+  });
+}
+
+function renderReportCharts(cache, tasks, tipo) {
+  // Chart 1: Faturamento vs Meta (bar) — or DRE (horiz bar for master)
+  setTimeout(function() {
+    var programa = cache.programa || 'mentoring';
+    if (programa === 'master') {
+      var dre = cache._dreData || {};
+      var dreLabels = ['Fat. Bruto','CMV','Desp. Fixas','Desp. Var.','Impostos','Lucro Líq.'];
+      var dreVals = [
+        parseBRL(cache.fat), parseBRL(cache.cmv),
+        parseBRL(cache.dfixas), parseBRL(cache.dvar),
+        parseBRL(cache.impost), parseBRL(cache.ll)
+      ];
+      var dreColors = ['rgba(0,0,128,0.7)','rgba(239,68,68,0.7)','rgba(239,68,68,0.6)','rgba(239,68,68,0.5)','rgba(239,68,68,0.4)','rgba(34,197,94,0.8)'];
+      rptDestroyChart('rpt-chart-fat');
+      var canvas = document.getElementById('rpt-chart-fat');
+      if (canvas) {
+        _gCharts['rpt-chart-fat'] = new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: { labels: dreLabels, datasets: [{ label: 'R$', data: dreVals, backgroundColor: dreColors, borderRadius: 4 }] },
+          options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: function(v){ return 'R$'+(v/1000).toFixed(0)+'k'; } } }, x: { ticks: { font: { size: 9 } } } }
+          }
+        });
+      }
+    } else {
+      // Faturamento bar + meta line
+      var hist = cache._historico;
+      if (hist && hist.length > 1) {
+        var labels = hist.map(function(h){ return h.mes; });
+        var fatVals = hist.map(function(h){ return h.fat; });
+        var metaVals = hist.map(function(h){ return h.meta || 0; });
+        rptDestroyChart('rpt-chart-fat');
+        var canvas = document.getElementById('rpt-chart-fat');
+        if (canvas) {
+          _gCharts['rpt-chart-fat'] = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [
+                { label: 'Faturamento', data: fatVals, backgroundColor: 'rgba(0,0,128,0.7)', borderRadius: 4 },
+                { label: 'Meta', data: metaVals, type: 'line', borderColor: '#8BD4E0', backgroundColor: 'rgba(139,212,224,0.15)', pointRadius: 4, tension: 0.3, fill: false, borderWidth: 2 }
+              ]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: true,
+              plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 12 } } },
+              scales: { y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: function(v){ return 'R$'+(v>=1000?((v/1000).toFixed(0)+'k'):v); } } }, x: { ticks: { font: { size: 10 } } } }
+            }
+          });
+        }
+      } else {
+        // Single month bar
+        var fat = parseBRL(cache.fat) || 0;
+        var meta = parseBRL(cache.meta) || 0;
+        rptBarChart('rpt-chart-fat',
+          ['Faturamento','Meta'],
+          [{label:'Valor',data:[fat,meta],backgroundColor:['rgba(0,0,128,0.7)','rgba(139,212,224,0.8)'],borderRadius:4}]
+        );
+      }
+    }
+
+    // Chart 2: Operacional donut (FlowUp tasks)
+    var done = tasks.filter(function(t){return t.isDone;}).length;
+    var over = tasks.filter(function(t){return t.isOver;}).length;
+    var active = tasks.filter(function(t){return !t.isDone&&!t.isOver;}).length;
+    if (done+over+active > 0) {
+      rptDoughnutChart('rpt-chart-ops',
+        ['Concluídas','Em Andamento','Atrasadas'],
+        [done, active, over],
+        ['#22c55e','rgba(0,0,128,0.75)','#ef4444']
+      );
+    }
+
+    // Chart 3: Trello boards progress (if data available)
+    var boards = S.trelloBoards;
+    if (boards.length) {
+      var bLabels = boards.slice(0,6).map(function(b){ return b.name.length>20?b.name.substring(0,18)+'…':b.name; });
+      var bPct = boards.slice(0,6).map(function(b){
+        var bc = S.trelloCards.filter(function(c){return c.boardId===b.id;});
+        return bc.length ? Math.round(bc.filter(function(c){return c.dueComplete;}).length/bc.length*100) : 0;
+      });
+      rptBarChart('rpt-chart-trello', bLabels,
+        [{label:'Progresso (%)',data:bPct,backgroundColor:'rgba(91,190,206,0.8)',borderRadius:4}],
+        {scales:{y:{max:100,ticks:{callback:function(v){return v+'%';}}}}}
+      );
+    }
+  }, 80);
+}
+
+// ── PDF generation ──
+function rptDownloadPDF(tipo) {
+  var el = document.getElementById('rpt-prev');
+  if (!el || !el.innerHTML.trim()) { alert('Gere o relatório primeiro antes de baixar o PDF.'); return; }
+  var btn = document.querySelector('.rpt-pdf-btn');
+  if (btn) { btn.textContent = '⏳ Gerando PDF...'; btn.disabled = true; }
+
+  var cache = tipo === 'mensal' ? _rmf : _ref;
+  var cliente = (cache.cliente||'Relatório').replace(/[^a-zA-Z0-9]/g,'_');
+  var mes = mesNomeStr(parseInt(cache.mes)||new Date().getMonth()+1);
+  var ano = cache.ano || new Date().getFullYear();
+  var tipoLabel = tipo === 'mensal' ? 'Relatorio_Mensal' : 'Encerramento_Modulo';
+  var filename = tipoLabel + '_' + cliente + '_' + mes + '_' + ano + '.pdf';
+
+  var opt = {
+    margin: [8, 6, 8, 6],
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.97 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all','css','legacy'], before: '.rpt-sec' }
+  };
+
+  html2pdf().set(opt).from(el).save().then(function(){
+    if (btn) { btn.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg> Baixar PDF'; btn.disabled = false; }
+  }).catch(function(e){
+    if (btn) { btn.textContent = 'Erro — tente novamente'; btn.disabled = false; }
+  });
+}
 // ═══════════════ RELATÓRIO MENSAL + ENCERRAMENTO ═══════════════
 
 var _rmf = {}; // Relatório Mensal form cache
@@ -1739,7 +2288,15 @@ function rptMensal() {
       '</div>';
   }
 
-  var formHtml = '<div class="rpt-form-panel">' +
+  var driveBar = '<div class="rpt-drive-bar">' +
+    '<div class="rpt-drive-status"><div class="rpt-drive-dot' + (_gToken?' connected':'') + '"></div><span class="rpt-drive-status-txt">' + (_gToken?'Drive conectado':'Drive não conectado') + '</span></div>' +
+    '<button class="rpt-drive-btn rpt-connect-btn" onclick="' + (_gToken?'gDriveSignOut()':'gDriveSignIn()') + '">' + (_gToken?'Desconectar':'Conectar Google Drive') + '</button>' +
+    (_rmf.cliente ? '<button class="rpt-drive-btn" style="background:var(--teal-dark)" onclick="triggerDriveLoad(\'mensal\')">↺ Carregar dados do Drive</button>' : '') +
+    '<span class="rpt-drive-cfg-link" onclick="showGDriveConfigModal()">Configurar Client ID</span>' +
+    (_rmf._driveLoaded ? '<span style="font-size:11px;color:#22c55e;margin-left:auto">✔ Dados carregados do Drive</span>' : '') +
+    '</div>' +
+    '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">⏳ Carregando dados das planilhas do Drive...</div>';
+  var formHtml = driveBar + '<div class="rpt-form-panel">' +
     '<div class="rpt-form-title"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Configurar Relatório Mensal de Resultados</div>' +
     '<div class="rpt-form-grid">' +
     '<div class="rpt-cfg-field"><label>Cliente</label><select id="rmf-cliente" onchange="_rmf.cliente=this.value;rptMensal()">'+cliOpts+'</select></div>' +
@@ -1821,12 +2378,26 @@ function rptGenerateMensal() {
   var trelloSec = rptTrelloSection();
   var analysisSec = rptAnalysisSection(_rmf.analise, _rmf.proximos);
 
+  var chartsHtml = '<div class="rpt-charts-grid">' +
+    '<div class="rpt-chart-wrap"><div class="rpt-chart-title">Faturamento vs Meta</div><canvas id="rpt-chart-fat" height="180"></canvas></div>' +
+    '<div class="rpt-chart-wrap"><div class="rpt-chart-title">Atividades — FlowUp</div><canvas id="rpt-chart-ops" height="180"></canvas></div>' +
+    (S.trelloBoards.length ? '<div class="rpt-chart-wrap" style="grid-column:1/-1"><div class="rpt-chart-title">Progresso por Planejamento — Trello</div><canvas id="rpt-chart-trello" height="130"></canvas></div>' : '') +
+    '</div>';
+
+  var actionBar = '<div class="rpt-action-bar">' +
+    '<button class="rpt-pdf-btn" onclick="rptDownloadPDF(\'mensal\')">' +
+    '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>Baixar PDF</button>' +
+    '<button class="rpt-drive-btn secondary" onclick="window.print()">Imprimir</button>' +
+    '</div>';
+
   var content = rptHeader('RELATÓRIO MENSAL DE RESULTADOS', programaLabel + ' | ' + (_rmf.cliente||'Cliente não selecionado') + ' | ' + mesNome + ' / ' + _rmf.ano) +
-    kpiHtml + flowSec + trelloSec + analysisSec + rptFooter();
+    kpiHtml + chartsHtml + flowSec + trelloSec + analysisSec + rptFooter();
 
   var prev = document.getElementById('rpt-prev');
-  if (prev) prev.innerHTML = content;
-  else document.getElementById('report-preview').innerHTML = content;
+  if (prev) prev.innerHTML = actionBar + content;
+  else document.getElementById('report-preview').innerHTML = actionBar + content;
+
+  renderReportCharts(_rmf, tasks, 'mensal');
 }
 
 // ════════ RELATÓRIO ENCERRAMENTO DE MÓDULO ════════
@@ -1848,7 +2419,23 @@ function rptEncerramento() {
 
   var kpiFields = labels.map(function(l,i){ return '<div class="rpt-cfg-field"><label>'+l+'</label><input id="ref-'+kpiKeys[i]+'" value="'+(_ref[kpiKeys[i]]||'')+'" oninput="_ref[\''+kpiKeys[i]+'\']=this.value" placeholder="—"></div>'; }).join('');
 
-  var formHtml = '<div class="rpt-form-panel">' +
+  var driveBar = '<div class="rpt-drive-bar">' +
+    '<div class="rpt-drive-status"><div class="rpt-drive-dot' + (_gToken?' connected':'') + '"></div><span class="rpt-drive-status-txt">' + (_gToken?'Drive conectado':'Drive não conectado') + '</span></div>' +
+    '<button class="rpt-drive-btn rpt-connect-btn" onclick="' + (_gToken?'gDriveSignOut()':'gDriveSignIn()') + '">' + (_gToken?'Desconectar':'Conectar Google Drive') + '</button>' +
+    (_rmf.cliente ? '<button class="rpt-drive-btn" style="background:var(--teal-dark)" onclick="triggerDriveLoad(\'mensal\')">↺ Carregar dados do Drive</button>' : '') +
+    '<span class="rpt-drive-cfg-link" onclick="showGDriveConfigModal()">Configurar Client ID</span>' +
+    (_rmf._driveLoaded ? '<span style="font-size:11px;color:#22c55e;margin-left:auto">✔ Dados carregados do Drive</span>' : '') +
+    '</div>' +
+    '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">⏳ Carregando dados das planilhas do Drive...</div>';
+  var driveBarEnc = '<div class="rpt-drive-bar">' +
+    '<div class="rpt-drive-status"><div class="rpt-drive-dot' + (_gToken?' connected':'') + '"></div><span class="rpt-drive-status-txt">' + (_gToken?'Drive conectado':'Drive não conectado') + '</span></div>' +
+    '<button class="rpt-drive-btn rpt-connect-btn" onclick="' + (_gToken?'gDriveSignOut()':'gDriveSignIn()') + '">' + (_gToken?'Desconectar':'Conectar Google Drive') + '</button>' +
+    (_ref.cliente ? '<button class="rpt-drive-btn" style="background:var(--teal-dark)" onclick="triggerDriveLoad(\'encerramento\')">↺ Carregar dados do Drive</button>' : '') +
+    '<span class="rpt-drive-cfg-link" onclick="showGDriveConfigModal()">Configurar Client ID</span>' +
+    (_ref._driveLoaded ? '<span style="font-size:11px;color:#22c55e;margin-left:auto">✔ Dados carregados do Drive</span>' : '') +
+    '</div>' +
+    '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">⏳ Carregando dados das planilhas do Drive...</div>';
+  var formHtml = driveBarEnc + '<div class="rpt-form-panel">' +
     '<div class="rpt-form-title"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>Configurar Relatório de Encerramento de Módulo</div>' +
     '<div class="rpt-form-grid">' +
     '<div class="rpt-cfg-field"><label>Cliente</label><select id="ref-cliente" onchange="_ref.cliente=this.value;rptEncerramento()">'+cliOpts+'</select></div>' +
@@ -1930,13 +2517,27 @@ function rptGenerateEncerramento() {
 
   var headerExtra = modBadge + periodoInfo;
 
+  var chartsHtmlEnc = '<div class="rpt-charts-grid">' +
+    '<div class="rpt-chart-wrap"><div class="rpt-chart-title">Indicadores do Módulo</div><canvas id="rpt-chart-fat" height="180"></canvas></div>' +
+    '<div class="rpt-chart-wrap"><div class="rpt-chart-title">Atividades — FlowUp</div><canvas id="rpt-chart-ops" height="180"></canvas></div>' +
+    (S.trelloBoards.length ? '<div class="rpt-chart-wrap" style="grid-column:1/-1"><div class="rpt-chart-title">Progresso por Planejamento — Trello</div><canvas id="rpt-chart-trello" height="130"></canvas></div>' : '') +
+    '</div>';
+
+  var actionBarEnc = '<div class="rpt-action-bar">' +
+    '<button class="rpt-pdf-btn" onclick="rptDownloadPDF(\'encerramento\')">' +
+    '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>Baixar PDF</button>' +
+    '<button class="rpt-drive-btn secondary" onclick="window.print()">Imprimir</button>' +
+    '</div>';
+
   var content = rptHeader('RELATÓRIO DE ENCERRAMENTO DE MÓDULO', programaLabel + ' | ' + (_ref.cliente||'Cliente não selecionado')) +
     (headerExtra ? '<div style="margin-bottom:24px">' + headerExtra + '</div>' : '') +
-    kpiHtml + flowSec + trelloSec + nextModBlock + analysisSec + rptFooter();
+    kpiHtml + chartsHtmlEnc + flowSec + trelloSec + nextModBlock + analysisSec + rptFooter();
 
   var prev = document.getElementById('rpt-prev');
-  if (prev) prev.innerHTML = content;
-  else document.getElementById('report-preview').innerHTML = content;
+  if (prev) prev.innerHTML = actionBarEnc + content;
+  else document.getElementById('report-preview').innerHTML = actionBarEnc + content;
+
+  renderReportCharts(_ref, tasks, 'encerramento');
 }
 // ═══════════════ REPORTS ═══════════════
 let _rptType = 'summary';
