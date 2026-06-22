@@ -230,7 +230,34 @@ tbody tr:hover{background:var(--off);}
 .rpt-kpi-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;}
 .rpt-sec{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border);margin-top:24px;}
 .rpt-footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted);}
-@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.sidebar,.topbar,.filter-bar,.rpt-top,.rpt-filters-row,.btn-pdf{display:none!important;}.main{margin-left:0!important;}.page{display:none!important;padding:0!important;}.page.active{display:block!important;}#page-reports{padding:0!important;}.report-preview{border:none!important;box-shadow:none!important;padding:20px 0!important;border-radius:0!important;}body{background:#fff!important;}.table-wrap{box-shadow:none!important;border:1px solid #ccc!important;}tr{page-break-inside:avoid;}.rpt-header{page-break-after:avoid;}.rpt-sec{page-break-after:avoid;}}
+
+/* ═══ REPORT FORM PANELS ═══ */
+.rpt-form-panel{background:var(--off);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:24px;}
+.rpt-form-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.rpt-form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px;}
+.rpt-form-grid.wide{grid-template-columns:1fr 1fr;}
+.rpt-form-section{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:14px 0 10px;padding-top:12px;border-top:1px solid var(--border);}
+.rpt-cfg-field label{display:block;font-size:10.5px;font-weight:600;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;}
+.rpt-cfg-field input,.rpt-cfg-field select,.rpt-cfg-field textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--txt);background:var(--white);outline:none;transition:border-color .2s;}
+.rpt-cfg-field input:focus,.rpt-cfg-field select:focus,.rpt-cfg-field textarea:focus{border-color:var(--navy);}
+.rpt-cfg-field textarea{resize:vertical;min-height:70px;}
+.rpt-gen-btn{background:var(--navy);color:#fff;border:none;padding:10px 24px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;transition:background .2s;}
+.rpt-gen-btn:hover{background:var(--navy-light);}
+.rpt-kpi-highlight{background:linear-gradient(135deg,var(--navy) 0%,#0a1a7a 100%);color:#fff;border-radius:var(--r);padding:20px;margin-bottom:28px;}
+.rpt-kpi-highlight-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;}
+.rpt-kpi-h{text-align:center;}
+.rpt-kpi-h-val{font-size:22px;font-weight:800;color:#fff;line-height:1;}
+.rpt-kpi-h-sub{font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.6px;margin-top:4px;font-weight:600;}
+.rpt-kpi-h-lbl{font-size:10.5px;color:rgba(255,255,255,.85);margin-top:2px;}
+.rpt-analysis-box{background:var(--off);border-left:4px solid var(--navy);border-radius:0 var(--r2) var(--r2) 0;padding:16px 20px;margin-bottom:20px;}
+.rpt-analysis-box p{font-size:13px;color:var(--txt);line-height:1.6;white-space:pre-wrap;}
+.rpt-analysis-title{font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;}
+.rpt-ops-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.rpt-ops-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;}
+.rpt-ops-val{font-size:26px;font-weight:800;color:var(--navy);line-height:1;}
+.rpt-ops-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px;font-weight:600;}
+.rpt-modulo-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(139,212,224,.15);border:1px solid rgba(139,212,224,.3);border-radius:var(--r2);padding:6px 14px;font-size:11.5px;color:var(--teal-dark);font-weight:600;margin-bottom:4px;}
+@media print{.rpt-form-panel{display:none!important;}}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.sidebar,.topbar,.filter-bar,.rpt-top,.rpt-filters-row,.btn-pdf{display:none!important;}.main{margin-left:0!important;}.page{display:none!important;padding:0!important;}.page.active{display:block!important;}#page-reports{padding:0!important;}.report-preview{border:none!important;box-shadow:none!important;padding:20px 0!important;border-radius:0!important;}body{background:#fff!important;}.table-wrap{box-shadow:none!important;border:1px solid #ccc!important;}tr{page-break-inside:avoid;}.rpt-header{page-break-after:avoid;}.rpt-sec{page-break-after:avoid;}}
 </style>
 </head>
 <body>
@@ -485,6 +512,14 @@ tbody tr:hover{background:var(--off);}
         <button class="rpt-type-btn" id="rtype-trello" onclick="selectReportType('trello',this)">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
           Planejamentos Trello
+        </button>
+        <button class="rpt-type-btn" id="rtype-mensal" onclick="selectReportType('mensal',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Relatório Mensal
+        </button>
+        <button class="rpt-type-btn" id="rtype-encerramento" onclick="selectReportType('encerramento',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+          Enc. de Módulo
         </button>
       </div>
       <div class="rpt-actions-row">
@@ -1553,6 +1588,356 @@ function loadLogo() {
 
 // ═══════════════ NAV ═══════════════
 
+
+// ═══════════════ RELATÓRIO MENSAL + ENCERRAMENTO ═══════════════
+
+var _rmf = {}; // Relatório Mensal form cache
+var _ref = {}; // Relatório Encerramento form cache
+
+function getUniqueClients() {
+  var seen = {}, list = [];
+  S.projects.forEach(function(p){ if(p.client&&!seen[p.client]){seen[p.client]=1;list.push(p.client);} });
+  S.tasks.forEach(function(t){ if(t.client&&!seen[t.client]){seen[t.client]=1;list.push(t.client);} });
+  return list.sort();
+}
+
+function mesNomeStr(n) {
+  return ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][n-1]||'';
+}
+
+function fmtBRL(v) {
+  if (!v && v !== 0) return '—';
+  var n = parseFloat(String(v).replace(/[^\d,.-]/g,'').replace(',','.'));
+  if (isNaN(n)) return v;
+  return 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function rptTasksForClient(clienteName) {
+  if (!clienteName) return S.tasks;
+  return S.tasks.filter(function(t){ return (t.client||'').toLowerCase().indexOf(clienteName.toLowerCase()) >= 0 || (t.project||'').toLowerCase().indexOf(clienteName.toLowerCase()) >= 0; });
+}
+
+function rptFlowUpSection(tasks, label) {
+  var done = tasks.filter(function(t){return t.isDone;});
+  var over = tasks.filter(function(t){return t.isOver;});
+  var active = tasks.filter(function(t){return !t.isDone&&!t.isOver;});
+
+  var overRows = '';
+  over.forEach(function(t){
+    overRows += '<tr><td style="font-size:12px;max-width:220px"><strong>' + t.name + '</strong></td>' +
+      '<td style="font-size:11px">' + (t.project||'—') + '</td>' +
+      '<td style="font-size:12px">' + t.responsible + '</td>' +
+      '<td style="font-size:11px;color:var(--red);font-weight:700">' + (t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '—') + '</td>' +
+      '<td style="font-size:11px;color:var(--red);font-weight:700">' + t.daysLate + 'd</td></tr>';
+  });
+
+  var doneRows = '';
+  done.slice(0,15).forEach(function(t){
+    doneRows += '<tr><td style="font-size:12px;max-width:260px">' + t.name + '</td>' +
+      '<td style="font-size:11px;color:var(--muted)">' + (t.project||'—') + '</td>' +
+      '<td style="font-size:12px">' + t.responsible + '</td></tr>';
+  });
+  if (done.length > 15) doneRows += '<tr><td colspan="3" style="text-align:center;color:var(--muted);font-size:11px">+ ' + (done.length-15) + ' atividades adicionais concluídas</td></tr>';
+
+  var html = '<div class="rpt-sec">' + label + '</div>' +
+    '<div class="rpt-ops-grid">' +
+    '<div class="rpt-ops-card"><div class="rpt-ops-val" style="color:var(--green)">' + done.length + '</div><div class="rpt-ops-lbl">Concluídas</div></div>' +
+    '<div class="rpt-ops-card"><div class="rpt-ops-val" style="color:var(--navy)">' + active.length + '</div><div class="rpt-ops-lbl">Em Andamento</div></div>' +
+    '<div class="rpt-ops-card"><div class="rpt-ops-val" style="color:var(--red)">' + over.length + '</div><div class="rpt-ops-lbl">Em Atraso</div></div>' +
+    '</div>';
+
+  if (doneRows) {
+    html += '<div style="font-size:11.5px;font-weight:700;color:var(--green);margin-bottom:6px">✔ Atividades Concluídas</div>' +
+      '<div class="table-wrap" style="margin-bottom:16px"><table><thead><tr><th>Atividade</th><th>Projeto</th><th>Responsável</th></tr></thead><tbody>' + doneRows + '</tbody></table></div>';
+  } else {
+    html += '<div style="font-size:11.5px;color:var(--muted);margin-bottom:16px;font-style:italic">Nenhuma atividade concluída no período.</div>';
+  }
+
+  if (overRows) {
+    html += '<div style="font-size:11.5px;font-weight:700;color:var(--red);margin-bottom:6px">⚠ Atividades em Atraso</div>' +
+      '<div class="table-wrap" style="margin-bottom:16px"><table><thead><tr><th>Atividade</th><th>Projeto</th><th>Responsável</th><th>Prazo</th><th>Atraso</th></tr></thead><tbody>' + overRows + '</tbody></table></div>';
+  }
+
+  return html;
+}
+
+function rptTrelloSection() {
+  var boards = S.trelloBoards;
+  if (!boards.length) return '<div class="rpt-sec">Planejamento Estratégico — Trello</div><div style="font-size:11.5px;color:var(--muted);font-style:italic;margin-bottom:20px">Nenhum board Trello carregado. Sincronize o painel para incluir esta seção.</div>';
+
+  var total = S.trelloCards.length;
+  var over = S.trelloCards.filter(function(c){return c.isOver;}).length;
+  var done = S.trelloCards.filter(function(c){return c.dueComplete;}).length;
+
+  var boardRows = '';
+  boards.forEach(function(b) {
+    var bc = S.trelloCards.filter(function(c){return c.boardId===b.id;});
+    var bo = bc.filter(function(c){return c.isOver;}).length;
+    var bd = bc.filter(function(c){return c.dueComplete;}).length;
+    var pct = bc.length ? Math.round(bd/bc.length*100) : 0;
+    boardRows += '<tr><td style="font-size:12px;max-width:260px"><strong>' + b.name + '</strong></td>' +
+      '<td style="text-align:center">' + bc.length + '</td>' +
+      '<td style="text-align:center;color:var(--green);font-weight:700">' + bd + '</td>' +
+      '<td style="text-align:center;color:' + (bo>0?'var(--red)':'var(--muted)') + ';font-weight:' + (bo>0?'700':'400') + '">' + bo + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="flex:1;height:4px;background:var(--border);border-radius:999px;overflow:hidden;min-width:50px"><div style="height:100%;width:' + pct + '%;background:' + (pct>=80?'var(--green)':'var(--navy)') + ';border-radius:999px"></div></div>' + pct + '%</div></td></tr>';
+  });
+
+  return '<div class="rpt-sec">Planejamento Estratégico — Trello</div>' +
+    '<div class="rpt-ops-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">' +
+    '<div class="rpt-ops-card"><div class="rpt-ops-val" style="color:var(--trello)">' + boards.length + '</div><div class="rpt-ops-lbl">Boards</div></div>' +
+    '<div class="rpt-ops-card"><div class="rpt-ops-val" style="color:var(--green)">' + done + '</div><div class="rpt-ops-lbl">Cards Concluídos</div></div>' +
+    '<div class="rpt-ops-card"><div class="rpt-ops-val" style="color:var(--red)">' + over + '</div><div class="rpt-ops-lbl">Cards Vencidos</div></div>' +
+    '</div>' +
+    '<div class="table-wrap" style="margin-bottom:0"><table><thead><tr><th>Planejamento</th><th>Total</th><th>Concluídos</th><th>Vencidos</th><th>Progresso</th></tr></thead><tbody>' + boardRows + '</tbody></table></div>';
+}
+
+function rptAnalysisSection(analise, proximos) {
+  var html = '';
+  if (analise) {
+    html += '<div class="rpt-sec">Análise Executiva</div><div class="rpt-analysis-box"><p>' + analise.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p></div>';
+  }
+  if (proximos) {
+    html += '<div class="rpt-sec">Próximos Passos e Recomendações</div><div class="rpt-analysis-box" style="border-left-color:var(--teal-dark)"><p>' + proximos.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p></div>';
+  }
+  return html;
+}
+
+// ════════ RELATÓRIO MENSAL ════════
+
+function rptMensal() {
+  var clients = getUniqueClients();
+  var hoje = new Date();
+  var mesOpts = '';
+  for (var i=1;i<=12;i++) mesOpts += '<option value="'+i+'"'+(_rmf.mes==i?' selected':'')+'>'+mesNomeStr(i)+'</option>';
+  var cliOpts = '<option value="">Selecione o cliente</option>' + clients.map(function(c){ return '<option value="'+c+'"'+(_rmf.cliente===c?' selected':'')+'>'+c+'</option>'; }).join('');
+  var progOpts = [['mentoring','Organize Mentoring'],['master','Organize Master'],['marketing','Organize Marketing e Vendas']].map(function(p){ return '<option value="'+p[0]+'"'+(_rmf.programa===p[0]?' selected':'')+'>'+p[1]+'</option>'; }).join('');
+
+  var kpiSection = '';
+  if (_rmf.programa === 'master') {
+    kpiSection = '<div class="rpt-form-section">DRE — Demonstrativo de Resultados (valores do mês — da planilha)</div>' +
+      '<div class="rpt-form-grid">' +
+      '<div class="rpt-cfg-field"><label>Faturamento Bruto (R$)</label><input id="rmf-fat" value="'+(_rmf.fat||'')+'" oninput="_rmf.fat=this.value" placeholder="Ex: 145000"></div>' +
+      '<div class="rpt-cfg-field"><label>CMV / Custo dos Produtos (R$)</label><input id="rmf-cmv" value="'+(_rmf.cmv||'')+'" oninput="_rmf.cmv=this.value" placeholder="Ex: 52000"></div>' +
+      '<div class="rpt-cfg-field"><label>Despesas Fixas (R$)</label><input id="rmf-dfixas" value="'+(_rmf.dfixas||'')+'" oninput="_rmf.dfixas=this.value" placeholder="Ex: 38000"></div>' +
+      '<div class="rpt-cfg-field"><label>Despesas Variáveis (R$)</label><input id="rmf-dvar" value="'+(_rmf.dvar||'')+'" oninput="_rmf.dvar=this.value" placeholder="Ex: 14500"></div>' +
+      '<div class="rpt-cfg-field"><label>Impostos (R$)</label><input id="rmf-impost" value="'+(_rmf.impost||'')+'" oninput="_rmf.impost=this.value" placeholder="Ex: 8700"></div>' +
+      '<div class="rpt-cfg-field"><label>Lucro Líquido (R$)</label><input id="rmf-ll" value="'+(_rmf.ll||'')+'" oninput="_rmf.ll=this.value" placeholder="Calculado automaticamente se vazio"></div>' +
+      '</div>' +
+      '<div class="rpt-form-section">KPIs Financeiros Adicionais</div><div class="rpt-form-grid">' +
+      '<div class="rpt-cfg-field"><label>Capital de Giro (R$)</label><input id="rmf-cgiro" value="'+(_rmf.cgiro||'')+'" oninput="_rmf.cgiro=this.value" placeholder="A informar"></div>' +
+      '<div class="rpt-cfg-field"><label>Inadimplência (%)</label><input id="rmf-inadim" value="'+(_rmf.inadim||'')+'" oninput="_rmf.inadim=this.value" placeholder="Ex: 3.2"></div>' +
+      '</div>';
+  } else {
+    kpiSection = '<div class="rpt-form-section">Indicadores Comerciais (da planilha de indicadores do Drive)</div>' +
+      '<div class="rpt-form-grid">' +
+      '<div class="rpt-cfg-field"><label>Faturamento do Mês (R$)</label><input id="rmf-fat" value="'+(_rmf.fat||'')+'" oninput="_rmf.fat=this.value" placeholder="Ex: 98500"></div>' +
+      '<div class="rpt-cfg-field"><label>Meta do Mês (R$)</label><input id="rmf-meta" value="'+(_rmf.meta||'')+'" oninput="_rmf.meta=this.value" placeholder="Ex: 90000"></div>' +
+      '<div class="rpt-cfg-field"><label>Crescimento vs. Ano Anterior (%)</label><input id="rmf-cresc" value="'+(_rmf.cresc||'')+'" oninput="_rmf.cresc=this.value" placeholder="Ex: 23.7"></div>' +
+      '<div class="rpt-cfg-field"><label>Clientes Ativos</label><input id="rmf-cativos" value="'+(_rmf.cativos||'')+'" oninput="_rmf.cativos=this.value" placeholder="Ex: 47"></div>' +
+      '<div class="rpt-cfg-field"><label>Taxa de Conversão (%)</label><input id="rmf-conv" value="'+(_rmf.conv||'')+'" oninput="_rmf.conv=this.value" placeholder="Ex: 38"></div>' +
+      '<div class="rpt-cfg-field"><label>Ticket Médio (R$)</label><input id="rmf-ticket" value="'+(_rmf.ticket||'')+'" oninput="_rmf.ticket=this.value" placeholder="Ex: 2095"></div>' +
+      '</div>';
+  }
+
+  var formHtml = '<div class="rpt-form-panel">' +
+    '<div class="rpt-form-title"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Configurar Relatório Mensal de Resultados</div>' +
+    '<div class="rpt-form-grid">' +
+    '<div class="rpt-cfg-field"><label>Cliente</label><select id="rmf-cliente" onchange="_rmf.cliente=this.value;rptMensal()">'+cliOpts+'</select></div>' +
+    '<div class="rpt-cfg-field"><label>Programa</label><select id="rmf-programa" onchange="_rmf.programa=this.value;rptMensal()">'+progOpts+'</select></div>' +
+    '<div class="rpt-cfg-field"><label>Mês de Referência</label><select id="rmf-mes" onchange="_rmf.mes=parseInt(this.value)">'+mesOpts+'</select></div>' +
+    '<div class="rpt-cfg-field"><label>Ano</label><input id="rmf-ano" value="'+(_rmf.ano||hoje.getFullYear())+'" oninput="_rmf.ano=this.value" type="number" style="max-width:100px"></div>' +
+    '</div>' +
+    kpiSection +
+    '<div class="rpt-form-section">Análise e Próximos Passos</div>' +
+    '<div class="rpt-form-grid wide">' +
+    '<div class="rpt-cfg-field"><label>Análise Executiva do Mês</label><textarea id="rmf-analise" rows="4" oninput="_rmf.analise=this.value">'+(_rmf.analise||'')+'</textarea></div>' +
+    '<div class="rpt-cfg-field"><label>Próximos Passos e Recomendações</label><textarea id="rmf-proximos" rows="4" oninput="_rmf.proximos=this.value">'+(_rmf.proximos||'')+'</textarea></div>' +
+    '</div>' +
+    '<button class="rpt-gen-btn" onclick="rptGenerateMensal()">▶ Gerar Pré-visualização do Relatório</button>' +
+    '</div>';
+
+  document.getElementById('rpt-filters').innerHTML = '';
+  document.getElementById('report-preview').innerHTML = formHtml + '<div id="rpt-prev"></div>';
+
+  if (_rmf.cliente) rptGenerateMensal();
+}
+
+function rptGenerateMensal() {
+  _rmf.cliente = (document.getElementById('rmf-cliente')||{value:_rmf.cliente||''}).value;
+  _rmf.programa = (document.getElementById('rmf-programa')||{value:_rmf.programa||'mentoring'}).value;
+  _rmf.mes = parseInt((document.getElementById('rmf-mes')||{value:_rmf.mes||new Date().getMonth()+1}).value);
+  _rmf.ano = (document.getElementById('rmf-ano')||{value:_rmf.ano||new Date().getFullYear()}).value;
+
+  var mesNome = mesNomeStr(_rmf.mes);
+  var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[_rmf.programa]||_rmf.programa;
+  var tasks = rptTasksForClient(_rmf.cliente);
+
+  var kpiHtml = '';
+  if (_rmf.programa === 'master') {
+    var fat = parseFloat((_rmf.fat||'0').replace(',','.')) || 0;
+    var cmv = parseFloat((_rmf.cmv||'0').replace(',','.')) || 0;
+    var dfixas = parseFloat((_rmf.dfixas||'0').replace(',','.')) || 0;
+    var dvar = parseFloat((_rmf.dvar||'0').replace(',','.')) || 0;
+    var impost = parseFloat((_rmf.impost||'0').replace(',','.')) || 0;
+    var lucroLiq = _rmf.ll ? parseFloat(_rmf.ll.replace(',','.')) : (fat - cmv - dfixas - dvar - impost);
+    var margemPct = fat > 0 ? (lucroLiq/fat*100).toFixed(1) : '—';
+
+    kpiHtml = '<div class="rpt-kpi-highlight">' +
+      '<div style="font-size:10.5px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;font-weight:600">DRE — Demonstrativo de Resultados do Mês</div>' +
+      '<div class="rpt-kpi-highlight-grid">' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+fmtBRL(_rmf.fat||'—')+'</div><div class="rpt-kpi-h-sub">Faturamento Bruto</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+fmtBRL(_rmf.cmv||'—')+'</div><div class="rpt-kpi-h-sub">CMV</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+fmtBRL(fat-cmv||'—')+'</div><div class="rpt-kpi-h-sub">Lucro Bruto</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+fmtBRL(_rmf.dfixas||'—')+'</div><div class="rpt-kpi-h-sub">Desp. Fixas</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+fmtBRL(_rmf.dvar||'—')+'</div><div class="rpt-kpi-h-sub">Desp. Variáveis</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+fmtBRL(lucroLiq)+'</div><div class="rpt-kpi-h-sub">Lucro Líquido</div></div>' +
+      '</div>' +
+      '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);display:flex;gap:28px;flex-wrap:wrap">' +
+      '<div style="font-size:11.5px;color:rgba(255,255,255,.85)">Margem Líquida: <strong>'+margemPct+'%</strong></div>' +
+      (_rmf.cgiro?'<div style="font-size:11.5px;color:rgba(255,255,255,.85)">Capital de Giro: <strong>'+fmtBRL(_rmf.cgiro)+'</strong></div>':'') +
+      (_rmf.inadim?'<div style="font-size:11.5px;color:rgba(255,255,255,.85)">Inadimplência: <strong>'+_rmf.inadim+'%</strong></div>':'') +
+      '</div></div>';
+  } else {
+    var metaV = _rmf.meta ? fmtBRL(_rmf.meta) : '—';
+    var metaCtx = '';
+    if (_rmf.fat && _rmf.meta) {
+      var fatN = parseFloat(_rmf.fat.replace(',','.'));
+      var metaN = parseFloat(_rmf.meta.replace(',','.'));
+      if (!isNaN(fatN) && !isNaN(metaN)) metaCtx = fatN >= metaN ? ' ✅ Atingida' : ' ⚠ Abaixo';
+    }
+    kpiHtml = '<div class="rpt-kpi-highlight">' +
+      '<div style="font-size:10.5px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;font-weight:600">Indicadores Comerciais — '+mesNome+'/'+_rmf.ano+'</div>' +
+      '<div class="rpt-kpi-highlight-grid">' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+(_rmf.fat?fmtBRL(_rmf.fat):'—')+'</div><div class="rpt-kpi-h-sub">Faturamento</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+metaV+'</div><div class="rpt-kpi-h-sub">Meta'+metaCtx+'</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+(_rmf.cresc?_rmf.cresc+'%':'—')+'</div><div class="rpt-kpi-h-sub">Crescimento Anual</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+(_rmf.cativos||'—')+'</div><div class="rpt-kpi-h-sub">Clientes Ativos</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+(_rmf.conv?_rmf.conv+'%':'—')+'</div><div class="rpt-kpi-h-sub">Taxa Conversão</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+(_rmf.ticket?fmtBRL(_rmf.ticket):'—')+'</div><div class="rpt-kpi-h-sub">Ticket Médio</div></div>' +
+      '</div></div>';
+  }
+
+  var flowSec = rptFlowUpSection(tasks, 'Operacional — Atividades FlowUp');
+  var trelloSec = rptTrelloSection();
+  var analysisSec = rptAnalysisSection(_rmf.analise, _rmf.proximos);
+
+  var content = rptHeader('RELATÓRIO MENSAL DE RESULTADOS', programaLabel + ' | ' + (_rmf.cliente||'Cliente não selecionado') + ' | ' + mesNome + ' / ' + _rmf.ano) +
+    kpiHtml + flowSec + trelloSec + analysisSec + rptFooter();
+
+  var prev = document.getElementById('rpt-prev');
+  if (prev) prev.innerHTML = content;
+  else document.getElementById('report-preview').innerHTML = content;
+}
+
+// ════════ RELATÓRIO ENCERRAMENTO DE MÓDULO ════════
+
+function rptEncerramento() {
+  var clients = getUniqueClients();
+  var hoje = new Date();
+  var cliOpts = '<option value="">Selecione o cliente</option>' + clients.map(function(c){ return '<option value="'+c+'"'+(_ref.cliente===c?' selected':'')+'>'+c+'</option>'; }).join('');
+  var progOpts = [['mentoring','Organize Mentoring'],['master','Organize Master'],['marketing','Organize Marketing e Vendas']].map(function(p){ return '<option value="'+p[0]+'"'+(_ref.programa===p[0]?' selected':'')+'>'+p[1]+'</option>'; }).join('');
+
+  var kpiLabels = {
+    mentoring: ['Faturamento do Módulo (R$)','Meta do Módulo (R$)','Crescimento vs. Anterior (%)','Clientes Ativos','Taxa de Conversão (%)','Ticket Médio (R$)'],
+    master: ['Faturamento Bruto (R$)','Lucro Líquido (R$)','Margem de Lucro (%)','Ponto de Equilíbrio (R$)','Capital de Giro (R$)','Inadimplência (%)'],
+    marketing: ['Faturamento do Módulo (R$)','Meta do Módulo (R$)','Leads Gerados','Taxa de Conversão (%)','Ticket Médio (R$)','ROI das Ações (%)']
+  };
+  var prog = _ref.programa || 'mentoring';
+  var labels = kpiLabels[prog] || kpiLabels.mentoring;
+  var kpiKeys = ['k1','k2','k3','k4','k5','k6'];
+
+  var kpiFields = labels.map(function(l,i){ return '<div class="rpt-cfg-field"><label>'+l+'</label><input id="ref-'+kpiKeys[i]+'" value="'+(_ref[kpiKeys[i]]||'')+'" oninput="_ref[\''+kpiKeys[i]+'\']=this.value" placeholder="—"></div>'; }).join('');
+
+  var formHtml = '<div class="rpt-form-panel">' +
+    '<div class="rpt-form-title"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>Configurar Relatório de Encerramento de Módulo</div>' +
+    '<div class="rpt-form-grid">' +
+    '<div class="rpt-cfg-field"><label>Cliente</label><select id="ref-cliente" onchange="_ref.cliente=this.value;rptEncerramento()">'+cliOpts+'</select></div>' +
+    '<div class="rpt-cfg-field"><label>Programa</label><select id="ref-programa" onchange="_ref.programa=this.value;rptEncerramento()">'+progOpts+'</select></div>' +
+    '<div class="rpt-cfg-field"><label>Módulo Nº</label><input id="ref-modnum" value="'+(_ref.modnum||'')+'" oninput="_ref.modnum=this.value" placeholder="Ex: 1"></div>' +
+    '<div class="rpt-cfg-field"><label>Nome do Módulo</label><input id="ref-modnom" value="'+(_ref.modnom||'')+'" oninput="_ref.modnom=this.value" placeholder="Ex: Diagnóstico e Planejamento Estratégico"></div>' +
+    '<div class="rpt-cfg-field"><label>Data de Início</label><input id="ref-dtini" type="date" value="'+(_ref.dtini||'')+'" oninput="_ref.dtini=this.value"></div>' +
+    '<div class="rpt-cfg-field"><label>Data de Conclusão</label><input id="ref-dtfim" type="date" value="'+(_ref.dtfim||'')+'" oninput="_ref.dtfim=this.value"></div>' +
+    '<div class="rpt-cfg-field"><label>Próximo Módulo</label><input id="ref-proxmod" value="'+(_ref.proxmod||'')+'" oninput="_ref.proxmod=this.value" placeholder="Ex: Estrutura Financeira e DRE"></div>' +
+    '<div class="rpt-cfg-field"><label>Nº de Mentorias Realizadas</label><input id="ref-nment" value="'+(_ref.nment||'')+'" oninput="_ref.nment=this.value" placeholder="Ex: 4"></div>' +
+    '</div>' +
+    '<div class="rpt-form-section">Indicadores do Módulo (da planilha de indicadores do Drive — '+({mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Marketing e Vendas'}[prog]||prog)+')</div>' +
+    '<div class="rpt-form-grid">' + kpiFields + '</div>' +
+    '<div class="rpt-form-section">Análise Executiva e Próximos Passos</div>' +
+    '<div class="rpt-form-grid wide">' +
+    '<div class="rpt-cfg-field"><label>Análise Executiva do Módulo</label><textarea id="ref-analise" rows="4" oninput="_ref.analise=this.value">'+(_ref.analise||'')+'</textarea></div>' +
+    '<div class="rpt-cfg-field"><label>Próximos Passos e Foco do Próximo Módulo</label><textarea id="ref-proximos" rows="4" oninput="_ref.proximos=this.value">'+(_ref.proximos||'')+'</textarea></div>' +
+    '</div>' +
+    '<button class="rpt-gen-btn" onclick="rptGenerateEncerramento()">▶ Gerar Pré-visualização do Relatório</button>' +
+    '</div>';
+
+  document.getElementById('rpt-filters').innerHTML = '';
+  document.getElementById('report-preview').innerHTML = formHtml + '<div id="rpt-prev"></div>';
+
+  if (_ref.cliente) rptGenerateEncerramento();
+}
+
+function rptGenerateEncerramento() {
+  _ref.cliente = (document.getElementById('ref-cliente')||{value:_ref.cliente||''}).value;
+  _ref.programa = (document.getElementById('ref-programa')||{value:_ref.programa||'mentoring'}).value;
+  _ref.modnum = (document.getElementById('ref-modnum')||{value:_ref.modnum||''}).value;
+  _ref.modnom = (document.getElementById('ref-modnom')||{value:_ref.modnom||''}).value;
+  _ref.dtini = (document.getElementById('ref-dtini')||{value:_ref.dtini||''}).value;
+  _ref.dtfim = (document.getElementById('ref-dtfim')||{value:_ref.dtfim||''}).value;
+  _ref.proxmod = (document.getElementById('ref-proxmod')||{value:_ref.proxmod||''}).value;
+  _ref.nment = (document.getElementById('ref-nment')||{value:_ref.nment||''}).value;
+
+  var kpiLabels = {
+    mentoring: ['Faturamento do Módulo','Meta do Módulo','Crescimento vs. Anterior','Clientes Ativos','Taxa de Conversão','Ticket Médio'],
+    master: ['Faturamento Bruto','Lucro Líquido','Margem de Lucro','Ponto de Equilíbrio','Capital de Giro','Inadimplência'],
+    marketing: ['Faturamento do Módulo','Meta do Módulo','Leads Gerados','Taxa de Conversão','Ticket Médio','ROI das Ações']
+  };
+  var labels = kpiLabels[_ref.programa] || kpiLabels.mentoring;
+  var kpiKeys = ['k1','k2','k3','k4','k5','k6'];
+  kpiKeys.forEach(function(k){ _ref[k] = (document.getElementById('ref-'+k)||{value:_ref[k]||''}).value; });
+
+  var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[_ref.programa]||_ref.programa;
+  var periodoStr = '';
+  if (_ref.dtini && _ref.dtfim) periodoStr = new Date(_ref.dtini+'T12:00:00').toLocaleDateString('pt-BR') + ' a ' + new Date(_ref.dtfim+'T12:00:00').toLocaleDateString('pt-BR');
+
+  var kpiHtml = '<div class="rpt-kpi-highlight">' +
+    '<div style="font-size:10.5px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;font-weight:600">Indicadores do Módulo ' + (_ref.modnum?'Nº '+_ref.modnum:'') + ' — ' + programaLabel + '</div>' +
+    '<div class="rpt-kpi-highlight-grid">';
+  labels.forEach(function(l,i){
+    var v = _ref[kpiKeys[i]] || '—';
+    kpiHtml += '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+v+'</div><div class="rpt-kpi-h-sub">'+l+'</div></div>';
+  });
+  kpiHtml += '</div>';
+  if (_ref.nment) kpiHtml += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);font-size:11.5px;color:rgba(255,255,255,.85)">Mentorias realizadas no módulo: <strong>' + _ref.nment + '</strong></div>';
+  kpiHtml += '</div>';
+
+  var tasks = rptTasksForClient(_ref.cliente);
+  var flowSec = rptFlowUpSection(tasks, 'Status Operacional — FlowUp');
+  var trelloSec = rptTrelloSection();
+
+  var nextModBlock = '';
+  if (_ref.proxmod) {
+    nextModBlock = '<div class="rpt-sec">Foco do Próximo Módulo</div>' +
+      '<div class="rpt-analysis-box" style="border-left-color:var(--teal-dark);background:rgba(139,212,224,.07)">' +
+      '<div class="rpt-analysis-title">Próximo Módulo</div>' +
+      '<p style="font-size:14px;font-weight:600;color:var(--navy)">' + _ref.proxmod + '</p>' +
+      '</div>';
+  }
+
+  var analysisSec = rptAnalysisSection(_ref.analise, _ref.proximos);
+
+  var modBadge = _ref.modnum ? '<div class="rpt-modulo-badge">Módulo ' + _ref.modnum + (_ref.modnom?' — '+_ref.modnom:'') + '</div>' : '';
+  var periodoInfo = periodoStr ? '<div style="font-size:11.5px;color:var(--muted);margin-top:4px">Período: ' + periodoStr + '</div>' : '';
+
+  var headerExtra = modBadge + periodoInfo;
+
+  var content = rptHeader('RELATÓRIO DE ENCERRAMENTO DE MÓDULO', programaLabel + ' | ' + (_ref.cliente||'Cliente não selecionado')) +
+    (headerExtra ? '<div style="margin-bottom:24px">' + headerExtra + '</div>' : '') +
+    kpiHtml + flowSec + trelloSec + nextModBlock + analysisSec + rptFooter();
+
+  var prev = document.getElementById('rpt-prev');
+  if (prev) prev.innerHTML = content;
+  else document.getElementById('report-preview').innerHTML = content;
+}
 // ═══════════════ REPORTS ═══════════════
 let _rptType = 'summary';
 
@@ -1568,6 +1953,8 @@ function renderReports() {
   else if (_rptType === 'flowup-projects') rptFlowUpProjects();
   else if (_rptType === 'flowup-tasks') rptFlowUpTasks();
   else if (_rptType === 'trello') rptTrello();
+  else if (_rptType === 'mensal') rptMensal();
+  else if (_rptType === 'encerramento') rptEncerramento();
 }
 
 function printReport() { window.print(); }
@@ -1848,7 +2235,7 @@ function rptTrello() {
     boardsHtml +
     rptFooter();
 }
-const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Planejamento Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios' };
+const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Planejamento Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
 function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
