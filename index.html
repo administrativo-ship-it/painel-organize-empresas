@@ -570,9 +570,11 @@ const S = {
 // ═══════════════ FLOWUP API ═══════════════
 const FU = {
   base: 'https://time.flowup.me/api/v1',
+  proxy: 'https://corsproxy.io/?url=',
   h() { return { 'Authorization': `Token ${S.config.fuKey}`, 'Content-Type': 'application/json', 'X-Account': S.config.fuSubdomain }; },
   async get(ep) {
-    const r = await fetch(`${this.base}${ep}`, { headers: this.h() });
+    const url = `${this.base}${ep}`;
+    const r = await fetch(`${this.proxy}${encodeURIComponent(url)}`, { headers: this.h() });
     if (!r.ok) throw new Error(`FlowUp ${r.status}: ${r.statusText}`);
     return r.json();
   },
