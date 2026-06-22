@@ -208,6 +208,29 @@ tbody tr:hover{background:var(--off);}
 
 @media(max-width:1024px){.sidebar{width:210px}.main{margin-left:210px}.charts-grid{grid-template-columns:1fr}}
 @media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+/* ═══ REPORTS ═══ */
+.rpt-top{display:flex;flex-direction:column;gap:14px;margin-bottom:20px;}
+.rpt-type-row{display:flex;gap:8px;flex-wrap:wrap;}
+.rpt-type-btn{padding:8px 18px;border-radius:var(--r2);border:1.5px solid var(--border);background:var(--white);color:var(--txt2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px;}
+.rpt-type-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.rpt-type-btn:hover:not(.active){border-color:var(--navy);color:var(--navy);}
+.rpt-actions-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.rpt-filters-row{display:flex;gap:8px;flex-wrap:wrap;flex:1;}
+.btn-pdf{background:#c0392b;color:#fff;border:none;padding:9px 20px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;white-space:nowrap;}
+.btn-pdf:hover{background:#a93226;}
+.report-preview{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:36px;box-shadow:var(--sh);}
+.rpt-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:3px solid var(--navy);margin-bottom:28px;}
+.rpt-meta{text-align:right;}
+.rpt-title{font-size:18px;font-weight:800;color:var(--navy);line-height:1.2;}
+.rpt-subtitle{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.rpt-date{font-size:10.5px;color:var(--muted);margin-top:5px;}
+.rpt-kpi-row{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap;}
+.rpt-kpi{flex:1;min-width:110px;background:var(--off);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;}
+.rpt-kpi-val{font-size:26px;font-weight:800;color:var(--navy);line-height:1;}
+.rpt-kpi-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;}
+.rpt-sec{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border);margin-top:24px;}
+.rpt-footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted);}
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.sidebar,.topbar,.filter-bar,.rpt-top,.rpt-filters-row,.btn-pdf{display:none!important;}.main{margin-left:0!important;}.page{display:none!important;padding:0!important;}.page.active{display:block!important;}#page-reports{padding:0!important;}.report-preview{border:none!important;box-shadow:none!important;padding:20px 0!important;border-radius:0!important;}body{background:#fff!important;}.table-wrap{box-shadow:none!important;border:1px solid #ccc!important;}tr{page-break-inside:avoid;}.rpt-header{page-break-after:avoid;}.rpt-sec{page-break-after:avoid;}}
 </style>
 </head>
 <body>
@@ -265,6 +288,12 @@ tbody tr:hover{background:var(--off);}
     <span class="nav-badge" id="badge-alerts">—</span>
   </div>
 
+
+  <div class="nav-label">Relatórios</div>
+  <div class="nav-item" onclick="showPage('reports',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    Emitir Relatórios
+  </div>
   <div class="sidebar-footer">
     <button class="cfg-btn" onclick="openConfig('flowup')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
@@ -436,6 +465,44 @@ tbody tr:hover{background:var(--off);}
   </div>
 </div>
 
+
+  <!-- REPORTS -->
+  <div class="page" id="page-reports">
+    <div class="rpt-top">
+      <div class="rpt-type-row">
+        <button class="rpt-type-btn active" id="rtype-summary" onclick="selectReportType('summary',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Resumo Geral
+        </button>
+        <button class="rpt-type-btn" id="rtype-flowup-projects" onclick="selectReportType('flowup-projects',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+          Projetos FlowUp
+        </button>
+        <button class="rpt-type-btn" id="rtype-flowup-tasks" onclick="selectReportType('flowup-tasks',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Tarefas FlowUp
+        </button>
+        <button class="rpt-type-btn" id="rtype-trello" onclick="selectReportType('trello',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
+          Planejamentos Trello
+        </button>
+      </div>
+      <div class="rpt-actions-row">
+        <div class="rpt-filters-row" id="rpt-filters"></div>
+        <button class="btn-pdf" onclick="printReport()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path d="M13 3v6h6"/></svg>
+          Gerar PDF
+        </button>
+      </div>
+    </div>
+    <div class="report-preview" id="report-preview">
+      <div class="empty" style="padding:60px 20px">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <h3>Sincronize o painel para gerar relatórios</h3>
+        <p>Após sincronizar, os relatórios serão gerados automaticamente com os dados atualizados.</p>
+      </div>
+    </div>
+  </div>
 <!-- PROJECT MODAL -->
 <div class="modal-ov" id="proj-modal" onclick="if(event.target===this)closeModal('proj-modal')">
   <div class="modal" id="proj-modal-content"></div>
@@ -1485,13 +1552,310 @@ function loadLogo() {
 }
 
 // ═══════════════ NAV ═══════════════
-const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Planejamento Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção' };
+
+// ═══════════════ REPORTS ═══════════════
+let _rptType = 'summary';
+
+function selectReportType(type, el) {
+  _rptType = type;
+  document.querySelectorAll('.rpt-type-btn').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active');
+  renderReports();
+}
+
+function renderReports() {
+  if (_rptType === 'summary') rptSummary();
+  else if (_rptType === 'flowup-projects') rptFlowUpProjects();
+  else if (_rptType === 'flowup-tasks') rptFlowUpTasks();
+  else if (_rptType === 'trello') rptTrello();
+}
+
+function printReport() { window.print(); }
+
+function rptLogoHTML() {
+  var lc = S.logoConfig;
+  if (lc.img) return '<img src="' + lc.img + '" style="max-height:52px;max-width:200px;object-fit:contain;background:#fff;border-radius:6px;padding:4px 8px;">';
+  return '<div style="font-size:20px;font-weight:800;color:var(--navy)">Organize Empresas</div>';
+}
+
+function rptDateStr() {
+  return new Date().toLocaleDateString('pt-BR', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+}
+
+function rptHeader(title, subtitle) {
+  return '<div class="rpt-header"><div class="rpt-logo-col">' + rptLogoHTML() + '</div><div class="rpt-meta"><div class="rpt-title">' + title + '</div><div class="rpt-subtitle">' + subtitle + '</div><div class="rpt-date">Emitido em: ' + rptDateStr() + '</div></div></div>';
+}
+
+function rptFooter() {
+  return '<div class="rpt-footer"><span>Organize Empresas — Painel Gerencial de Projetos</span><span>Gerado em ' + rptDateStr() + '</span></div>';
+}
+
+function statusLabel(s) {
+  return {active:'Ativo', done:'Concluído', paused:'Pausado', inactive:'Inativo'}[s] || s;
+}
+function riskLabel(r) {
+  return {low:'Baixo', moderate:'Moderado', high:'Alto', critical:'Crítico'}[r] || r;
+}
+
+// ─ Resumo Geral ─
+function rptSummary() {
+  document.getElementById('rpt-filters').innerHTML = '';
+  var ps = S.projects, ts = S.tasks;
+  var activeP = ps.filter(function(p){return p.status==='active';}).length;
+  var doneP = ps.filter(function(p){return p.status==='done';}).length;
+  var overT = ts.filter(function(t){return t.isOver;}).length;
+  var doneT = ts.filter(function(t){return t.isDone;}).length;
+  var boards = S.trelloBoards.length;
+  var cards = S.trelloCards.length;
+  var cardsOver = S.trelloCards.filter(function(c){return c.isOver;}).length;
+  var highRisk = ps.filter(function(p){return p.risk==='high'||p.risk==='critical';});
+
+  var projRows = '';
+  ps.forEach(function(p, i) {
+    var overColor = p.tasks.over > 0 ? 'color:var(--red);font-weight:700' : 'color:var(--muted)';
+    var pct = p.progress;
+    var barColor = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--navy)' : 'var(--orange)';
+    projRows += '<tr><td style="color:var(--muted);font-size:11px">' + (i+1) + '</td><td><strong style="font-size:12px">' + p.name + '</strong></td><td style="font-size:11.5px">' + (p.client||'—') + '</td><td style="font-size:11.5px">' + p.responsible + '</td><td style="text-align:center">' + p.tasks.total + '</td><td style="text-align:center;color:var(--green);font-weight:700">' + p.tasks.done + '</td><td style="text-align:center;' + overColor + '">' + p.tasks.over + '</td><td><div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="flex:1;height:4px;background:var(--border);border-radius:999px;overflow:hidden;min-width:50px"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:999px"></div></div>' + pct + '%</div></td><td><span class="badge b-' + p.status + '">' + statusLabel(p.status) + '</span></td><td><span class="risk-badge rb-' + p.risk + '">' + riskLabel(p.risk) + '</span></td></tr>';
+  });
+  if (!projRows) projRows = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Nenhum projeto carregado — sincronize o painel</td></tr>';
+
+  var trelloRows = '';
+  S.trelloBoards.forEach(function(b) {
+    var bCards = S.trelloCards.filter(function(c){return c.boardId===b.id;}).length;
+    var bOver = S.trelloCards.filter(function(c){return c.boardId===b.id && c.isOver;}).length;
+    var overStyle = bOver > 0 ? 'color:var(--red);font-weight:700' : 'color:var(--muted)';
+    trelloRows += '<tr><td><strong style="font-size:12px">' + b.name + '</strong></td><td style="text-align:center">' + bCards + '</td><td style="text-align:center;' + overStyle + '">' + bOver + '</td></tr>';
+  });
+  if (!trelloRows) trelloRows = '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px">Nenhum board carregado</td></tr>';
+
+  var riskSection = '';
+  if (highRisk.length) {
+    var riskRows = '';
+    highRisk.forEach(function(p) {
+      riskRows += '<tr><td><strong>' + p.name + '</strong></td><td>' + (p.client||'—') + '</td><td>' + p.responsible + '</td><td style="color:var(--red);font-weight:700;text-align:center">' + p.tasks.over + '</td><td><span class="risk-badge rb-' + p.risk + '">' + riskLabel(p.risk) + '</span></td><td style="font-size:11px">' + (p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '—') + '</td></tr>';
+    });
+    riskSection = '<div class="rpt-sec">⚠ Projetos em Risco (' + highRisk.length + ')</div><div class="table-wrap" style="margin-bottom:0"><table><thead><tr><th>Projeto</th><th>Cliente</th><th>Responsável</th><th>Tarefas Atrasadas</th><th>Risco</th><th>Prazo</th></tr></thead><tbody>' + riskRows + '</tbody></table></div>';
+  }
+
+  document.getElementById('report-preview').innerHTML =
+    rptHeader('Relatório — Resumo Geral', 'Consolidado de Projetos, Tarefas e Planejamentos') +
+    '<div class="rpt-kpi-row">' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val">' + ps.length + '</div><div class="rpt-kpi-lbl">Projetos</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--green)">' + activeP + '</div><div class="rpt-kpi-lbl">Projetos Ativos</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val">' + ts.length + '</div><div class="rpt-kpi-lbl">Tarefas Total</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--red)">' + overT + '</div><div class="rpt-kpi-lbl">Tarefas Atrasadas</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--trello)">' + boards + '</div><div class="rpt-kpi-lbl">Boards Trello</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--red)">' + cardsOver + '</div><div class="rpt-kpi-lbl">Cards Vencidos</div></div>' +
+    '</div>' +
+    '<div class="rpt-sec">Projetos FlowUp (' + ps.length + ')</div>' +
+    '<div class="table-wrap" style="margin-bottom:24px"><table><thead><tr><th>#</th><th>Projeto</th><th>Cliente</th><th>Responsável</th><th>Total</th><th>Concluídas</th><th>Atrasadas</th><th>Progresso</th><th>Status</th><th>Risco</th></tr></thead><tbody>' + projRows + '</tbody></table></div>' +
+    riskSection +
+    '<div class="rpt-sec" style="margin-top:24px">Planejamentos Trello (' + boards + ')</div>' +
+    '<div class="table-wrap" style="margin-bottom:0"><table><thead><tr><th>Board</th><th>Cards</th><th>Vencidos</th></tr></thead><tbody>' + trelloRows + '</tbody></table></div>' +
+    rptFooter();
+}
+
+// ─ Projetos FlowUp ─
+function rptFlowUpProjects() {
+  var curStatus = (document.getElementById('rpt-fp-status') || {value:''}).value;
+  var curRisk = (document.getElementById('rpt-fp-risk') || {value:''}).value;
+  document.getElementById('rpt-filters').innerHTML =
+    '<select class="f-sel" id="rpt-fp-status" onchange="rptFlowUpProjects()">' +
+    '<option value="">Todos os Status</option>' +
+    '<option value="active"' + (curStatus==='active'?' selected':'') + '>Ativo</option>' +
+    '<option value="done"' + (curStatus==='done'?' selected':'') + '>Concluído</option>' +
+    '<option value="paused"' + (curStatus==='paused'?' selected':'') + '>Pausado</option>' +
+    '</select>' +
+    '<select class="f-sel" id="rpt-fp-risk" onchange="rptFlowUpProjects()">' +
+    '<option value="">Todos os Riscos</option>' +
+    '<option value="low"' + (curRisk==='low'?' selected':'') + '>Baixo</option>' +
+    '<option value="high"' + (curRisk==='high'?' selected':'') + '>Alto</option>' +
+    '<option value="critical"' + (curRisk==='critical'?' selected':'') + '>Crítico</option>' +
+    '</select>';
+
+  var ps = S.projects;
+  var statusF = (document.getElementById('rpt-fp-status') || {value:''}).value;
+  var riskF = (document.getElementById('rpt-fp-risk') || {value:''}).value;
+  if (statusF) ps = ps.filter(function(p){return p.status===statusF;});
+  if (riskF) ps = ps.filter(function(p){return p.risk===riskF;});
+
+  var active = ps.filter(function(p){return p.status==='active';}).length;
+  var done = ps.filter(function(p){return p.status==='done';}).length;
+  var highRisk = ps.filter(function(p){return p.risk==='high'||p.risk==='critical';}).length;
+  var avgProg = ps.length ? Math.round(ps.reduce(function(a,p){return a+p.progress;},0)/ps.length) : 0;
+  var totalOver = ps.reduce(function(a,p){return a+p.tasks.over;},0);
+
+  var rows = '';
+  ps.forEach(function(p, i) {
+    var pct = p.progress;
+    var barColor = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--navy)' : 'var(--orange)';
+    rows += '<tr><td style="color:var(--muted);font-size:11px">' + (i+1) + '</td>' +
+      '<td><strong style="font-size:12px">' + p.name + '</strong></td>' +
+      '<td style="font-size:11.5px">' + (p.client||'—') + '</td>' +
+      '<td style="font-size:11px;color:var(--txt2)">' + (p.service||'—') + '</td>' +
+      '<td style="font-size:11.5px">' + p.responsible + '</td>' +
+      '<td style="font-size:11px">' + (p.start ? new Date(p.start).toLocaleDateString('pt-BR') : '—') + '</td>' +
+      '<td style="font-size:11px">' + (p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '—') + '</td>' +
+      '<td style="text-align:center">' + p.tasks.total + '</td>' +
+      '<td style="text-align:center;color:var(--green);font-weight:700">' + p.tasks.done + '</td>' +
+      '<td style="text-align:center;color:' + (p.tasks.over>0?'var(--red)':'var(--muted)') + ';font-weight:' + (p.tasks.over>0?'700':'400') + '">' + p.tasks.over + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="flex:1;height:4px;background:var(--border);border-radius:999px;overflow:hidden;min-width:40px"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:999px"></div></div>' + pct + '%</div></td>' +
+      '<td><span class="badge b-' + p.status + '">' + statusLabel(p.status) + '</span></td>' +
+      '<td><span class="risk-badge rb-' + p.risk + '">' + riskLabel(p.risk) + '</span></td></tr>';
+  });
+  if (!rows) rows = '<tr><td colspan="13" style="text-align:center;color:var(--muted);padding:20px">Nenhum projeto encontrado com esses filtros</td></tr>';
+
+  document.getElementById('report-preview').innerHTML =
+    rptHeader('Relatório de Projetos — FlowUp', 'Situação atual da carteira de projetos') +
+    '<div class="rpt-kpi-row">' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val">' + ps.length + '</div><div class="rpt-kpi-lbl">Total</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--green)">' + active + '</div><div class="rpt-kpi-lbl">Ativos</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val">' + done + '</div><div class="rpt-kpi-lbl">Concluídos</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--red)">' + highRisk + '</div><div class="rpt-kpi-lbl">Alto Risco</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--red)">' + totalOver + '</div><div class="rpt-kpi-lbl">Tarefas Atrasadas</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val">' + avgProg + '%</div><div class="rpt-kpi-lbl">Progresso Médio</div></div>' +
+    '</div>' +
+    '<div class="rpt-sec">Projetos (' + ps.length + ')</div>' +
+    '<div class="table-wrap"><table><thead><tr><th>#</th><th>Projeto</th><th>Cliente</th><th>Serviço</th><th>Responsável</th><th>Início</th><th>Prazo</th><th>Total</th><th>Concl.</th><th>Atras.</th><th>Progresso</th><th>Status</th><th>Risco</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    rptFooter();
+}
+
+// ─ Tarefas FlowUp ─
+function rptFlowUpTasks() {
+  var curProj = (document.getElementById('rpt-ft-proj') || {value:''}).value;
+  var curStat = (document.getElementById('rpt-ft-stat') || {value:''}).value;
+  var curMem  = (document.getElementById('rpt-ft-mem')  || {value:''}).value;
+
+  var projOpts = '<option value="">Todos os Projetos</option>';
+  S.projects.forEach(function(p){ projOpts += '<option value="' + p.id + '"' + (curProj==p.id?' selected':'') + '>' + p.name + '</option>'; });
+  var memOpts = '<option value="">Todos os Responsáveis</option>';
+  S.members.forEach(function(m){ memOpts += '<option value="' + m.name + '"' + (curMem===m.name?' selected':'') + '>' + m.name + '</option>'; });
+
+  document.getElementById('rpt-filters').innerHTML =
+    '<select class="f-sel" id="rpt-ft-proj" onchange="rptFlowUpTasks()">' + projOpts + '</select>' +
+    '<select class="f-sel" id="rpt-ft-stat" onchange="rptFlowUpTasks()">' +
+    '<option value="">Todos os Status</option>' +
+    '<option value="active"' + (curStat==='active'?' selected':'') + '>Em andamento</option>' +
+    '<option value="overdue"' + (curStat==='overdue'?' selected':'') + '>Atrasadas</option>' +
+    '<option value="done"' + (curStat==='done'?' selected':'') + '>Concluídas</option>' +
+    '</select>' +
+    '<select class="f-sel" id="rpt-ft-mem" onchange="rptFlowUpTasks()">' + memOpts + '</select>';
+
+  var projF = (document.getElementById('rpt-ft-proj') || {value:''}).value;
+  var statF = (document.getElementById('rpt-ft-stat') || {value:''}).value;
+  var memF  = (document.getElementById('rpt-ft-mem')  || {value:''}).value;
+
+  var ts = S.tasks;
+  if (projF) ts = ts.filter(function(t){return String(t.projectId)===String(projF);});
+  if (statF) ts = ts.filter(function(t){return t.status===statF;});
+  if (memF)  ts = ts.filter(function(t){return t.responsible===memF;});
+
+  var done = ts.filter(function(t){return t.isDone;}).length;
+  var over = ts.filter(function(t){return t.isOver;}).length;
+  var active = ts.filter(function(t){return !t.isDone && !t.isOver;}).length;
+  var rate = ts.length ? Math.round(done/ts.length*100) : 0;
+
+  var rows = '';
+  ts.forEach(function(t, i) {
+    var dueStyle = t.isOver ? 'color:var(--red);font-weight:700' : '';
+    var delayStr = t.isOver ? (t.daysLate + 'd') : '—';
+    var delayStyle = t.isOver ? 'color:var(--red);font-weight:700' : 'color:var(--muted)';
+    var statLabel = t.isDone ? 'Concluída' : (t.isOver ? 'Atrasada' : 'Em andamento');
+    var statClass = t.isDone ? 'b-done' : (t.isOver ? 'b-over' : 'b-active');
+    rows += '<tr><td style="color:var(--muted);font-size:11px">' + (i+1) + '</td>' +
+      '<td style="font-size:12px;max-width:220px"><strong>' + t.name + '</strong></td>' +
+      '<td style="font-size:11px;color:var(--txt2)">' + (t.project||'—') + '</td>' +
+      '<td style="font-size:11px">' + (t.client||'—') + '</td>' +
+      '<td style="font-size:12px">' + t.responsible + '</td>' +
+      '<td style="font-size:11px;' + dueStyle + '">' + (t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '—') + '</td>' +
+      '<td><span class="badge ' + statClass + '">' + statLabel + '</span></td>' +
+      '<td style="font-size:11px;' + delayStyle + '">' + delayStr + '</td></tr>';
+  });
+  if (!rows) rows = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Nenhuma tarefa encontrada com esses filtros</td></tr>';
+
+  document.getElementById('report-preview').innerHTML =
+    rptHeader('Relatório de Tarefas — FlowUp', 'Situação das tarefas nos projetos') +
+    '<div class="rpt-kpi-row">' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val">' + ts.length + '</div><div class="rpt-kpi-lbl">Total</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--green)">' + done + '</div><div class="rpt-kpi-lbl">Concluídas</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--navy)">' + active + '</div><div class="rpt-kpi-lbl">Em Andamento</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--red)">' + over + '</div><div class="rpt-kpi-lbl">Atrasadas</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val">' + rate + '%</div><div class="rpt-kpi-lbl">Conclusão</div></div>' +
+    '</div>' +
+    '<div class="rpt-sec">Tarefas (' + ts.length + ')</div>' +
+    '<div class="table-wrap"><table><thead><tr><th>#</th><th>Tarefa</th><th>Projeto</th><th>Cliente</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Atraso</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    rptFooter();
+}
+
+// ─ Trello ─
+function rptTrello() {
+  var curBoard = (document.getElementById('rpt-tr-board') || {value:''}).value;
+  var boardOpts = '<option value="">Todos os Boards</option>';
+  S.trelloBoards.forEach(function(b){ boardOpts += '<option value="' + b.id + '"' + (curBoard===b.id?' selected':'') + '>' + b.name + '</option>'; });
+  document.getElementById('rpt-filters').innerHTML = '<select class="f-sel" id="rpt-tr-board" onchange="rptTrello()">' + boardOpts + '</select>';
+
+  var boardF = (document.getElementById('rpt-tr-board') || {value:''}).value;
+  var boards = S.trelloBoards;
+  if (boardF) boards = boards.filter(function(b){return b.id===boardF;});
+
+  var filtCards = S.trelloCards.filter(function(c){return !boardF||c.boardId===boardF;});
+  var totalC = filtCards.length;
+  var overC  = filtCards.filter(function(c){return c.isOver;}).length;
+  var doneC  = filtCards.filter(function(c){return c.dueComplete;}).length;
+  var rate   = totalC ? Math.round(doneC/totalC*100) : 0;
+
+  var boardsHtml = '';
+  if (!boards.length) {
+    boardsHtml = '<div class="empty" style="padding:40px 20px"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="44" height="44"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg><h3>Nenhum board carregado</h3><p>Sincronize o painel para carregar os planejamentos Trello.</p></div>';
+  }
+  boards.forEach(function(b) {
+    var bCards = S.trelloCards.filter(function(c){return c.boardId===b.id;});
+    var bLists = S.trelloLists.filter(function(l){return l.boardId===b.id;});
+    var bOver  = bCards.filter(function(c){return c.isOver;}).length;
+    var bDone  = bCards.filter(function(c){return c.dueComplete;}).length;
+
+    var listRows = '';
+    bLists.forEach(function(l) {
+      var lCards = bCards.filter(function(c){return c.listId===l.id;});
+      var lOver  = lCards.filter(function(c){return c.isOver;}).length;
+      listRows += '<tr><td>' + l.name + '</td><td style="text-align:center">' + lCards.length + '</td><td style="text-align:center;color:' + (lOver>0?'var(--red)':'var(--muted)') + '">' + lOver + '</td></tr>';
+    });
+
+    var overRows = '';
+    bCards.filter(function(c){return c.isOver;}).forEach(function(c) {
+      var days = Math.floor((Date.now() - new Date(c.due)) / 86400000);
+      overRows += '<tr><td style="font-size:12px">' + c.name + '</td><td style="font-size:11px">' + c.listName + '</td><td style="font-size:11px;color:var(--red)">' + new Date(c.due).toLocaleDateString('pt-BR') + '</td><td style="font-size:11px;color:var(--red);font-weight:700">' + days + 'd</td></tr>';
+    });
+
+    var linkHtml = b.shortUrl ? ' | <a href="' + b.shortUrl + '" target="_blank" style="color:var(--trello)">Abrir no Trello ↗</a>' : '';
+    var overSpan = bOver > 0 ? '<span style="color:var(--red);font-weight:700">' + bOver + ' vencidos</span>' : '<span style="color:var(--green)">nenhum vencido</span>';
+
+    boardsHtml += '<div class="rpt-sec" style="margin-top:20px">🟦 ' + b.name + '</div>' +
+      '<div style="margin-bottom:10px;font-size:11.5px;color:var(--muted)">' + bCards.length + ' cards | ' + bDone + ' concluídos | ' + overSpan + linkHtml + '</div>' +
+      (listRows ? '<div class="table-wrap" style="margin-bottom:14px"><table><thead><tr><th>Lista</th><th>Cards</th><th>Vencidos</th></tr></thead><tbody>' + listRows + '</tbody></table></div>' : '') +
+      (overRows ? '<div style="font-size:11.5px;font-weight:700;color:var(--red);margin-bottom:6px">⚠ Cards Vencidos</div><div class="table-wrap" style="margin-bottom:0"><table><thead><tr><th>Card</th><th>Lista</th><th>Vencimento</th><th>Atraso</th></tr></thead><tbody>' + overRows + '</tbody></table></div>' : '');
+  });
+
+  document.getElementById('report-preview').innerHTML =
+    rptHeader('Relatório de Planejamentos — Trello', 'Situação dos planejamentos estratégicos mensais') +
+    '<div class="rpt-kpi-row">' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--trello)">' + boards.length + '</div><div class="rpt-kpi-lbl">Boards</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val">' + totalC + '</div><div class="rpt-kpi-lbl">Cards Total</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--green)">' + doneC + '</div><div class="rpt-kpi-lbl">Concluídos</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--red)">' + overC + '</div><div class="rpt-kpi-lbl">Vencidos</div></div>' +
+    '<div class="rpt-kpi"><div class="rpt-kpi-val">' + rate + '%</div><div class="rpt-kpi-lbl">Conclusão</div></div>' +
+    '</div>' +
+    boardsHtml +
+    rptFooter();
+}
+const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Planejamento Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios' };
 function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   if (el) el.classList.add('active');
   document.getElementById('page-title').textContent = pageTitles[name]||name;
+  if (name === 'reports') renderReports();
 }
 
 // ═══════════════ HELPERS ═══════════════
