@@ -9,26 +9,26 @@
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-:root{--navy:#000080;--navy-light:#0a0a9e;--teal:#8BD4E0;--teal-dark:#5bbece;--slate:#41546A;--white:#fff;--off:#f4f6fb;--border:#e2e8f4;--txt:#0d1526;--txt2:#41546A;--muted:#8a9bb5;--green:#1a7a4a;--green-bg:#e8f5ee;--yellow:#b45309;--yellow-bg:#fef3cd;--red:#c0392b;--red-bg:#fdf0ee;--orange:#d35400;--orange-bg:#fef0e6;--trello:#0052CC;--trello-bg:#e8f0ff;--sh:0 4px 16px rgba(0,0,80,.08);--r:12px;--r2:8px;}
+:root{--navy:#1B2B6B;--navy-light:#2A3F8F;--teal:#5CC8D4;--teal-dark:#3DBBCC;--slate:#41546A;--white:#fff;--off:#f4f6fb;--border:#e2e8f4;--txt:#0d1526;--txt2:#41546A;--muted:#8a9bb5;--green:#1a7a4a;--green-bg:#e8f5ee;--yellow:#b45309;--yellow-bg:#fef3cd;--red:#c0392b;--red-bg:#fdf0ee;--orange:#d35400;--orange-bg:#fef0e6;--trello:#0052CC;--trello-bg:#e8f0ff;--sh:0 4px 16px rgba(27,43,107,.08);--r:12px;--r2:8px;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min-height:100vh;display:flex;}
 
 /* SIDEBAR */
 .sidebar{width:252px;min-height:100vh;background:var(--navy);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;overflow-y:auto;}
-.logo-area{padding:24px 20px 16px;border-bottom:1px solid rgba(139,212,224,.15);cursor:pointer;position:relative;}
-.logo-area:hover{background:rgba(139,212,224,.05);}
+.logo-area{padding:24px 20px 16px;border-bottom:1px solid rgba(92,200,212,.15);cursor:pointer;position:relative;}
+.logo-area:hover{background:rgba(92,200,212,.05);}
 .logo-svg{width:152px;height:auto;}
-.logo-tagline{font-size:10px;color:rgba(139,212,224,.7);letter-spacing:.8px;text-transform:uppercase;font-weight:500;margin-top:4px;}
-.nav-label{font-size:9.5px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(139,212,224,.45);padding:18px 20px 5px;}
+.logo-tagline{font-size:10px;color:rgba(92,200,212,.7);letter-spacing:.8px;text-transform:uppercase;font-weight:500;margin-top:4px;}
+.nav-label{font-size:9.5px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(92,200,212,.45);padding:18px 20px 5px;}
 .nav-item{display:flex;align-items:center;gap:11px;padding:10px 20px;cursor:pointer;color:rgba(255,255,255,.7);font-size:13px;font-weight:500;transition:all .2s;border-left:3px solid transparent;}
-.nav-item:hover{background:rgba(139,212,224,.08);color:#fff;}
-.nav-item.active{background:rgba(139,212,224,.13);color:#fff;border-left-color:var(--teal);}
+.nav-item:hover{background:rgba(92,200,212,.08);color:#fff;}
+.nav-item.active{background:rgba(92,200,212,.13);color:#fff;border-left-color:var(--teal);}
 .nav-item svg{width:17px;height:17px;flex-shrink:0;}
 .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px;min-width:18px;text-align:center;}
 .nav-badge.blue{background:var(--trello);}
-.sidebar-footer{margin-top:auto;padding:14px 20px;border-top:1px solid rgba(139,212,224,.15);display:flex;flex-direction:column;gap:7px;}
-.cfg-btn{width:100%;background:rgba(139,212,224,.1);border:1px solid rgba(139,212,224,.2);color:var(--teal);padding:8px 12px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .2s;}
-.cfg-btn:hover{background:rgba(139,212,224,.2);}
+.sidebar-footer{margin-top:auto;padding:14px 20px;border-top:1px solid rgba(92,200,212,.15);display:flex;flex-direction:column;gap:7px;}
+.cfg-btn{width:100%;background:rgba(92,200,212,.1);border:1px solid rgba(92,200,212,.2);color:var(--teal);padding:8px 12px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .2s;}
+.cfg-btn:hover{background:rgba(92,200,212,.2);}
 
 /* MAIN */
 .main{margin-left:252px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
@@ -258,7 +258,7 @@ tbody tr:hover{background:var(--off);}
 .rpt-ops-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;}
 .rpt-ops-val{font-size:26px;font-weight:800;color:var(--navy);line-height:1;}
 .rpt-ops-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px;font-weight:600;}
-.rpt-modulo-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(139,212,224,.15);border:1px solid rgba(139,212,224,.3);border-radius:var(--r2);padding:6px 14px;font-size:11.5px;color:var(--teal-dark);font-weight:600;margin-bottom:4px;}
+.rpt-modulo-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(92,200,212,.15);border:1px solid rgba(92,200,212,.3);border-radius:var(--r2);padding:6px 14px;font-size:11.5px;color:var(--teal-dark);font-weight:600;margin-bottom:4px;}
 @media print{.rpt-form-panel{display:none!important;}}
 /* ── Drive integration & reports v2 ── */
 .rpt-drive-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--off);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;flex-wrap:wrap;}
@@ -296,14 +296,14 @@ tbody tr:hover{background:var(--off);}
 <aside class="sidebar">
   <div class="logo-area" onclick="openLogoConfig()" title="Clique para personalizar">
     <svg class="logo-svg" id="logo-svg" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="26" width="7" height="14" rx="1.5" fill="#8BD4E0"/>
-      <rect x="11" y="18" width="7" height="22" rx="1.5" fill="#8BD4E0"/>
-      <rect x="20" y="10" width="7" height="30" rx="1.5" fill="#8BD4E0"/>
+      <rect x="2" y="26" width="7" height="14" rx="1.5" fill="#5CC8D4"/>
+      <rect x="11" y="18" width="7" height="22" rx="1.5" fill="#5CC8D4"/>
+      <rect x="20" y="10" width="7" height="30" rx="1.5" fill="#5CC8D4"/>
       <ellipse cx="37" cy="20" rx="7" ry="10" transform="rotate(-35 37 20)" fill="white" opacity=".85"/>
-      <ellipse cx="37" cy="20" rx="5" ry="8" transform="rotate(-35 37 20)" fill="#8BD4E0"/>
+      <ellipse cx="37" cy="20" rx="5" ry="8" transform="rotate(-35 37 20)" fill="#5CC8D4"/>
       <path d="M44 11 Q50 6 52 10 Q47 13 44 11Z" fill="white" opacity=".8"/>
-      <path d="M30 29 Q28 34 32 35 Q34 31 30 29Z" fill="#F4A800" opacity=".9"/>
-      <text x="60" y="29" font-family="DM Sans,sans-serif" font-size="18" font-weight="800" fill="#8BD4E0" letter-spacing="-0.5">Organize</text>
+      <path d="M30 29 Q28 34 32 35 Q34 31 30 29Z" fill="#ffffff" opacity=".7"/>
+      <text x="60" y="29" font-family="DM Sans,sans-serif" font-size="18" font-weight="800" fill="#5CC8D4" letter-spacing="-0.5">Organize</text>
       <text x="62" y="44" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.72)" letter-spacing="3">EMPRESAS</text>
     </svg>
     <img id="logo-custom" style="display:none;max-width:175px;max-height:58px;object-fit:contain;background:#fff;border-radius:8px;padding:5px 10px;" alt="Logo">
@@ -671,7 +671,7 @@ tbody tr:hover{background:var(--off);}
       <div id="logo-preview" style="display:none;margin-bottom:12px">
         <div style="background:var(--navy);border-radius:var(--r2);padding:14px;display:flex;align-items:center;gap:10px">
           <img id="logo-prev-img" style="max-height:48px;max-width:150px;object-fit:contain;">
-          <div><div id="logo-prev-name" style="color:#fff;font-weight:700;font-size:14px"></div><div id="logo-prev-tagline" style="color:rgba(139,212,224,.7);font-size:11px;margin-top:1px"></div></div>
+          <div><div id="logo-prev-name" style="color:#fff;font-weight:700;font-size:14px"></div><div id="logo-prev-tagline" style="color:rgba(92,200,212,.7);font-size:11px;margin-top:1px"></div></div>
         </div>
         <button onclick="removeLogo()" style="margin-top:6px;background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:5px 11px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Remover logo</button>
       </div>
@@ -1099,7 +1099,7 @@ function renderOverview() {
   mkChart('ch-status','doughnut',
     ['Ativo','Concluído','Inativo/Pausado','Em Risco'],
     [active, done, ps.filter(p=>p.status==='inactive'||p.status==='paused').length, atRisk],
-    ['#000080','#1a7a4a','#41546A','#c0392b']
+    ['#1B2B6B','#1a7a4a','#41546A','#c0392b']
   );
 
   // Trello lists chart
@@ -1285,7 +1285,7 @@ function openTrelloBoard(boardId) {
 // ─── MEMBERS ───
 function renderMembers() {
   const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='—'))].sort();
-  const colors = ['#000080','#41546A','#5bbece','#2c4a7a','#1a7a4a','#d35400','#0052CC'];
+  const colors = ['#1B2B6B','#41546A','#3DBBCC','#2c4a7a','#1a7a4a','#d35400','#0052CC'];
   const grid = document.getElementById('member-grid');
   if (!names.length) { grid.innerHTML = empty('Nenhum responsável', 'Sincronize os dados do FlowUp.'); return; }
   grid.innerHTML = names.map((name, i) => {
@@ -1323,7 +1323,7 @@ function renderDashboard() {
   mkChart('ch-task-status','doughnut',
     ['Concluídas','Atrasadas','Ativas'],
     [ts.filter(t=>t.isDone).length, ts.filter(t=>t.isOver).length, ts.filter(t=>!t.isDone&&!t.isOver).length],
-    ['#1a7a4a','#c0392b','#8BD4E0']
+    ['#1a7a4a','#c0392b','#5CC8D4']
   );
   const cm = {};
   ts.filter(t=>t.isOver).forEach(t=>{ cm[t.client]=(cm[t.client]||0)+1; });
@@ -1343,7 +1343,7 @@ function renderDashboard() {
   const tbody = document.getElementById('prog-body');
   tbody.innerHTML = ps.map(p => {
     const bw = Math.min(p.progress, 100);
-    const bc = p.progress > 70 ? '#1a7a4a' : (p.tasks.over > 2 ? '#c0392b' : '#000080');
+    const bc = p.progress > 70 ? '#1a7a4a' : (p.tasks.over > 2 ? '#c0392b' : '#1B2B6B');
     return `<tr>
       <td style="font-weight:600;color:var(--navy)">${p.name}</td>
       <td style="font-size:12px;color:var(--muted)">${p.client}</td>
@@ -1430,7 +1430,7 @@ function openProjModal(id) {
     </div>
     <div class="modal-body">
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
-        ${miniKpi('Progresso', p.progress+'%', '#000080')}
+        ${miniKpi('Progresso', p.progress+'%', '#1B2B6B')}
         ${miniKpi('Concluídas', doneTasks.length, '#1a7a4a')}
         ${miniKpi('Atrasadas', overTasks.length, '#c0392b')}
         ${miniKpi('Pendentes', activeTasks.length, '#41546A')}
@@ -2072,7 +2072,7 @@ function rptDoughnutChart(canvasId, labels, data, colors) {
     type: 'doughnut',
     data: {
       labels: labels,
-      datasets: [{ data: data, backgroundColor: colors||['#22c55e','#000080','#ef4444'], borderWidth: 2 }]
+      datasets: [{ data: data, backgroundColor: colors||['#22c55e','#1B2B6B','#ef4444'], borderWidth: 2 }]
     },
     options: {
       responsive: true, maintainAspectRatio: true, cutout: '65%',
@@ -2138,7 +2138,7 @@ function renderReportCharts(cache, tasks, tipo) {
               labels: labels,
               datasets: [
                 { label: 'Faturamento', data: fatVals, backgroundColor: 'rgba(0,0,128,0.7)', borderRadius: 4 },
-                { label: 'Meta', data: metaVals, type: 'line', borderColor: '#8BD4E0', backgroundColor: 'rgba(139,212,224,0.15)', pointRadius: 4, tension: 0.3, fill: false, borderWidth: 2 }
+                { label: 'Meta', data: metaVals, type: 'line', borderColor: '#5CC8D4', backgroundColor: 'rgba(92,200,212,0.15)', pointRadius: 4, tension: 0.3, fill: false, borderWidth: 2 }
               ]
             },
             options: {
@@ -2154,7 +2154,7 @@ function renderReportCharts(cache, tasks, tipo) {
         var meta = parseBRL(cache.meta) || 0;
         rptBarChart('rpt-chart-fat',
           ['Faturamento','Meta'],
-          [{label:'Valor',data:[fat,meta],backgroundColor:['rgba(0,0,128,0.7)','rgba(139,212,224,0.8)'],borderRadius:4}]
+          [{label:'Valor',data:[fat,meta],backgroundColor:['rgba(0,0,128,0.7)','rgba(92,200,212,0.8)'],borderRadius:4}]
         );
       }
     }
@@ -2395,12 +2395,12 @@ function rptGenSvgChart(historico, mesSel) {
 
   // Meta line
   var metaPts = months.map(function(h,i){ return xp(i).toFixed(1)+','+sc(h.meta||0).toFixed(1); }).join(' ');
-  var meta = '<polyline points="'+metaPts+'" fill="none" stroke="#F0A500" stroke-width="2.5" stroke-dasharray="6,4"/>';
+  var meta = '<polyline points="'+metaPts+'" fill="none" stroke="#3DBBCC" stroke-width="2.5" stroke-dasharray="6,4"/>';
   months.forEach(function(h,i){
     var x=xp(i), y=sc(h.meta||0);
     var v=h.meta>=1000?'R$'+(h.meta/1000).toFixed(0)+'k':'R$'+(h.meta||0);
-    meta += '<rect x="'+(x-5).toFixed(1)+'" y="'+(y-5).toFixed(1)+'" width="10" height="10" rx="2" fill="#F0A500"/>';
-    meta += '<text x="'+x.toFixed(1)+'" y="'+(y-10).toFixed(1)+'" text-anchor="middle" font-size="9" fill="#C07000">'+v+'</text>';
+    meta += '<rect x="'+(x-5).toFixed(1)+'" y="'+(y-5).toFixed(1)+'" width="10" height="10" rx="2" fill="#3DBBCC"/>';
+    meta += '<text x="'+x.toFixed(1)+'" y="'+(y-10).toFixed(1)+'" text-anchor="middle" font-size="9" fill="#1B7A85">'+v+'</text>';
   });
 
   // Realizado line
@@ -2411,26 +2411,26 @@ function rptGenSvgChart(historico, mesSel) {
       var y=sc(h.fat);
       fatPts.push(x.toFixed(1)+','+y.toFixed(1));
       var v=h.fat>=1000?'R$'+(h.fat/1000).toFixed(1)+'k':'R$'+h.fat;
-      fat += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(isSel?7:5)+'" fill="#1A376B"/>';
-      fat += '<text x="'+x.toFixed(1)+'" y="'+(y-12).toFixed(1)+'" text-anchor="middle" font-size="'+(isSel?10:9)+'" fill="#1A376B" font-weight="'+(isSel?'bold':'400')+'">'+v+'</text>';
+      fat += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(isSel?7:5)+'" fill="#1B2B6B"/>';
+      fat += '<text x="'+x.toFixed(1)+'" y="'+(y-12).toFixed(1)+'" text-anchor="middle" font-size="'+(isSel?10:9)+'" fill="#1B2B6B" font-weight="'+(isSel?'bold':'400')+'">'+v+'</text>';
     } else {
       var yb=sc(0);
-      fat += '<circle cx="'+x.toFixed(1)+'" cy="'+yb.toFixed(1)+'" r="4" fill="#1A376B" opacity="0.3"/>';
+      fat += '<circle cx="'+x.toFixed(1)+'" cy="'+yb.toFixed(1)+'" r="4" fill="#1B2B6B" opacity="0.3"/>';
       fat += '<text x="'+x.toFixed(1)+'" y="'+(yb+16).toFixed(1)+'" text-anchor="middle" font-size="9" fill="#8A94A8" font-style="italic">n/d</text>';
     }
   });
-  if (fatPts.length >= 2) fat = '<polyline points="'+fatPts.join(' ')+'" fill="none" stroke="#1A376B" stroke-width="2.5"/>'+fat;
+  if (fatPts.length >= 2) fat = '<polyline points="'+fatPts.join(' ')+'" fill="none" stroke="#1B2B6B" stroke-width="2.5"/>'+fat;
 
   // X labels
   var xlbls = months.map(function(h,i){
     var x=xp(i), isSel=(h.mesNum===mesSel);
-    return '<text x="'+x.toFixed(1)+'" y="'+(H-padB+18)+'" text-anchor="middle" font-size="11" fill="'+(isSel?'#1A376B':'#2C3E50')+'" font-weight="'+(isSel?'800':'600')+'">'+h.mes+(isSel?'●':'')+' </text>';
+    return '<text x="'+x.toFixed(1)+'" y="'+(H-padB+18)+'" text-anchor="middle" font-size="11" fill="'+(isSel?'#1B2B6B':'#2C3E50')+'" font-weight="'+(isSel?'800':'600')+'">'+h.mes+(isSel?'●':'')+' </text>';
   }).join('');
 
   // Legend
   var lx = W-240;
-  var legend = '<line x1="'+lx+'" y1="'+(H-8)+'" x2="'+(lx+28)+'" y2="'+(H-8)+'" stroke="#1A376B" stroke-width="2.5"/><circle cx="'+(lx+14)+'" cy="'+(H-8)+'" r="4" fill="#1A376B"/><text x="'+(lx+33)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Realizado</text>'
-    +'<line x1="'+(lx+100)+'" y1="'+(H-8)+'" x2="'+(lx+128)+'" y2="'+(H-8)+'" stroke="#F0A500" stroke-width="2.5" stroke-dasharray="5,3"/><rect x="'+(lx+107)+'" y="'+(H-14)+'" width="10" height="10" rx="2" fill="#F0A500"/><text x="'+(lx+133)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Meta</text>';
+  var legend = '<line x1="'+lx+'" y1="'+(H-8)+'" x2="'+(lx+28)+'" y2="'+(H-8)+'" stroke="#1B2B6B" stroke-width="2.5"/><circle cx="'+(lx+14)+'" cy="'+(H-8)+'" r="4" fill="#1B2B6B"/><text x="'+(lx+33)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Realizado</text>'
+    +'<line x1="'+(lx+100)+'" y1="'+(H-8)+'" x2="'+(lx+128)+'" y2="'+(H-8)+'" stroke="#3DBBCC" stroke-width="2.5" stroke-dasharray="5,3"/><rect x="'+(lx+107)+'" y="'+(H-14)+'" width="10" height="10" rx="2" fill="#3DBBCC"/><text x="'+(lx+133)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Meta</text>';
 
   return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%">'+grid+meta+fat+xlbls+legend+'</svg>';
 }
@@ -2555,20 +2555,20 @@ function rptGenerateMensal() {
 
   // ── ESTILOS INLINE (self-contained para PDF) ──
   var S_body = 'font-family:Open Sans,Arial,sans-serif;color:#2C3E50;background:#fff;max-width:900px;margin:0 auto;';
-  var S_hdr = 'background:#1A376B;padding:28px 40px 22px;display:flex;justify-content:space-between;align-items:flex-start;';
+  var S_hdr = 'background:#1B2B6B;padding:28px 40px 22px;display:flex;justify-content:space-between;align-items:flex-start;';
   var S_h1 = 'font-family:Montserrat,Arial,sans-serif;color:#fff;font-size:21px;font-weight:800;letter-spacing:.5px;line-height:1.2;text-transform:uppercase;margin:0;';
   var S_sub = 'color:rgba(255,255,255,.75);font-size:13px;margin-top:5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;';
-  var S_badge = 'background:#F0A500;color:#1A376B;font-family:Montserrat,Arial,sans-serif;font-weight:800;font-size:12px;padding:5px 14px;border-radius:20px;letter-spacing:.5px;display:inline-block;';
+  var S_badge = 'background:#5CC8D4;color:#1B2B6B;font-family:Montserrat,Arial,sans-serif;font-weight:800;font-size:12px;padding:5px 14px;border-radius:20px;letter-spacing:.5px;display:inline-block;';
   var S_emp = 'color:rgba(255,255,255,.55);font-size:11px;margin-top:6px;letter-spacing:1px;text-transform:uppercase;text-align:right;';
-  var S_gold = 'height:4px;background:linear-gradient(90deg,#F0A500,#FFD060,#F0A500);';
+  var S_gold = 'height:4px;background:linear-gradient(90deg,#5CC8D4,#85DDE8,#5CC8D4);';
   var S_body2 = 'padding:28px 40px;';
-  var S_sec = 'font-family:Montserrat,Arial,sans-serif;font-size:11px;font-weight:700;color:#1A376B;text-transform:uppercase;letter-spacing:2px;border-left:3px solid #F0A500;padding-left:10px;margin-bottom:14px;margin-top:26px;';
+  var S_sec = 'font-family:Montserrat,Arial,sans-serif;font-size:11px;font-weight:700;color:#1B2B6B;text-transform:uppercase;letter-spacing:2px;border-left:3px solid #5CC8D4;padding-left:10px;margin-bottom:14px;margin-top:26px;';
   var S_grid4 = 'display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px;';
   var S_card = 'background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:14px 12px;text-align:center;';
-  var S_cardHL = 'background:#1A376B;border:1px solid #1A376B;border-radius:8px;padding:14px 12px;text-align:center;';
+  var S_cardHL = 'background:#1B2B6B;border:1px solid #1B2B6B;border-radius:8px;padding:14px 12px;text-align:center;';
   var S_lbl = 'font-size:10px;color:#6B7A99;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;';
   var S_lblW = 'font-size:10px;color:rgba(255,255,255,.65);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;';
-  var S_val = 'font-family:Montserrat,Arial,sans-serif;font-size:20px;font-weight:800;color:#1A376B;line-height:1.1;';
+  var S_val = 'font-family:Montserrat,Arial,sans-serif;font-size:20px;font-weight:800;color:#1B2B6B;line-height:1.1;';
   var S_valW = 'font-family:Montserrat,Arial,sans-serif;font-size:20px;font-weight:800;color:#fff;line-height:1.1;';
   var S_valG = 'font-family:Montserrat,Arial,sans-serif;font-size:20px;font-weight:800;color:#28A745;line-height:1.1;';
   var S_valR = 'font-family:Montserrat,Arial,sans-serif;font-size:20px;font-weight:800;color:#DC3545;line-height:1.1;';
@@ -2619,11 +2619,11 @@ function rptGenerateMensal() {
     html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:14px 18px;margin-top:10px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
     html += '<span style="font-size:11px;font-weight:600;color:#6B7A99;text-transform:uppercase;letter-spacing:.8px;">Progresso da Meta Mensal</span>';
-    html += '<span style="font-size:12px;color:#2C3E50"><strong style="color:#1A376B">'+fmtBRL(fatN)+'</strong> de <strong style="color:#1A376B">'+fmtBRL(metaN)+'</strong></span>';
+    html += '<span style="font-size:12px;color:#2C3E50"><strong style="color:#1B2B6B">'+fmtBRL(fatN)+'</strong> de <strong style="color:#1B2B6B">'+fmtBRL(metaN)+'</strong></span>';
     html += '</div><div style="height:10px;background:#DDE2EC;border-radius:99px;overflow:hidden;">';
-    html += '<div style="height:100%;width:'+barW+'%;background:linear-gradient(90deg,#1A376B,#2A4F9B);border-radius:99px;"></div></div>';
+    html += '<div style="height:100%;width:'+barW+'%;background:linear-gradient(90deg,#1B2B6B,#2A4F9B);border-radius:99px;"></div></div>';
     html += '<div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px;color:#8A94A8;">';
-    html += '<span>R$ 0</span><span style="font-weight:700;color:#1A376B;">'+pctMeta+'% atingido</span><span>'+fmtBRL(metaN)+'</span></div></div>';
+    html += '<span>R$ 0</span><span style="font-weight:700;color:#1B2B6B;">'+pctMeta+'% atingido</span><span>'+fmtBRL(metaN)+'</span></div></div>';
   }
 
   // ── GRÁFICO SVG ──
@@ -2699,7 +2699,7 @@ function rptGenerateMensal() {
     html += '</div>';
     var bRows = tBoards.slice(0,6).map(function(b){
       var bc=tCards.filter(function(c){return c.boardId===b.id;}),bd=bc.filter(function(c){return c.dueComplete;}).length,pct=bc.length?Math.round(bd/bc.length*100):0;
-      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #E0E5EE;font-size:12px;"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+b.name+'</span><span style="width:40px;text-align:right;color:#1A376B;font-weight:700;">'+bd+'/'+bc.length+'</span><div style="width:80px;height:6px;background:#DDE2EC;border-radius:99px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+(pct>=80?'#28A745':'#1A376B')+';border-radius:99px;"></div></div><span style="width:32px;text-align:right;font-size:11px;color:#6B7A99;">'+pct+'%</span></div>';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #E0E5EE;font-size:12px;"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+b.name+'</span><span style="width:40px;text-align:right;color:#1B2B6B;font-weight:700;">'+bd+'/'+bc.length+'</span><div style="width:80px;height:6px;background:#DDE2EC;border-radius:99px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+(pct>=80?'#28A745':'#1B2B6B')+';border-radius:99px;"></div></div><span style="width:32px;text-align:right;font-size:11px;color:#6B7A99;">'+pct+'%</span></div>';
     }).join('');
     html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 16px;">'+bRows+'</div>';
   } else if (trelloUrl) {
@@ -2713,14 +2713,14 @@ function rptGenerateMensal() {
   // ── RESUMO EXECUTIVO ──
   if (_rmf.analise) {
     html += '<div style="'+S_sec+'">Resumo Executivo</div>';
-    html += '<div style="background:linear-gradient(135deg,#1A376B 0%,#2A4F9B 100%);border-radius:8px;padding:22px 26px;margin-top:0;">';
+    html += '<div style="background:linear-gradient(135deg,#1B2B6B 0%,#2A4F9B 100%);border-radius:8px;padding:22px 26px;margin-top:0;">';
     html += '<p style="color:rgba(255,255,255,.92);font-size:13px;line-height:1.75;font-style:italic;">'+_rmf.analise.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
   }
 
   // ── PRÓXIMOS PASSOS ──
   if (_rmf.proximos) {
     html += '<div style="'+S_sec+'">Próximos Passos e Recomendações</div>';
-    html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-left:4px solid #F0A500;border-radius:8px;padding:18px 20px;margin-top:0;">';
+    html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-left:4px solid #5CC8D4;border-radius:8px;padding:18px 20px;margin-top:0;">';
     html += '<p style="font-size:13px;line-height:1.7;color:#2C3E50;">'+_rmf.proximos.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
   }
 
@@ -2728,7 +2728,7 @@ function rptGenerateMensal() {
 
   // ── FOOTER ──
   html += '<div style="background:#F5F7FA;border-top:1px solid #E0E5EE;padding:14px 40px;display:flex;justify-content:space-between;align-items:center;margin-top:28px;">';
-  html += '<div style="font-family:Montserrat,Arial,sans-serif;font-weight:800;font-size:13px;color:#1A376B;letter-spacing:.5px;">ORGANIZE <span style="color:#F0A500">EMPRESAS</span></div>';
+  html += '<div style="font-family:Montserrat,Arial,sans-serif;font-weight:800;font-size:13px;color:#1B2B6B;letter-spacing:.5px;">ORGANIZE <span style="color:#5CC8D4">EMPRESAS</span></div>';
   html += '<div style="font-size:11px;color:#8A94A8;">Relatório gerado em '+new Date().toLocaleDateString('pt-BR')+' · Referência: '+mesNome+'/'+_rmf.ano+'</div>';
   html += '</div></div>'; // fim page
 
@@ -2779,7 +2779,7 @@ function rptMensal() {
     var hasDrive = val && val.indexOf('drive.google.com') >= 0;
     var hasSheets = val && val.indexOf('spreadsheets') >= 0;
     var idStr = links[idKey] ? '<span style="font-size:10px;color:#22c55e;margin-top:2px;display:block;">✔ ID extraído: '+links[idKey]+'</span>' : '';
-    var driveLink = (hasDrive && val) ? '<a href="'+val+'" target="_blank" style="font-size:10px;color:#1A376B;margin-top:2px;display:block;">↗ Abrir no Drive</a>' : '';
+    var driveLink = (hasDrive && val) ? '<a href="'+val+'" target="_blank" style="font-size:10px;color:#1B2B6B;margin-top:2px;display:block;">↗ Abrir no Drive</a>' : '';
     var trelloLink = (val && val.indexOf('trello') >= 0) ? '<a href="'+val+'" target="_blank" style="font-size:10px;color:#0079BF;margin-top:2px;display:block;">↗ Abrir no Trello</a>' : '';
     return '<div class="rpt-cfg-field" style="grid-column:span 2;">'+
       '<label>'+f.label+'</label>'+
@@ -2980,7 +2980,7 @@ function rptGenerateEncerramento() {
   var nextModBlock = '';
   if (_ref.proxmod) {
     nextModBlock = '<div class="rpt-sec">Foco do Próximo Módulo</div>' +
-      '<div class="rpt-analysis-box" style="border-left-color:var(--teal-dark);background:rgba(139,212,224,.07)">' +
+      '<div class="rpt-analysis-box" style="border-left-color:var(--teal-dark);background:rgba(92,200,212,.07)">' +
       '<div class="rpt-analysis-title">Próximo Módulo</div>' +
       '<p style="font-size:14px;font-weight:600;color:var(--navy)">' + _ref.proxmod + '</p>' +
       '</div>';
