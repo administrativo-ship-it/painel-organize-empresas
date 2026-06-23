@@ -373,6 +373,18 @@ function slugify(s){
     .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
 }
 function randId(){ return Math.random().toString(36).slice(2,7); }
+// prefixo do link por serviço (padrão único de nomenclatura)
+const SERVICO_SLUG={
+  'Organize Mentoring':'organize-mentoring',
+  'Organize Master':'organize-master',
+  'Organize Marketing e Vendas':'organize-marketing-vendas',
+  'Organize Estratégico':'organize-estrategico',
+  'Organize Finance':'organize-finance'
+};
+function buildId(servico,empresa){
+  const pref = SERVICO_SLUG[servico] || 'organizeempresas';
+  return pref + '/' + slugify(empresa);
+}
 function extractCalId(v){
   v=(v||'').trim();
   if(!v) return '';
@@ -392,7 +404,7 @@ async function createPortal(){
   if(!ghToken()){ openToken(); return; }
 
   const editando = !!EDIT_ID;
-  const id = EDIT_ID || (slugify(empresa)+'-'+randId());
+  const id = EDIT_ID || buildId(document.getElementById('servico').value, empresa);
   const data={
     empresa,
     servico: document.getElementById('servico').value,
@@ -420,13 +432,18 @@ async function createPortal(){
     // pega sha se já existir (necessário para atualizar mantendo o mesmo arquivo/link)
     const g=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`,{headers:ghHeaders()});
     const sha=g.ok ? (await g.json()).sha : null;
+    if(sha && !editando){
+      msg.className='msg err show';
+      msg.innerHTML=`Já existe um portal para <b>${id}</b>. Use o botão <b>✏️ Editar</b> na lista para alterá-lo (o link permanece o mesmo).`;
+      btn.disabled=false; btn.innerHTML='✨ Criar portal do cliente'; return;
+    }
     const body={message:`${editando?'edita':'cria'} portal: ${empresa}`, content:b64utf8(JSON.stringify(data,null,2)), branch:BRANCH};
     if(sha) body.sha=sha;
     const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`,{method:'PUT', headers:ghHeaders(), body:JSON.stringify(body)});
     if(!r.ok){ const b=await r.json().catch(()=>({})); throw new Error(b.message||('HTTP '+r.status)); }
     EDIT_ID=id; // permanece em edição com o MESMO id/link
     showEditBanner();
-    const link=`${PAGES_BASE}/cliente.html?id=${id}`;
+    const link=`${PAGES_BASE}/${id}`;
     showResult(link, empresa, editando);
     msg.className='msg show'; msg.style.display='none';
     listClients();
@@ -530,15 +547,16 @@ async function listClients(){
   if(!ghToken()){ box.innerHTML='<div style="color:var(--muted);font-size:13px">Conecte o GitHub para listar os portais.</div>'; return; }
   box.innerHTML='<div style="color:var(--muted);font-size:13px"><span class="spin"></span> Carregando…</div>';
   try{
-    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/clientes?ref=${BRANCH}`,{headers:ghHeaders()});
-    if(r.status===404){ box.innerHTML='<div style="color:var(--muted);font-size:13px">Nenhum portal criado ainda.</div>'; return; }
+    // árvore recursiva (os JSON ficam em subpastas por serviço)
+    const r=await fetch(`https://api.github.com/repos/${REPO}/git/trees/${BRANCH}?recursive=1`,{headers:ghHeaders()});
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const files=(await r.json()).filter(f=>f.name.endsWith('.json'));
-    if(!files.length){ box.innerHTML='<div style="color:var(--muted);font-size:13px">Nenhum portal criado ainda.</div>'; return; }
+    const tree=(await r.json()).tree||[];
+    const ids=tree.filter(t=>t.type==='blob' && t.path.indexOf('clientes/')===0 && t.path.endsWith('.json'))
+                  .map(t=>t.path.slice('clientes/'.length,-5));
+    if(!ids.length){ box.innerHTML='<div style="color:var(--muted);font-size:13px">Nenhum portal criado ainda.</div>'; return; }
     box.innerHTML='';
-    files.sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{
-      const id=f.name.replace('.json','');
-      const link=`${PAGES_BASE}/cliente.html?id=${id}`;
+    ids.sort((a,b)=>a.localeCompare(b)).forEach(id=>{
+      const link=`${PAGES_BASE}/${id}`;
       const el=document.createElement('div'); el.className='cli-item';
       el.innerHTML=`<span style="font-size:16px">🏢</span><span class="nm">${id}</span>
         <button class="btn btn-ghost btn-sm" onclick="editClient('${id}')">✏️ Editar</button>
