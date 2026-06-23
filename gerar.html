@@ -83,6 +83,10 @@ textarea{resize:vertical;min-height:70px}
 /* existing clients */
 .cli-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r2);margin-bottom:8px;font-size:13px}
 .cli-item .nm{font-weight:700;color:var(--navy);flex:1}
+.h-ico{width:19px;height:19px;fill:var(--navy);vertical-align:-4px;margin-right:7px}
+.btn svg,.cli-item svg,.pv-tab svg,.gh-state svg{width:15px;height:15px;fill:currentColor;vertical-align:-2px}
+.pv-tab svg{width:13px;height:13px}
+.cli-item .nm svg{width:15px;height:15px;fill:var(--navy);vertical-align:-2px;margin-right:6px}
 .cli-item a{color:var(--teal-dark);font-weight:700;text-decoration:none;font-size:12px}
 .spin{display:inline-block;width:16px;height:16px;border:2.5px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:rot .8s linear infinite;vertical-align:middle}
 @keyframes rot{to{transform:rotate(360deg)}}
@@ -97,7 +101,7 @@ textarea{resize:vertical;min-height:70px}
 
 <div class="wrap">
   <div class="intro">
-    <h1>🚀 Gerador de Portais de Mentoria</h1>
+    <h1><svg class="h-ico" style="width:26px;height:26px;vertical-align:-5px" viewBox="0 0 24 24"><path d="M13.13 22.19l-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27l-2.77 6.1zM5.64 12.5l-3.83-1.63 6.1-2.77c-.91 1.36-1.69 2.83-2.27 4.4zM21.61 2.39S16.66.269 11 5.93c-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l1.12 1.12c.55.55 1.38.74 2.13.46C12.47 15.5 14.88 14.2 17.07 12c5.66-5.66 4.54-9.61 4.54-9.61zm-7.96 7.96c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0z"/></svg> Gerador de Portais de Mentoria</h1>
     <p>Preencha os dados do cliente, clique em <b>Criar portal</b> e receba o link pronto para enviar no WhatsApp. Cada cliente ganha sua própria página com agenda, gravações, Trello e Drive — tudo atualizado automaticamente.</p>
   </div>
 
@@ -105,7 +109,7 @@ textarea{resize:vertical;min-height:70px}
     <!-- FORM -->
     <div>
       <div class="card">
-        <h2>👤 Dados do cliente</h2>
+        <h2><svg class="h-ico" viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"/></svg>Dados do cliente</h2>
         <div class="hint">Informações principais que aparecem no topo do portal.</div>
         <div class="field">
           <label class="req">Nome da empresa</label>
@@ -131,7 +135,7 @@ textarea{resize:vertical;min-height:70px}
           <div class="logo-drop" id="logoDrop" onclick="document.getElementById('logoFile').click()"
                ondragover="event.preventDefault();this.style.borderColor='var(--navy)'"
                ondragleave="this.style.borderColor='var(--border)'" ondrop="dropLogo(event)">
-            <div style="font-size:26px">🖼️</div>
+            <svg style="width:28px;height:28px;fill:var(--navy)" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
             <div style="font-size:13px;font-weight:700;color:var(--navy);margin-top:4px">Clique ou arraste a logo</div>
             <div style="font-size:11.5px;color:var(--muted);margin-top:2px">PNG ou JPG · será otimizada automaticamente</div>
           </div>
@@ -149,7 +153,7 @@ textarea{resize:vertical;min-height:70px}
       </div>
 
       <div class="card">
-        <h2>🔗 Acessos do cliente</h2>
+        <h2><svg class="h-ico" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>Acessos do cliente</h2>
         <div class="hint">Cole os links das ferramentas. Pode deixar em branco o que ainda não existir — aparece como "em breve".</div>
         <div class="field">
           <label class="req">E-mail(s) do cliente no Google (Agenda)</label>
@@ -191,17 +195,17 @@ textarea{resize:vertical;min-height:70px}
         <span id="editBannerTxt"></span>
         <button class="btn btn-ghost btn-sm" onclick="resetForm()" style="white-space:nowrap">✕ Novo portal</button>
       </div>
-      <button class="btn btn-primary btn-lg btn-block" id="createBtn" onclick="createPortal()">✨ Criar portal do cliente</button>
+      <button class="btn btn-primary btn-lg btn-block" id="createBtn" onclick="createPortal()"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Criar portal do cliente</button>
       <div class="msg" id="formMsg"></div>
 
       <div class="result" id="result">
-        <h2>✅ Portal criado com sucesso!</h2>
+        <h2><svg class="h-ico" style="fill:var(--green)" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Portal criado com sucesso!</h2>
         <p style="font-size:13.5px;color:var(--txt2);margin-top:4px">Este é o link exclusivo do cliente. Envie no grupo de WhatsApp:</p>
         <div class="link-box" id="resultLink"></div>
         <div class="result-actions">
-          <button class="btn btn-ghost" onclick="copyLink()">📋 Copiar link</button>
-          <a class="btn btn-primary" id="openLink" target="_blank">👁️ Abrir portal</a>
-          <a class="btn btn-green" id="waLink" target="_blank">💬 Enviar no WhatsApp</a>
+          <button class="btn btn-ghost" onclick="copyLink()"><svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 00-2 2v14h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"/></svg> Copiar link</button>
+          <a class="btn btn-primary" id="openLink" target="_blank"><svg viewBox="0 0 24 24"><path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7zM5 5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7H5V5z"/></svg> Abrir portal</a>
+          <a class="btn btn-green" id="waLink" target="_blank"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Enviar no WhatsApp</a>
         </div>
       </div>
     </div>
@@ -209,7 +213,7 @@ textarea{resize:vertical;min-height:70px}
     <!-- PREVIEW + clientes -->
     <div>
       <div class="card preview-card">
-        <h2>👁️ Pré-visualização</h2>
+        <h2><svg class="h-ico" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5C21.3 7.6 17 4.5 12 4.5zm0 12.5a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/></svg>Pré-visualização</h2>
         <div class="hint">Veja como o topo do portal vai ficar.</div>
         <div class="pv-frame">
           <div class="pv-hero">
@@ -217,20 +221,20 @@ textarea{resize:vertical;min-height:70px}
             <div><h3 id="pvName">Nome da empresa</h3><span class="pv-badge" id="pvBadge" style="display:none"></span></div>
           </div>
           <div class="pv-tabs">
-            <span class="pv-tab on">📆 Agenda</span><span class="pv-tab">🎬 Gravações</span>
-            <span class="pv-tab">🗂️ Trello</span><span class="pv-tab">📁 Drive</span>
+            <span class="pv-tab on"><svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg> Agenda</span><span class="pv-tab"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> Gravações</span>
+            <span class="pv-tab"><svg viewBox="0 0 24 24"><path d="M21.147 0H2.853A2.86 2.86 0 000 2.853v18.294A2.86 2.86 0 002.853 24h18.294A2.86 2.86 0 0024 21.147V2.853A2.86 2.86 0 0021.147 0zM10.34 17.287a.953.953 0 01-.953.953h-4a.954.954 0 01-.954-.953V5.38a.953.953 0 01.954-.953h4a.954.954 0 01.953.953zm9.233-5.467a.944.944 0 01-.953.947h-4a.947.947 0 01-.953-.947V5.38a.953.953 0 01.953-.953h4a.954.954 0 01.953.953z"/></svg> Trello</span><span class="pv-tab"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg> Drive</span>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <h2>📂 Portais já criados</h2>
+        <h2><svg class="h-ico" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>Portais já criados</h2>
         <div class="hint">Clientes com portal ativo.</div>
         <div id="clientList"><div style="color:var(--muted);font-size:13px"><span class="spin"></span> Conecte o GitHub para listar.</div></div>
       </div>
 
       <div class="card">
-        <h2>🖼️ Logo da Organize</h2>
+        <h2><svg class="h-ico" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>Logo da Organize</h2>
         <div class="hint">Logo compartilhada por <b>todos os portais</b> e pelo painel. Ao trocar aqui, atualiza em todos automaticamente.</div>
         <div style="background:var(--navy);border-radius:var(--r2);padding:14px;text-align:center;margin-bottom:12px">
           <img id="sharedLogoPrev" src="organize-logo.png" alt="logo" style="height:40px;max-width:90%;object-fit:contain">
@@ -251,7 +255,7 @@ textarea{resize:vertical;min-height:70px}
 <!-- TOKEN MODAL -->
 <div class="ov" id="tokenOv">
   <div class="modal">
-    <h3>🔐 Conectar GitHub</h3>
+    <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zM9 8V6a3 3 0 016 0v2z"/></svg>Conectar GitHub</h3>
     <p>O gerador salva os portais no repositório da Organize. Cole o token GitHub uma única vez — fica guardado só neste navegador.</p>
     <input class="inp mono" id="tokenInput" placeholder="ghp_..." style="margin-bottom:14px">
     <div style="display:flex;gap:10px">
@@ -434,8 +438,8 @@ async function createPortal(){
     const sha=g.ok ? (await g.json()).sha : null;
     if(sha && !editando){
       msg.className='msg err show';
-      msg.innerHTML=`Já existe um portal para <b>${id}</b>. Use o botão <b>✏️ Editar</b> na lista para alterá-lo (o link permanece o mesmo).`;
-      btn.disabled=false; btn.innerHTML='✨ Criar portal do cliente'; return;
+      msg.innerHTML=`Já existe um portal para <b>${id}</b>. Use o botão <b>Editar</b> na lista para alterá-lo (o link permanece o mesmo).`;
+      btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Criar portal do cliente'; return;
     }
     const body={message:`${editando?'edita':'cria'} portal: ${empresa}`, content:b64utf8(JSON.stringify(data,null,2)), branch:BRANCH};
     if(sha) body.sha=sha;
@@ -450,7 +454,7 @@ async function createPortal(){
   }catch(e){
     msg.className='msg err show'; msg.textContent='Erro ao salvar: '+e.message;
   }finally{
-    btn.disabled=false; btn.innerHTML=EDIT_ID?'💾 Salvar alterações':'✨ Criar portal do cliente';
+    btn.disabled=false; btn.innerHTML=EDIT_ID?'<svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4zm-5 16a3 3 0 110-6 3 3 0 010 6zm3-10H5V5h10v4z"/></svg> Salvar alterações':'<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Criar portal do cliente';
   }
 }
 
@@ -480,7 +484,7 @@ async function editClient(id){
     if(LOGO_DATA) showLogo(); else removeLogoSilent();
     EDIT_ID=id;
     showEditBanner();
-    document.getElementById('createBtn').innerHTML='💾 Salvar alterações';
+    document.getElementById('createBtn').innerHTML='<svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4zm-5 16a3 3 0 110-6 3 3 0 010 6zm3-10H5V5h10v4z"/></svg> Salvar alterações';
     document.getElementById('result').classList.remove('show');
     updatePreview();
     msg.style.display='none';
@@ -510,7 +514,7 @@ async function deleteClient(id){
 function showEditBanner(){
   const b=document.getElementById('editBanner');
   b.style.display='flex';
-  document.getElementById('editBannerTxt').innerHTML=`✏️ Editando portal: <b>${EDIT_ID}</b> — o link permanece o mesmo.`;
+  document.getElementById('editBannerTxt').innerHTML=`<svg class="ico-i" style="width:15px;height:15px;fill:currentColor;vertical-align:-2px" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75z"/></svg> Editando portal: <b>${EDIT_ID}</b> — o link permanece o mesmo.`;
 }
 function resetForm(){
   EDIT_ID=null;
@@ -518,7 +522,7 @@ function resetForm(){
     .forEach(id=>document.getElementById(id).value='');
   removeLogoSilent();
   document.getElementById('editBanner').style.display='none';
-  document.getElementById('createBtn').innerHTML='✨ Criar portal do cliente';
+  document.getElementById('createBtn').innerHTML='<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Criar portal do cliente';
   document.getElementById('result').classList.remove('show');
   document.getElementById('formMsg').style.display='none';
   updatePreview();
@@ -528,7 +532,7 @@ function removeLogoSilent(){ LOGO_DATA=''; document.getElementById('logoPrev').s
 
 function showResult(link, empresa, editando){
   const r=document.getElementById('result');
-  r.querySelector('h2').textContent = editando ? '✅ Portal atualizado com sucesso!' : '✅ Portal criado com sucesso!';
+  r.querySelector('h2').innerHTML = '<svg class="h-ico" style="fill:var(--green)" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' + (editando ? 'Portal atualizado com sucesso!' : 'Portal criado com sucesso!');
   document.getElementById('resultLink').textContent=link;
   document.getElementById('openLink').href=link;
   const txt=`Olá! 👋 Este é o seu portal exclusivo de mentoria da Organize Empresas. Aqui você acessa agenda, gravações, Trello e Drive em um só lugar:\n${link}`;
@@ -558,9 +562,9 @@ async function listClients(){
     ids.sort((a,b)=>a.localeCompare(b)).forEach(id=>{
       const link=`${PAGES_BASE}/${id}`;
       const el=document.createElement('div'); el.className='cli-item';
-      el.innerHTML=`<span style="font-size:16px">🏢</span><span class="nm">${id}</span>
-        <button class="btn btn-ghost btn-sm" onclick="editClient('${id}')">✏️ Editar</button>
-        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid #f3c9c2" onclick="deleteClient('${id}')">🗑️ Excluir</button>
+      el.innerHTML=`<span class="nm"><svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>${id}</span>
+        <button class="btn btn-ghost btn-sm" onclick="editClient('${id}')"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75z"/></svg> Editar</button>
+        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid #f3c9c2" onclick="deleteClient('${id}')"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8a2 2 0 002-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> Excluir</button>
         <a href="${link}" target="_blank">abrir ↗</a>`;
       box.appendChild(el);
     });
