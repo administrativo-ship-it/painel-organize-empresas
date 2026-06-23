@@ -157,20 +157,34 @@ textarea{resize:vertical;min-height:70px}
           <div class="sub">O e-mail Google que o cliente usa e que <b>recebe os convites das mentorias</b>. A página lê a agenda de quem acessa e mostra só os eventos com esse e-mail — o cliente deve entrar com essa mesma conta. Ex.: <code>movimentokidsellennic@gmail.com</code></div>
         </div>
         <div class="field">
-          <label>Filtro por nome <span style="font-weight:500;color:var(--muted)">(opcional)</span></label>
+          <label class="req">Nome da empresa na agenda (filtro)</label>
           <input class="inp mono" id="filtro" placeholder="Ex.: Movimento Kids">
-          <div class="sub">Reforço opcional: também exibe eventos cujo título ou descrição contenham este texto (útil para sessões em grupo).</div>
+          <div class="sub">Nome <b>exatamente como aparece no título dos eventos</b>. Só serão exibidos eventos no padrão <code>Organize Mentoring - Nome</code> (e variações). Eventos com "Organize Empresas" no título são ignorados (internos).</div>
         </div>
         <div class="field">
-          <label>Link do Trello (área de trabalho)</label>
+          <label>Link de busca da agenda <span style="font-weight:500;color:var(--muted)">(opcional)</span></label>
+          <input class="inp mono" id="agendaBusca" placeholder="https://calendar.google.com/calendar/u/0/r/search?q=movimento%20kids">
+          <div class="sub">Link de busca da empresa no Google Agenda. Usado no botão "Abrir no Google Agenda" do portal e como reforço do filtro (extrai o nome do <code>q=</code>).</div>
+        </div>
+        <div class="field">
+          <label>Link das apostilas</label>
+          <input class="inp mono" id="apostilas" placeholder="https://drive.google.com/drive/folders/...">
+          <div class="sub">Pasta ou arquivo com as apostilas e materiais de apoio do programa.</div>
+        </div>
+        <div class="field">
+          <label>Link do Trello (planejamento e indicadores)</label>
           <input class="inp mono" id="trello" placeholder="https://trello.com/b/...">
         </div>
         <div class="field">
-          <label>Link do Drive (pasta da empresa)</label>
+          <label>Link do Drive (materiais e documentos)</label>
           <input class="inp mono" id="drive" placeholder="https://drive.google.com/drive/folders/...">
         </div>
       </div>
 
+      <div class="msg info" id="editBanner" style="display:none;align-items:center;justify-content:space-between;gap:10px">
+        <span id="editBannerTxt"></span>
+        <button class="btn btn-ghost btn-sm" onclick="resetForm()" style="white-space:nowrap">✕ Novo portal</button>
+      </div>
       <button class="btn btn-primary btn-lg btn-block" id="createBtn" onclick="createPortal()">✨ Criar portal do cliente</button>
       <div class="msg" id="formMsg"></div>
 
@@ -236,6 +250,7 @@ const PAGES_BASE = 'https://administrativo-ship-it.github.io/painel-organize-emp
 const TOKEN_KEY = 'organize_gh_token';
 
 let LOGO_DATA = '';   // base64 data URL da logo
+let EDIT_ID = null;   // id do portal em edição (null = criando novo)
 
 /* ---------- token GitHub ---------- */
 function ghToken(){ return localStorage.getItem(TOKEN_KEY)||''; }
@@ -324,7 +339,8 @@ async function createPortal(){
   if(!empresa){ msg.className='msg err show'; msg.textContent='Informe o nome da empresa.'; return; }
   if(!ghToken()){ openToken(); return; }
 
-  const id = slugify(empresa)+'-'+randId();
+  const editando = !!EDIT_ID;
+  const id = EDIT_ID || (slugify(empresa)+'-'+randId());
   const data={
     empresa,
     servico: document.getElementById('servico').value,
@@ -333,6 +349,8 @@ async function createPortal(){
     calendarId: 'primary',
     clienteEmail: document.getElementById('clienteEmail').value.trim(),
     filtro: document.getElementById('filtro').value.trim(),
+    agendaBusca: document.getElementById('agendaBusca').value.trim(),
+    apostilas: document.getElementById('apostilas').value.trim(),
     trello: document.getElementById('trello').value.trim(),
     drive: document.getElementById('drive').value.trim(),
     boasVindas: document.getElementById('boasVindas').value.trim(),
@@ -340,30 +358,84 @@ async function createPortal(){
   };
 
   const btn=document.getElementById('createBtn');
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Criando…';
-  msg.className='msg info show'; msg.textContent='Salvando portal no servidor…';
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Salvando…';
+  msg.className='msg info show'; msg.textContent=editando?'Salvando alterações…':'Salvando portal no servidor…';
 
   try{
     const path=`clientes/${id}.json`;
-    const content=b64utf8(JSON.stringify(data,null,2));
-    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`,{
-      method:'PUT', headers:ghHeaders(),
-      body:JSON.stringify({message:`portal: ${empresa}`, content, branch:BRANCH})
-    });
+    // pega sha se já existir (necessário para atualizar mantendo o mesmo arquivo/link)
+    const g=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`,{headers:ghHeaders()});
+    const sha=g.ok ? (await g.json()).sha : null;
+    const body={message:`${editando?'edita':'cria'} portal: ${empresa}`, content:b64utf8(JSON.stringify(data,null,2)), branch:BRANCH};
+    if(sha) body.sha=sha;
+    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`,{method:'PUT', headers:ghHeaders(), body:JSON.stringify(body)});
     if(!r.ok){ const b=await r.json().catch(()=>({})); throw new Error(b.message||('HTTP '+r.status)); }
+    EDIT_ID=id; // permanece em edição com o MESMO id/link
+    showEditBanner();
     const link=`${PAGES_BASE}/cliente.html?id=${id}`;
-    showResult(link, empresa);
+    showResult(link, empresa, editando);
     msg.className='msg show'; msg.style.display='none';
     listClients();
   }catch(e){
-    msg.className='msg err show'; msg.textContent='Erro ao criar: '+e.message;
+    msg.className='msg err show'; msg.textContent='Erro ao salvar: '+e.message;
   }finally{
-    btn.disabled=false; btn.innerHTML='✨ Criar portal do cliente';
+    btn.disabled=false; btn.innerHTML=EDIT_ID?'💾 Salvar alterações':'✨ Criar portal do cliente';
   }
 }
 
-function showResult(link, empresa){
+/* ---------- editar / novo ---------- */
+async function editClient(id){
+  if(!ghToken()){ openToken(); return; }
+  const msg=document.getElementById('formMsg');
+  msg.className='msg info show'; msg.textContent='Carregando portal para edição…';
+  try{
+    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/clientes/${id}.json?ref=${BRANCH}`,{headers:ghHeaders()});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const info=await r.json();
+    const d=JSON.parse(decodeURIComponent(escape(atob((info.content||'').replace(/\n/g,'')))));
+    document.getElementById('empresa').value=d.empresa||'';
+    document.getElementById('servico').value=d.servico||'';
+    document.getElementById('responsavel').value=d.responsavel||'';
+    document.getElementById('clienteEmail').value=d.clienteEmail||'';
+    document.getElementById('filtro').value=d.filtro||'';
+    document.getElementById('agendaBusca').value=d.agendaBusca||'';
+    document.getElementById('apostilas').value=d.apostilas||'';
+    document.getElementById('trello').value=d.trello||'';
+    document.getElementById('drive').value=d.drive||'';
+    document.getElementById('boasVindas').value=d.boasVindas||'';
+    LOGO_DATA=d.logo||'';
+    if(LOGO_DATA) showLogo(); else removeLogoSilent();
+    EDIT_ID=id;
+    showEditBanner();
+    document.getElementById('createBtn').innerHTML='💾 Salvar alterações';
+    document.getElementById('result').classList.remove('show');
+    updatePreview();
+    msg.style.display='none';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){ msg.className='msg err show'; msg.textContent='Erro ao carregar: '+e.message; }
+}
+function showEditBanner(){
+  const b=document.getElementById('editBanner');
+  b.style.display='flex';
+  document.getElementById('editBannerTxt').innerHTML=`✏️ Editando portal: <b>${EDIT_ID}</b> — o link permanece o mesmo.`;
+}
+function resetForm(){
+  EDIT_ID=null;
+  ['empresa','servico','responsavel','clienteEmail','filtro','agendaBusca','apostilas','trello','drive','boasVindas']
+    .forEach(id=>document.getElementById(id).value='');
+  removeLogoSilent();
+  document.getElementById('editBanner').style.display='none';
+  document.getElementById('createBtn').innerHTML='✨ Criar portal do cliente';
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('formMsg').style.display='none';
+  updatePreview();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function removeLogoSilent(){ LOGO_DATA=''; document.getElementById('logoPrev').style.display='none'; document.getElementById('logoFile').value=''; }
+
+function showResult(link, empresa, editando){
   const r=document.getElementById('result');
+  r.querySelector('h2').textContent = editando ? '✅ Portal atualizado com sucesso!' : '✅ Portal criado com sucesso!';
   document.getElementById('resultLink').textContent=link;
   document.getElementById('openLink').href=link;
   const txt=`Olá! 👋 Este é o seu portal exclusivo de mentoria da Organize Empresas. Aqui você acessa agenda, gravações, Trello e Drive em um só lugar:\n${link}`;
@@ -393,6 +465,7 @@ async function listClients(){
       const link=`${PAGES_BASE}/cliente.html?id=${id}`;
       const el=document.createElement('div'); el.className='cli-item';
       el.innerHTML=`<span style="font-size:16px">🏢</span><span class="nm">${id}</span>
+        <button class="btn btn-ghost btn-sm" onclick="editClient('${id}')">✏️ Editar</button>
         <a href="${link}" target="_blank">abrir ↗</a>`;
       box.appendChild(el);
     });
