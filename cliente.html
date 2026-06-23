@@ -245,6 +245,7 @@ footer .org{color:var(--navy);font-weight:700}
    ============================================================ */
 const GOOGLE_CLIENT_ID = '317582081175-hq9fhp12dnv67odbp1lamnb34e3ngvrn.apps.googleusercontent.com';
 const CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+const CAL_OK_KEY = 'organize_cal_ok';   // lembra que o cliente já conectou (login persistente)
 const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const MES_FULL = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
@@ -355,12 +356,26 @@ function initGoogle(){
     callback: (resp)=>{
       if(resp && resp.access_token){
         TOKEN = resp.access_token;
+        localStorage.setItem(CAL_OK_KEY,'1');   // lembra para reconectar sozinho
         setAuthState(true);
         loadCalendar();
+        scheduleTokenRefresh();
       }
-    }
+    },
+    error_callback: ()=>{ setAuthState(false); }  // login silencioso falhou → mostra botão
   });
   document.getElementById('connectBtn').style.display='inline-flex';
+  // LOGIN PERSISTENTE: se já conectou neste navegador, reconecta sem pedir nada
+  if(localStorage.getItem(CAL_OK_KEY)){
+    document.getElementById('authLabel').textContent='Reconectando…';
+    try{ tokenClient.requestAccessToken({prompt:''}); }catch(e){}
+  }
+}
+// renova o token em silêncio antes de expirar (~55 min) para manter a sessão viva
+let _refreshTimer=null;
+function scheduleTokenRefresh(){
+  clearTimeout(_refreshTimer);
+  _refreshTimer=setTimeout(()=>{ if(localStorage.getItem(CAL_OK_KEY)){ try{ tokenClient.requestAccessToken({prompt:''}); }catch(e){} } }, 55*60*1000);
 }
 function connectGoogle(){
   if(!tokenClient){ alert('Carregando login do Google… tente novamente em alguns segundos.'); return; }
@@ -369,6 +384,8 @@ function connectGoogle(){
 function signOut(){
   if(TOKEN){ google.accounts.oauth2.revoke(TOKEN,()=>{}); }
   TOKEN=null; EVENTS=[];
+  localStorage.removeItem(CAL_OK_KEY);   // esquece o login persistente
+  clearTimeout(_refreshTimer);
   setAuthState(false);
   // restaurar gates
   document.getElementById('agendaContent').innerHTML = gateHTML('agenda');
@@ -484,7 +501,8 @@ function renderAgenda(){
   // botão abrir google agenda (usa o link de busca da empresa, se houver)
   const agUrl = CLIENT.agendaBusca || 'https://calendar.google.com/calendar/u/0/r';
   document.getElementById('agendaActions').innerHTML =
-    `<a class="btn btn-ghost" target="_blank" rel="noopener" href="${agUrl}">Abrir no Google Agenda ↗</a>`;
+    `<button class="btn btn-ghost" onclick="loadCalendar()" title="Buscar novidades">🔄 Atualizar</button>
+     <a class="btn btn-ghost" target="_blank" rel="noopener" href="${agUrl}">Abrir no Google Agenda ↗</a>`;
   if(upcoming.length){
     html += `<div class="evt-group-lbl">▸ Próximas (${upcoming.length})</div>`;
     upcoming.forEach(e=>html+=evtHTML(e,false));
@@ -565,6 +583,10 @@ function switchTab(t){
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));
 }
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---------- atualização automática ----------
+   Ao voltar para a aba (ou reabrir), recarrega a agenda/gravações ao vivo. */
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && TOKEN) loadCalendar(); });
 
 /* ---------- boot ---------- */
 loadClient();
