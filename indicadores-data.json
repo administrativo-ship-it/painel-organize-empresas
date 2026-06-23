@@ -7,7 +7,104 @@
       "financeiroId": "129OE8LjjP78visfwm1G0pMocYEw4-qgq",
       "fluxoId": null,
       "historico": [],
-      "mensal": {},
+      "mensal": {
+        "1": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "2": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "3": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "4": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "5": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "6": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "7": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "8": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "9": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "10": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "11": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "12": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        }
+      },
       "dre": {}
     },
     "ML Motos": {
@@ -16,7 +113,64 @@
       "financeiroId": null,
       "fluxoId": null,
       "historico": [],
-      "mensal": {},
+      "mensal": {
+        "6": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "7": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "8": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "9": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "10": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "11": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "12": {
+          "fat": 0,
+          "meta": 0,
+          "cresc": null,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        }
+      },
       "dre": {}
     }
   }
