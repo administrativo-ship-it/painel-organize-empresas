@@ -286,6 +286,8 @@ footer .org{color:var(--navy);font-weight:700}
 const GOOGLE_CLIENT_ID = '317582081175-hq9fhp12dnv67odbp1lamnb34e3ngvrn.apps.googleusercontent.com';
 const CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/drive.readonly';
 const CAL_OK_KEY = 'organize_cal_ok';   // lembra que o cliente já conectou (login persistente)
+// base do site (funciona em produção e no preview local)
+const REPO_BASE = location.pathname.indexOf('/painel-organize-empresas/')===0 ? '/painel-organize-empresas/' : '/';
 const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const MES_FULL = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
@@ -295,17 +297,31 @@ let TOKEN = null;        // access token Google
 let tokenClient = null;
 let EVENTS = [];         // eventos carregados
 
+/* ---------- identificar o cliente (URL limpa por caminho OU ?id=) ---------- */
+function getClientId(){
+  const q = new URLSearchParams(location.search).get('id');
+  if(q) return q.replace(/^\/+|\/+$/g,'');
+  // caminho: ex. /painel-organize-empresas/organize-mentoring/movimento-kids
+  let p = location.pathname;
+  if(p.indexOf(REPO_BASE)===0) p = p.slice(REPO_BASE.length);
+  p = p.replace(/^\/+|\/+$/g,'');
+  if(!p || /(^|\/)(cliente|index|404)\.html?$/i.test(p)) return null;
+  try{ p = decodeURIComponent(p); }catch(e){}
+  return p;
+}
+function jsonUrl(id){
+  return REPO_BASE+'clientes/'+id.split('/').map(encodeURIComponent).join('/')+'.json?v='+Date.now();
+}
 /* ---------- carregar config do cliente ---------- */
 async function loadClient(){
-  const params = new URLSearchParams(location.search);
-  const id = params.get('id');
+  const id = getClientId();
   if(!id){
     document.getElementById('clientName').textContent = 'Página não configurada';
-    document.getElementById('clientWelcome').textContent = 'Link inválido — falta o identificador do cliente (?id=).';
+    document.getElementById('clientWelcome').textContent = 'Link inválido — falta o identificador do cliente.';
     return;
   }
   try{
-    const res = await fetch(`clientes/${encodeURIComponent(id)}.json?v=`+Date.now());
+    const res = await fetch(jsonUrl(id));
     if(!res.ok) throw new Error('not found');
     CLIENT = await res.json();
     renderClient();
@@ -735,6 +751,7 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 /* ---------- boot ---------- */
+document.querySelector('.org-logo').src = REPO_BASE+'organize-logo.png';
 loadClient();
 initGoogle();
 </script>
