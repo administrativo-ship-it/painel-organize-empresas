@@ -363,18 +363,12 @@ function gateHTML(which){
 }
 
 async function loadCalendar(){
-  if(!CLIENT || !CLIENT.calendarId){
-    document.getElementById('agendaContent').innerHTML =
-      `<div class="err-box">Esta página ainda não tem um calendário configurado pela assessoria.</div>`;
-    document.getElementById('gravacoesContent').innerHTML =
-      `<div class="empty"><div class="ic">📭</div>Nenhum calendário configurado ainda.</div>`;
-    return;
-  }
+  const calId = (CLIENT && CLIENT.calendarId) ? CLIENT.calendarId : 'primary';
   document.getElementById('agendaContent').innerHTML = `<div class="loading"><span class="spin"></span>Carregando agenda…</div>`;
   const now = new Date();
   const timeMin = new Date(now.getFullYear(), now.getMonth()-12, 1).toISOString();
   const timeMax = new Date(now.getFullYear(), now.getMonth()+13, 1).toISOString();
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CLIENT.calendarId)}/events`
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`
     + `?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=2500`;
   try{
     const r = await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
@@ -386,7 +380,9 @@ async function loadCalendar(){
     }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data = await r.json();
-    EVENTS = (data.items||[]).filter(e=>e.status!=='cancelled' && (e.start&&(e.start.dateTime||e.start.date)));
+    EVENTS = (data.items||[])
+      .filter(e=>e.status!=='cancelled' && (e.start&&(e.start.dateTime||e.start.date)))
+      .filter(matchesClient);
     renderAgenda();
     renderGravacoes();
     renderNext();
@@ -394,6 +390,27 @@ async function loadCalendar(){
     document.getElementById('agendaContent').innerHTML =
       `<div class="err-box">Não foi possível carregar a agenda agora. ${e.message||''}</div>`;
   }
+}
+
+/* ---------- filtro do cliente ----------
+   Os eventos de mentoria ficam numa agenda compartilhada da Organize.
+   Identificamos os eventos DESTE cliente pelo e-mail dele (convidado) e/ou
+   por um texto de filtro (nome). Sem filtro, mostra tudo. */
+function matchesClient(e){
+  const email=(CLIENT.clienteEmail||'').toLowerCase().trim();
+  const filtro=(CLIENT.filtro||'').toLowerCase().trim();
+  if(!email && !filtro) return true;
+  if(email){
+    const inAtt=(e.attendees||[]).some(a=>(a.email||'').toLowerCase()===email);
+    const isOrg=((e.organizer&&e.organizer.email)||'').toLowerCase()===email;
+    const isCre=((e.creator&&e.creator.email)||'').toLowerCase()===email;
+    if(inAtt||isOrg||isCre) return true;
+  }
+  if(filtro){
+    const hay=((e.summary||'')+' '+(e.description||'')).toLowerCase();
+    if(hay.includes(filtro)) return true;
+  }
+  return false;
 }
 
 /* ---------- parsing de gravações ---------- */
