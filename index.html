@@ -306,7 +306,7 @@ tbody tr:hover{background:var(--off);}
       <text x="60" y="29" font-family="DM Sans,sans-serif" font-size="18" font-weight="800" fill="#5CC8D4" letter-spacing="-0.5">Organize</text>
       <text x="62" y="44" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.72)" letter-spacing="3">EMPRESAS</text>
     </svg>
-    <img id="logo-custom" style="display:none;max-width:175px;max-height:58px;object-fit:contain;background:#fff;border-radius:8px;padding:5px 10px;" alt="Logo">
+    <img id="logo-custom" style="display:none;max-width:180px;max-height:52px;object-fit:contain;" alt="Logo">
     <div class="logo-tagline" id="logo-tagline">Painel Gerencial de Projetos</div>
   </div>
 
@@ -1617,8 +1617,11 @@ function applyLogo() {
   if (lc.name) document.title = lc.name + ' — Painel Gerencial';
   const svgEl = document.getElementById('logo-svg');
   const imgEl = document.getElementById('logo-custom');
-  if (lc.img) { svgEl.style.display='none'; imgEl.src=lc.img; imgEl.style.display='block'; }
-  else { svgEl.style.display='block'; imgEl.style.display='none'; }
+  // logo centralizada: usa o arquivo compartilhado organize-logo.png (igual aos portais)
+  svgEl.style.display='none';
+  imgEl.onerror=function(){ imgEl.style.display='none'; svgEl.style.display='block'; };
+  imgEl.src = 'organize-logo.png?v=' + Date.now();
+  imgEl.style.display='block';
 }
 function loadLogo() {
   try { const l=JSON.parse(localStorage.getItem('oe_logo2')||'{}'); if(l.name!==undefined)S.logoConfig.name=l.name; if(l.tagline!==undefined)S.logoConfig.tagline=l.tagline; if(l.img)S.logoConfig.img=l.img; applyLogo(); } catch(e) {}
