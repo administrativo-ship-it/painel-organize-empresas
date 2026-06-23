@@ -45,7 +45,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min
 /* next session strip */
 .next-strip{max-width:1100px;margin:-26px auto 0;padding:0 24px;position:relative;z-index:5}
 .next-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px 22px;display:flex;align-items:center;gap:16px;border-left:5px solid var(--gold)}
-.next-card .ico{font-size:24px}
+.next-card .ico{font-size:24px;color:var(--navy);display:flex}
+.next-card .ico svg{width:26px;height:26px;fill:var(--navy)}
+.ico-i{width:1em;height:1em;fill:currentColor;vertical-align:-.15em;flex-shrink:0}
+.meta .ico-i{width:14px;height:14px}
 .next-card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700}
 .next-card .ttl{font-size:15.5px;font-weight:700;color:var(--txt);margin-top:2px}
 .next-card .when{font-size:13px;color:var(--txt2);margin-top:1px}
@@ -136,7 +139,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min
 
 /* empty / loading */
 .empty{text-align:center;padding:46px 20px;color:var(--muted)}
-.empty .ic{font-size:40px;opacity:.6;margin-bottom:8px}
+.empty .ic{font-size:40px;opacity:.6;margin-bottom:8px;color:var(--muted)}
+.gate .ic{color:var(--teal)}
+.ic svg{width:1em;height:1em;fill:currentColor;display:inline-block;vertical-align:middle}
 .loading{text-align:center;padding:40px;color:var(--muted);font-size:14px}
 .spin{display:inline-block;width:22px;height:22px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:rot .8s linear infinite;vertical-align:middle;margin-right:8px}
 @keyframes rot{to{transform:rotate(360deg)}}
@@ -188,7 +193,7 @@ footer .org{color:var(--navy);font-weight:700}
 <!-- NEXT SESSION -->
 <div class="next-strip" id="nextStrip" style="display:none">
   <div class="next-card">
-    <span class="ico">📅</span>
+    <span class="ico"><svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg></span>
     <div>
       <div class="lbl">Próxima mentoria</div>
       <div class="ttl" id="nextTitle">—</div>
@@ -217,10 +222,10 @@ footer .org{color:var(--navy);font-weight:700}
     </div>
     <div id="agendaContent">
       <div class="gate" id="agendaGate">
-        <div class="ic">🔒</div>
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zM9 8V6a3 3 0 016 0v2z"/></svg></div>
         <h3>Conecte sua agenda</h3>
         <p>Para sua privacidade, o calendário da mentoria é exibido somente após você entrar com a conta Google autorizada.</p>
-        <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button>
+        <button class="btn btn-primary btn-lg" onclick="connectGoogle()"><svg class="ico-i" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> Conectar com Google</button>
       </div>
     </div>
   </div>
@@ -232,10 +237,10 @@ footer .org{color:var(--navy);font-weight:700}
     </div>
     <div id="gravacoesContent">
       <div class="gate">
-        <div class="ic">🔒</div>
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zM9 8V6a3 3 0 016 0v2z"/></svg></div>
         <h3>Conecte sua agenda</h3>
         <p>As gravações são vinculadas aos eventos da mentoria. Conecte sua conta Google para visualizá-las.</p>
-        <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button>
+        <button class="btn btn-primary btn-lg" onclick="connectGoogle()"><svg class="ico-i" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> Conectar com Google</button>
       </div>
     </div>
   </div>
@@ -268,7 +273,7 @@ footer .org{color:var(--navy);font-weight:700}
 <!-- MODAL DE VISUALIZAÇÃO DE APOSTILA -->
 <div class="ap-modal" id="apModal" onclick="if(event.target===this)closePreview()">
   <div class="ap-modal-box">
-    <div class="ap-modal-hd"><span>📄 Visualização da apostila</span><button onclick="closePreview()">✕</button></div>
+    <div class="ap-modal-hd"><span><svg class="ico-i" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg> Visualização da apostila</span><button onclick="closePreview()">✕</button></div>
     <iframe id="apFrame" src="" allow="autoplay"></iframe>
   </div>
 </div>
@@ -365,6 +370,13 @@ const ICON = {
   apostilas:'<svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>',
   extra:'<svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>'
 };
+/* ícones minimalistas inline (mesmo tom) */
+const SI_CAL='<svg class="ico-i" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>';
+const SI_CLOCK='<svg class="ico-i" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>';
+const SI_PIN='<svg class="ico-i" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>';
+const SI_REFRESH='<svg class="ico-i" viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0012 4a8 8 0 108 8h-2a6 6 0 11-6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg>';
+const SI_PLAY='<svg class="ico-i" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+const SI_VIDEO='<svg class="ico-i" viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11z"/></svg>';
 
 /* ---------- Trello + Drive ---------- */
 function renderTools(){
@@ -432,9 +444,9 @@ function initArea(area){
   const c=document.getElementById(area+'Content'); const cfg=areaCfg(area);
   if(!cfg.url){ c.innerHTML='<div class="tool-grid">'+offCard(cfg.ico, cfg.label+' ainda não disponível', cfg.empty)+'</div>'; return; }
   if(!TOKEN){
-    c.innerHTML=`<div class="gate"><div class="ic">📁</div><h3>Conecte para navegar</h3>
+    c.innerHTML=`<div class="gate"><div class="ic"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></div><h3>Conecte para navegar</h3>
       <p>Entre com sua conta Google para ver as pastas e arquivos aqui dentro, sempre atualizados.</p>
-      <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button>
+      <button class="btn btn-primary btn-lg" onclick="connectGoogle()"><svg class="ico-i" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> Conectar com Google</button>
       <div style="margin-top:12px"><a class="btn btn-ghost" href="${cfg.url}" target="_blank" rel="noopener">Ou abrir no Drive ↗</a></div></div>`;
     return;
   }
@@ -463,7 +475,7 @@ function renderArea(area,files){
   bc+='</div>';
   files.sort((a,b)=>(a.mimeType==='application/vnd.google-apps.folder'?0:1)-(b.mimeType==='application/vnd.google-apps.folder'?0:1));
   let html=bc;
-  if(!files.length){ html+=`<div class="empty"><div class="ic">📂</div>Esta pasta está vazia.</div>`; }
+  if(!files.length){ html+=`<div class="empty"><div class="ic"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></div>Esta pasta está vazia.</div>`; }
   else{
     html+='<div class="ap-list">';
     files.forEach(f=>{
@@ -486,7 +498,7 @@ function renderArea(area,files){
 }
 function intoArea(area,btn){ DRV[area].push({id:btn.dataset.id,name:btn.dataset.n}); listArea(area); }
 function crumbArea(area,i){ DRV[area].length=i+1; listArea(area); }
-function extBtn(url){ return `<div style="text-align:center;margin-top:16px"><a class="btn btn-ghost" href="${url}" target="_blank" rel="noopener">📁 Abrir no Drive ↗</a></div>`; }
+function extBtn(url){ return `<div style="text-align:center;margin-top:16px"><a class="btn btn-ghost" href="${url}" target="_blank" rel="noopener"><svg class="ico-i" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg> Abrir no Drive</a></div>`; }
 function previewDrive(id){ document.getElementById('apFrame').src=`https://drive.google.com/file/d/${id}/preview`; document.getElementById('apModal').classList.add('open'); }
 function closePreview(){ document.getElementById('apModal').classList.remove('open'); document.getElementById('apFrame').src=''; }
 
@@ -551,8 +563,8 @@ function gateHTML(which){
   const txt = which==='agenda'
     ? 'Para sua privacidade, o calendário é exibido somente após você entrar com a conta Google autorizada.'
     : 'As gravações são vinculadas aos eventos da mentoria. Conecte sua conta Google para visualizá-las.';
-  return `<div class="gate"><div class="ic">🔒</div><h3>Conecte sua agenda</h3>
-    <p>${txt}</p><button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button></div>`;
+  return `<div class="gate"><div class="ic"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zM9 8V6a3 3 0 016 0v2z"/></svg></div><h3>Conecte sua agenda</h3>
+    <p>${txt}</p><button class="btn btn-primary btn-lg" onclick="connectGoogle()"><svg class="ico-i" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> Conectar com Google</button></div>`;
 }
 
 async function loadCalendar(){
@@ -648,7 +660,7 @@ function meetLink(e){
 /* ---------- render agenda ---------- */
 function renderAgenda(){
   const c = document.getElementById('agendaContent');
-  if(!EVENTS.length){ c.innerHTML = `<div class="empty"><div class="ic">📭</div>Nenhuma mentoria agendada ainda.</div>`; return; }
+  if(!EVENTS.length){ c.innerHTML = `<div class="empty"><div class="ic"><svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg></div>Nenhuma mentoria agendada ainda.</div>`; return; }
   const now=new Date();
   const upcoming = EVENTS.filter(e=>eventStart(e)>=now);
   const past = EVENTS.filter(e=>eventStart(e)<now).reverse();
@@ -656,8 +668,8 @@ function renderAgenda(){
   // botão abrir google agenda (usa o link de busca da empresa, se houver)
   const agUrl = CLIENT.agendaBusca || 'https://calendar.google.com/calendar/u/0/r';
   document.getElementById('agendaActions').innerHTML =
-    `<button class="btn btn-ghost" onclick="loadCalendar()" title="Buscar novidades">🔄 Atualizar</button>
-     <a class="btn btn-ghost" target="_blank" rel="noopener" href="${agUrl}">Abrir no Google Agenda ↗</a>`;
+    `<button class="btn btn-ghost" onclick="loadCalendar()" title="Buscar novidades">${SI_REFRESH} Atualizar</button>
+     <a class="btn btn-ghost" target="_blank" rel="noopener" href="${agUrl}">${SI_CAL} Abrir no Google Agenda</a>`;
   if(upcoming.length){
     html += `<div class="evt-group-lbl">▸ Próximas (${upcoming.length})</div>`;
     upcoming.forEach(e=>html+=evtHTML(e,false));
@@ -676,13 +688,13 @@ function evtHTML(e,isPast){
   if(isAllDay(e)) timeStr='Dia todo';
   else timeStr=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   let actions='';
-  if(!isPast && meet) actions+=`<a class="chip chip-meet" href="${meet}" target="_blank" rel="noopener">🎥 Entrar</a>`;
-  recs.forEach(r=>actions+=`<a class="chip chip-rec" href="${r.url}" target="_blank" rel="noopener">▶ Gravação</a>`);
+  if(!isPast && meet) actions+=`<a class="chip chip-meet" href="${meet}" target="_blank" rel="noopener">${SI_VIDEO} Entrar</a>`;
+  recs.forEach(r=>actions+=`<a class="chip chip-rec" href="${r.url}" target="_blank" rel="noopener">${SI_PLAY} Gravação</a>`);
   return `<div class="evt ${isPast?'past':''}">
     <div class="evt-date"><div class="d">${d.getDate()}</div><div class="m">${MES[d.getMonth()]}</div></div>
     <div class="evt-body">
       <div class="t">${escapeHtml(e.summary||'Mentoria')}</div>
-      <div class="meta"><span>🕒 ${timeStr}</span>${e.location?`<span>📍 ${escapeHtml(e.location)}</span>`:''}<span>${DIAS[d.getDay()]}</span></div>
+      <div class="meta"><span>${SI_CLOCK} ${timeStr}</span>${e.location?`<span>${SI_PIN} ${escapeHtml(e.location)}</span>`:''}<span>${DIAS[d.getDay()]}</span></div>
     </div>
     <div class="evt-actions">${actions}</div>
   </div>`;
@@ -696,7 +708,7 @@ function renderGravacoes(){
   if(withRec.length){ badge.style.display='inline-block'; badge.textContent=withRec.length; }
   else badge.style.display='none';
   if(!withRec.length){
-    c.innerHTML=`<div class="empty"><div class="ic">🎬</div><div style="font-size:15px;color:var(--txt2);font-weight:600">Nenhuma mentoria gravada ainda</div>
+    c.innerHTML=`<div class="empty"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></div><div style="font-size:15px;color:var(--txt2);font-weight:600">Nenhuma mentoria gravada ainda</div>
       <div style="font-size:13px;margin-top:6px">Assim que uma mentoria for gravada, ela aparece aqui automaticamente.</div></div>`;
     return;
   }
@@ -705,11 +717,11 @@ function renderGravacoes(){
     const d=eventStart(e);
     const recs=recordingsOf(e);
     let btns='';
-    recs.forEach((r,i)=>btns+=`<a class="chip chip-rec" href="${r.url}" target="_blank" rel="noopener">▶ ${recs.length>1?('Assistir '+(i+1)):'Assistir gravação'}</a>`);
+    recs.forEach((r,i)=>btns+=`<a class="chip chip-rec" href="${r.url}" target="_blank" rel="noopener">${SI_PLAY} ${recs.length>1?('Assistir '+(i+1)):'Assistir gravação'}</a>`);
     html+=`<div class="evt past" style="border-left-color:var(--green)">
       <div class="evt-date" style="background:var(--green-bg)"><div class="d" style="color:var(--green)">${d.getDate()}</div><div class="m">${MES[d.getMonth()]}</div></div>
       <div class="evt-body"><div class="t">${escapeHtml(e.summary||'Mentoria')}</div>
-        <div class="meta"><span>📅 ${d.getDate()} de ${MES_FULL[d.getMonth()]} de ${d.getFullYear()}</span></div></div>
+        <div class="meta"><span>${SI_CAL} ${d.getDate()} de ${MES_FULL[d.getMonth()]} de ${d.getFullYear()}</span></div></div>
       <div class="evt-actions">${btns}</div></div>`;
   });
   c.innerHTML=html;
@@ -728,7 +740,7 @@ function renderNext(){
   document.getElementById('nextWhen').textContent=dateStr+timeStr;
   const meet=meetLink(next);
   document.getElementById('nextJoin').innerHTML = meet
-    ? `<a class="btn btn-teal btn-lg" href="${meet}" target="_blank" rel="noopener">🎥 Entrar na mentoria</a>` : '';
+    ? `<a class="btn btn-teal btn-lg" href="${meet}" target="_blank" rel="noopener">${SI_VIDEO} Entrar na mentoria</a>` : '';
   strip.style.display='block';
 }
 
