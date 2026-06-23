@@ -2579,7 +2579,7 @@ function rptGenerateMensal() {
   var html = '<div style="'+S_body+'" id="rpt-mensal-page">';
   html += '<div style="'+S_hdr+'">'+
     '<div style="display:flex;align-items:center;gap:16px;">'+
-    '<img src="'+LOGO_ORGANIZE_B64+'" alt="Organize Empresas" style="height:44px;width:auto;filter:brightness(0) invert(1);">'+
+    '<div style="background:#fff;border-radius:8px;padding:5px 12px;display:inline-flex;align-items:center;"><img src="'+LOGO_ORGANIZE_B64+'" alt="Organize Empresas" style="height:40px;width:auto;"></div>'+
     '<div>'+
     '<p style="color:rgba(255,255,255,.55);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 2px;">Relatório Mensal de Resultados</p>'+
     '<h1 style="'+S_h1+';font-size:18px;margin:0;">'+(_rmf.cliente||'Cliente não selecionado')+'</h1>'+
@@ -3035,8 +3035,8 @@ function printReport() { window.print(); }
 
 function rptLogoHTML() {
   var lc = S.logoConfig;
-  if (lc.img) return '<img src="' + lc.img + '" style="max-height:52px;max-width:200px;object-fit:contain;background:#fff;border-radius:6px;padding:4px 8px;">';
-  return '<div style="font-size:20px;font-weight:800;color:var(--navy)">Organize Empresas</div>';
+  if (lc.img) return '<img src="' + lc.img + '" style="max-height:52px;max-width:200px;object-fit:contain;">';
+  return '<img src="' + LOGO_ORGANIZE_B64 + '" alt="Organize Empresas" style="max-height:52px;max-width:220px;object-fit:contain;">';
 }
 
 function rptDateStr() {
