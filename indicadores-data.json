@@ -1,0 +1,38 @@
+{
+  "updated": "2026-06-22",
+  "clients": {
+    "Falcão Motos": {
+      "programa": "mentoring",
+      "comercialId": "1p6hYeAkzWc6qlcfLNMwE8EINXYmRRV1I",
+      "financeiroId": "1yUVD-SKnV9-Pv3V1HXlxI1tBfmAHnfue",
+      "fluxoId": "1DhQgt5V7FGKHiyOtvWTaywGt0skmk_sl",
+      "historico": [
+        {"mes": "Fev", "mesNum": 2, "fat2025": 31733.00, "fat2026": 0, "meta2026": 47599.50, "cresc": -100},
+        {"mes": "Mar", "mesNum": 3, "fat2025": 19025.85, "fat2026": 0, "meta2026": 38051.70, "cresc": -100},
+        {"mes": "Abr", "mesNum": 4, "fat2025": 22373.64, "fat2026": 0, "meta2026": 55934.10, "cresc": -100},
+        {"mes": "Mai", "mesNum": 5, "fat2025": 48720.58, "fat2026": 60281.90, "meta2026": 59926.31, "cresc": 24},
+        {"mes": "Jun", "mesNum": 6, "fat2025": 52685.80, "fat2026": 48450.25, "meta2026": 63222.96, "cresc": -8},
+        {"mes": "Jul", "mesNum": 7, "fat2025": 60436.00, "fat2026": 0, "meta2026": 66479.60, "cresc": null},
+        {"mes": "Ago", "mesNum": 8, "fat2025": 46796.00, "fat2026": 0, "meta2026": 60834.80, "cresc": null},
+        {"mes": "Set", "mesNum": 9, "fat2025": 47840.00, "fat2026": 0, "meta2026": 62192.00, "cresc": null},
+        {"mes": "Out", "mesNum": 10, "fat2025": 50070.00, "fat2026": 0, "meta2026": 62587.50, "cresc": null},
+        {"mes": "Nov", "mesNum": 11, "fat2025": 33938.00, "fat2026": 0, "meta2026": 55997.70, "cresc": null},
+        {"mes": "Dez", "mesNum": 12, "fat2025": 29497.75, "fat2026": 0, "meta2026": 50146.18, "cresc": null}
+      ],
+      "mensal": {
+        "2": {"fat": 0, "meta": 47599.50, "cresc": null, "conv": null, "ticket": null, "cativos": null},
+        "3": {"fat": 0, "meta": 38051.70, "cresc": null, "conv": null, "ticket": null, "cativos": null},
+        "4": {"fat": 0, "meta": 55934.10, "cresc": null, "conv": null, "ticket": null, "cativos": null},
+        "5": {"fat": 60281.90, "meta": 59926.31, "cresc": 24, "conv": 29, "ticket": 1295.40, "cativos": null},
+        "6": {"fat": 48450.25, "meta": 63222.96, "cresc": -8, "conv": 42, "ticket": 591.90, "cativos": null},
+        "7": {"fat": 0, "meta": 66479.60, "cresc": null, "conv": null, "ticket": null, "cativos": null},
+        "8": {"fat": 0, "meta": 60834.80, "cresc": null, "conv": null, "ticket": null, "cativos": null},
+        "9": {"fat": 0, "meta": 62192.00, "cresc": null, "conv": null, "ticket": null, "cativos": null},
+        "10": {"fat": 0, "meta": 62587.50, "cresc": null, "conv": null, "ticket": null, "cativos": null},
+        "11": {"fat": 0, "meta": 55997.70, "cresc": null, "conv": null, "ticket": null, "cativos": null},
+        "12": {"fat": 0, "meta": 50146.18, "cresc": null, "conv": null, "ticket": null, "cativos": null}
+      },
+      "dre": {}
+    }
+  }
+}
