@@ -1621,6 +1621,84 @@ function loadLogo() {
 
 
 
+
+// ═══════════════ INDICADORES DATA (carregamento estático do Drive) ═══════════════
+
+var _indicadoresData = null;
+
+async function loadIndicadoresData() {
+  if (_indicadoresData) return _indicadoresData;
+  try {
+    var r = await fetch('./indicadores-data.json?t=' + Date.now());
+    if (r.ok) {
+      _indicadoresData = await r.json();
+      console.log('[Indicadores] Dados carregados:', Object.keys(_indicadoresData.clients || {}));
+      // Extend CLIENT_SHEETS with Drive IDs from the JSON
+      if (_indicadoresData.clients) {
+        Object.keys(_indicadoresData.clients).forEach(function(name) {
+          var c = _indicadoresData.clients[name];
+          if (!CLIENT_SHEETS[name]) CLIENT_SHEETS[name] = {};
+          CLIENT_SHEETS[name].programa = c.programa;
+          if (c.comercialId) CLIENT_SHEETS[name].comercial = c.comercialId;
+          if (c.financeiroId) CLIENT_SHEETS[name].financeiro = c.financeiroId;
+          if (c.fluxoId) CLIENT_SHEETS[name].fluxo = c.fluxoId;
+        });
+      }
+    }
+  } catch(e) {
+    console.warn('[Indicadores] Não foi possível carregar indicadores-data.json:', e.message);
+  }
+  return _indicadoresData;
+}
+
+function getClientIndicadores(clienteName) {
+  if (!_indicadoresData || !_indicadoresData.clients) return null;
+  // Exact match or fuzzy match
+  if (_indicadoresData.clients[clienteName]) return _indicadoresData.clients[clienteName];
+  var lower = clienteName.toLowerCase();
+  var key = Object.keys(_indicadoresData.clients).find(function(k){ return k.toLowerCase().indexOf(lower) >= 0 || lower.indexOf(k.toLowerCase()) >= 0; });
+  return key ? _indicadoresData.clients[key] : null;
+}
+
+function applyIndicadoresData(tipo) {
+  var cache = tipo === 'mensal' ? _rmf : _ref;
+  var ind = getClientIndicadores(cache.cliente);
+  if (!ind) return false;
+
+  var mes = parseInt(cache.mes) || (new Date().getMonth() + 1);
+  var mesKey = String(mes);
+
+  // Set historico for charts
+  cache._historico = (ind.historico || []).filter(function(h){ return h.fat2026 > 0 || h.meta2026 > 0; })
+    .map(function(h){ return {mes: h.mes, fat: h.fat2026, meta: h.meta2026, cresc: h.cresc}; });
+
+  // Fill monthly KPIs
+  var monthly = (ind.mensal || {})[mesKey];
+  if (monthly) {
+    if (monthly.fat > 0) cache.fat = String(monthly.fat);
+    if (monthly.meta > 0) cache.meta = String(monthly.meta);
+    if (monthly.cresc !== null && monthly.cresc !== undefined) cache.cresc = String(monthly.cresc);
+    if (monthly.conv !== null && monthly.conv !== undefined) cache.conv = String(monthly.conv);
+    if (monthly.ticket !== null && monthly.ticket !== undefined) cache.ticket = String(monthly.ticket);
+    if (monthly.cativos) cache.cativos = String(monthly.cativos);
+  }
+
+  // For master: fill DRE
+  if (ind.programa === 'master' && ind.dre && ind.dre[mesKey]) {
+    var dre = ind.dre[mesKey];
+    if (dre.fat) cache.fat = String(dre.fat);
+    if (dre.dfixas) cache.dfixas = String(dre.dfixas);
+    if (dre.ll) cache.ll = String(dre.ll);
+    if (dre.margem) cache.margem = String(dre.margem);
+    cache._dreData = dre;
+  }
+
+  cache._driveLoaded = true;
+  return true;
+}
+
+// Call on page load
+loadIndicadoresData();
 // ═══════════════ GOOGLE DRIVE INTEGRATION ═══════════════
 
 var _gToken = null;
@@ -2316,7 +2394,12 @@ function rptMensal() {
   document.getElementById('rpt-filters').innerHTML = '';
   document.getElementById('report-preview').innerHTML = formHtml + '<div id="rpt-prev"></div>';
 
-  if (_rmf.cliente) rptGenerateMensal();
+  if (_rmf.cliente) {
+    // Auto-apply static indicadores data (from indicadores-data.json)
+    var applied = applyIndicadoresData('mensal');
+    rptGenerateMensal();
+    if (!applied && _gToken) { triggerDriveLoad('mensal'); }
+  }
 }
 
 function rptGenerateMensal() {
@@ -2460,7 +2543,11 @@ function rptEncerramento() {
   document.getElementById('rpt-filters').innerHTML = '';
   document.getElementById('report-preview').innerHTML = formHtml + '<div id="rpt-prev"></div>';
 
-  if (_ref.cliente) rptGenerateEncerramento();
+  if (_ref.cliente) {
+    var applied = applyIndicadoresData('encerramento');
+    rptGenerateEncerramento();
+    if (!applied && _gToken) { triggerDriveLoad('encerramento'); }
+  }
 }
 
 function rptGenerateEncerramento() {
