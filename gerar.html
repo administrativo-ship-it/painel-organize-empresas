@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Portais — Organize Empresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#000080;--navy-light:#0a0a9e;--teal:#8BD4E0;--teal-dark:#5bbece;
+  --slate:#41546A;--white:#fff;--off:#f4f6fb;--border:#e2e8f4;
+  --txt:#0d1526;--txt2:#41546A;--muted:#8a9bb5;--gold:#F4A800;
+  --green:#1a7a4a;--green-bg:#e8f5ee;--red:#c0392b;--red-bg:#fdf0ee;
+  --sh:0 4px 20px rgba(0,0,80,.08);--r:16px;--r2:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);-webkit-font-smoothing:antialiased;padding-bottom:60px}
+.topbar{background:var(--navy);color:#fff;padding:16px 0;box-shadow:0 2px 12px rgba(0,0,80,.18)}
+.topbar-in{max-width:980px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.org-logo-box{background:#fff;border-radius:11px;padding:7px 14px;display:flex;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.org-logo{height:32px;width:auto;display:block}
+.gh-state{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(255,255,255,.85);cursor:pointer}
+.gh-dot{width:9px;height:9px;border-radius:50%;background:#f59e0b}.gh-dot.on{background:#22c55e}
+.wrap{max-width:980px;margin:0 auto;padding:30px 24px}
+.intro h1{font-size:26px;font-weight:800;color:var(--navy)}
+.intro p{color:var(--txt2);font-size:14.5px;margin-top:6px;line-height:1.55;max-width:680px}
+.grid{display:grid;grid-template-columns:1.3fr .9fr;gap:24px;margin-top:26px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:24px;margin-bottom:20px}
+.card h2{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card .hint{font-size:12.5px;color:var(--muted);margin-bottom:16px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:700;color:var(--txt2);margin-bottom:6px}
+.field .sub{font-size:11.5px;color:var(--muted);font-weight:500;margin-top:4px;line-height:1.4}
+.inp,select,textarea{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);background:var(--off);outline:none;transition:border-color .15s}
+.inp:focus,select:focus,textarea:focus{border-color:var(--navy);background:#fff}
+.inp.mono{font-family:'DM Mono',monospace;font-size:12.5px}
+textarea{resize:vertical;min-height:70px}
+.req::after{content:" *";color:var(--red)}
+/* logo upload */
+.logo-drop{border:2px dashed var(--border);border-radius:var(--r2);padding:22px;text-align:center;cursor:pointer;background:var(--off);transition:border-color .15s}
+.logo-drop:hover{border-color:var(--navy)}
+.logo-prev{display:flex;align-items:center;gap:14px;background:var(--navy);border-radius:var(--r2);padding:12px 16px;margin-top:10px}
+.logo-prev img{max-height:54px;max-width:120px;object-fit:contain;background:#fff;border-radius:8px;padding:5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:var(--r2);font-family:inherit;font-weight:700;cursor:pointer;text-decoration:none;transition:all .15s;font-size:14px;padding:12px 20px}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-light)}
+.btn-teal{background:var(--teal);color:var(--navy)}.btn-teal:hover{background:var(--teal-dark)}
+.btn-ghost{background:var(--off);color:var(--navy);border:1px solid var(--border)}.btn-ghost:hover{background:#eef2fb}
+.btn-green{background:#25D366;color:#fff}.btn-green:hover{background:#1da851}
+.btn-block{width:100%}
+.btn-lg{padding:14px 24px;font-size:15px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:8px 14px;font-size:12.5px}
+/* preview side */
+.preview-card{position:sticky;top:24px}
+.pv-frame{border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#fff}
+.pv-hero{background:linear-gradient(135deg,var(--navy),#0a1a7a);padding:22px 18px;color:#fff;display:flex;align-items:center;gap:14px}
+.pv-logo{width:58px;height:58px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:6px;font-size:24px;font-weight:800;color:var(--navy)}
+.pv-logo img{max-width:100%;max-height:100%;object-fit:contain}
+.pv-hero h3{font-size:17px;font-weight:800;line-height:1.1}
+.pv-badge{display:inline-block;margin-top:6px;background:rgba(139,212,224,.18);border:1px solid rgba(139,212,224,.35);color:var(--teal);padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.pv-tabs{display:flex;gap:4px;padding:10px;flex-wrap:wrap}
+.pv-tab{font-size:11px;font-weight:600;color:var(--muted);background:var(--off);padding:5px 9px;border-radius:7px}
+.pv-tab.on{background:var(--navy);color:#fff}
+/* result */
+.result{display:none;background:linear-gradient(135deg,var(--green-bg),#fff);border:1.5px solid #b9e3cc;border-radius:var(--r);padding:24px;margin-top:4px}
+.result.show{display:block;animation:fade .3s}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+.result h2{color:var(--green);font-size:18px;display:flex;align-items:center;gap:8px}
+.link-box{background:#fff;border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;font-family:'DM Mono',monospace;font-size:12.5px;color:var(--navy);word-break:break-all;margin:14px 0}
+.result-actions{display:flex;gap:10px;flex-wrap:wrap}
+.msg{font-size:13px;padding:11px 14px;border-radius:var(--r2);margin-top:12px;display:none}
+.msg.show{display:block}
+.msg.err{background:var(--red-bg);color:var(--red);border:1px solid #f3c9c2}
+.msg.info{background:#e8f0ff;color:#0050b3;border:1px solid #b9d2f7}
+/* token modal */
+.ov{position:fixed;inset:0;background:rgba(13,21,38,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.ov.open{display:flex}
+.modal{background:#fff;border-radius:var(--r);padding:26px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h3{color:var(--navy);font-size:18px;margin-bottom:6px}
+.modal p{font-size:13px;color:var(--txt2);line-height:1.5;margin-bottom:14px}
+/* existing clients */
+.cli-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r2);margin-bottom:8px;font-size:13px}
+.cli-item .nm{font-weight:700;color:var(--navy);flex:1}
+.cli-item a{color:var(--teal-dark);font-weight:700;text-decoration:none;font-size:12px}
+.spin{display:inline-block;width:16px;height:16px;border:2.5px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:rot .8s linear infinite;vertical-align:middle}
+@keyframes rot{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-in">
+  <div class="org-logo-box"><img class="org-logo" src="organize-logo.png" alt="Organize Empresas"></div>
+  <div class="gh-state" onclick="openToken()"><span class="gh-dot" id="ghDot"></span><span id="ghLabel">Conectar GitHub</span></div>
+</div></div>
+
+<div class="wrap">
+  <div class="intro">
+    <h1>🚀 Gerador de Portais de Mentoria</h1>
+    <p>Preencha os dados do cliente, clique em <b>Criar portal</b> e receba o link pronto para enviar no WhatsApp. Cada cliente ganha sua própria página com agenda, gravações, Trello e Drive — tudo atualizado automaticamente.</p>
+  </div>
+
+  <div class="grid">
+    <!-- FORM -->
+    <div>
+      <div class="card">
+        <h2>👤 Dados do cliente</h2>
+        <div class="hint">Informações principais que aparecem no topo do portal.</div>
+        <div class="field">
+          <label class="req">Nome da empresa</label>
+          <input class="inp" id="empresa" placeholder="Ex.: Padaria Pão Quente" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Serviço contratado</label>
+          <select id="servico" onchange="updatePreview()">
+            <option value="">— selecione —</option>
+            <option>Organize Mentoring</option>
+            <option>Organize Master</option>
+            <option>Organize Marketing e Vendas</option>
+            <option>Organize Estratégico</option>
+            <option>Organize Finance</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Responsável / Mentor(a)</label>
+          <input class="inp" id="responsavel" placeholder="Ex.: Wmadson Madson" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Logo do cliente</label>
+          <div class="logo-drop" id="logoDrop" onclick="document.getElementById('logoFile').click()"
+               ondragover="event.preventDefault();this.style.borderColor='var(--navy)'"
+               ondragleave="this.style.borderColor='var(--border)'" ondrop="dropLogo(event)">
+            <div style="font-size:26px">🖼️</div>
+            <div style="font-size:13px;font-weight:700;color:var(--navy);margin-top:4px">Clique ou arraste a logo</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:2px">PNG ou JPG · será otimizada automaticamente</div>
+          </div>
+          <input type="file" id="logoFile" accept="image/*" style="display:none" onchange="pickLogo(event)">
+          <div class="logo-prev" id="logoPrev" style="display:none">
+            <img id="logoPrevImg" alt="logo">
+            <div style="flex:1"><div style="color:#fff;font-weight:700;font-size:13px">Logo carregada</div>
+              <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;margin-top:6px" onclick="removeLogo()">Remover</button></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Mensagem de boas-vindas <span style="font-weight:500;color:var(--muted)">(opcional)</span></label>
+          <textarea id="boasVindas" placeholder="Bem-vindo(a) ao seu portal de mentoria. Aqui você acompanha tudo em um só lugar." oninput="updatePreview()"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🔗 Acessos do cliente</h2>
+        <div class="hint">Cole os links das ferramentas. Pode deixar em branco o que ainda não existir — aparece como "em breve".</div>
+        <div class="field">
+          <label>ID / endereço do Google Agenda</label>
+          <input class="inp mono" id="calendarId" placeholder="cliente@group.calendar.google.com  ou  link de incorporação">
+          <div class="sub">Cole o <b>ID do calendário</b> (em Configurações da agenda → "ID da agenda") ou o link de incorporar — extraímos o ID automaticamente. A agenda deve estar compartilhada com a conta Google do cliente.</div>
+        </div>
+        <div class="field">
+          <label>Link do Trello (área de trabalho)</label>
+          <input class="inp mono" id="trello" placeholder="https://trello.com/b/...">
+        </div>
+        <div class="field">
+          <label>Link do Drive (pasta da empresa)</label>
+          <input class="inp mono" id="drive" placeholder="https://drive.google.com/drive/folders/...">
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg btn-block" id="createBtn" onclick="createPortal()">✨ Criar portal do cliente</button>
+      <div class="msg" id="formMsg"></div>
+
+      <div class="result" id="result">
+        <h2>✅ Portal criado com sucesso!</h2>
+        <p style="font-size:13.5px;color:var(--txt2);margin-top:4px">Este é o link exclusivo do cliente. Envie no grupo de WhatsApp:</p>
+        <div class="link-box" id="resultLink"></div>
+        <div class="result-actions">
+          <button class="btn btn-ghost" onclick="copyLink()">📋 Copiar link</button>
+          <a class="btn btn-primary" id="openLink" target="_blank">👁️ Abrir portal</a>
+          <a class="btn btn-green" id="waLink" target="_blank">💬 Enviar no WhatsApp</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW + clientes -->
+    <div>
+      <div class="card preview-card">
+        <h2>👁️ Pré-visualização</h2>
+        <div class="hint">Veja como o topo do portal vai ficar.</div>
+        <div class="pv-frame">
+          <div class="pv-hero">
+            <div class="pv-logo" id="pvLogo">·</div>
+            <div><h3 id="pvName">Nome da empresa</h3><span class="pv-badge" id="pvBadge" style="display:none"></span></div>
+          </div>
+          <div class="pv-tabs">
+            <span class="pv-tab on">📆 Agenda</span><span class="pv-tab">🎬 Gravações</span>
+            <span class="pv-tab">🗂️ Trello</span><span class="pv-tab">📁 Drive</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📂 Portais já criados</h2>
+        <div class="hint">Clientes com portal ativo.</div>
+        <div id="clientList"><div style="color:var(--muted);font-size:13px"><span class="spin"></span> Conecte o GitHub para listar.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOKEN MODAL -->
+<div class="ov" id="tokenOv">
+  <div class="modal">
+    <h3>🔐 Conectar GitHub</h3>
+    <p>O gerador salva os portais no repositório da Organize. Cole o token GitHub uma única vez — fica guardado só neste navegador.</p>
+    <input class="inp mono" id="tokenInput" placeholder="ghp_..." style="margin-bottom:14px">
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary btn-block" onclick="saveToken()">Salvar e conectar</button>
+      <button class="btn btn-ghost" onclick="closeToken()">Fechar</button>
+    </div>
+    <div class="msg" id="tokenMsg" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG DO REPOSITÓRIO — Organize Empresas
+   ============================================================ */
+const REPO = 'administrativo-ship-it/painel-organize-empresas';
+const BRANCH = 'main';
+const PAGES_BASE = 'https://administrativo-ship-it.github.io/painel-organize-empresas';
+const TOKEN_KEY = 'organize_gh_token';
+
+let LOGO_DATA = '';   // base64 data URL da logo
+
+/* ---------- token GitHub ---------- */
+function ghToken(){ return localStorage.getItem(TOKEN_KEY)||''; }
+function openToken(){ document.getElementById('tokenInput').value=ghToken(); document.getElementById('tokenOv').classList.add('open'); }
+function closeToken(){ document.getElementById('tokenOv').classList.remove('open'); }
+async function saveToken(){
+  const t=document.getElementById('tokenInput').value.trim();
+  const m=document.getElementById('tokenMsg');
+  if(!t){ m.className='msg err show'; m.textContent='Cole um token válido.'; return; }
+  m.className='msg info show'; m.textContent='Verificando token…';
+  try{
+    const r=await fetch(`https://api.github.com/repos/${REPO}`,{headers:ghHeaders(t)});
+    if(!r.ok) throw new Error('Token sem acesso ao repositório (HTTP '+r.status+')');
+    localStorage.setItem(TOKEN_KEY,t);
+    setGhState(true);
+    closeToken();
+    listClients();
+  }catch(e){ m.className='msg err show'; m.textContent=e.message; }
+}
+function ghHeaders(t){ return {Authorization:'token '+(t||ghToken()), Accept:'application/vnd.github+json'}; }
+function setGhState(on){
+  document.getElementById('ghDot').classList.toggle('on',on);
+  document.getElementById('ghLabel').textContent = on?'GitHub conectado':'Conectar GitHub';
+}
+
+/* ---------- logo ---------- */
+function pickLogo(e){ const f=e.target.files[0]; if(f) readLogo(f); }
+function dropLogo(e){ e.preventDefault(); e.currentTarget.style.borderColor='var(--border)'; const f=e.dataTransfer.files[0]; if(f) readLogo(f); }
+function readLogo(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    // redimensiona para no máx 320px para manter o JSON leve
+    const img=new Image();
+    img.onload=()=>{
+      const max=320, scale=Math.min(1,max/Math.max(img.width,img.height));
+      const cv=document.createElement('canvas');
+      cv.width=img.width*scale; cv.height=img.height*scale;
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      LOGO_DATA = cv.toDataURL('image/png');
+      showLogo();
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function showLogo(){
+  document.getElementById('logoPrev').style.display='flex';
+  document.getElementById('logoPrevImg').src=LOGO_DATA;
+  updatePreview();
+}
+function removeLogo(){ LOGO_DATA=''; document.getElementById('logoPrev').style.display='none'; document.getElementById('logoFile').value=''; updatePreview(); }
+
+/* ---------- preview ---------- */
+function updatePreview(){
+  const nome=document.getElementById('empresa').value.trim()||'Nome da empresa';
+  const serv=document.getElementById('servico').value;
+  document.getElementById('pvName').textContent=nome;
+  const pvLogo=document.getElementById('pvLogo');
+  if(LOGO_DATA) pvLogo.innerHTML=`<img src="${LOGO_DATA}">`;
+  else pvLogo.textContent=(nome.charAt(0)||'·').toUpperCase();
+  const b=document.getElementById('pvBadge');
+  if(serv){ b.style.display='inline-block'; b.textContent='★ '+serv; } else b.style.display='none';
+}
+
+/* ---------- helpers ---------- */
+function slugify(s){
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+}
+function randId(){ return Math.random().toString(36).slice(2,7); }
+function extractCalId(v){
+  v=(v||'').trim();
+  if(!v) return '';
+  // se vier um link de incorporação, extrai src=
+  const m=v.match(/[?&]src=([^&]+)/);
+  if(m) return decodeURIComponent(m[1]);
+  return v;
+}
+// base64 de string UTF-8 (para o conteúdo do arquivo)
+function b64utf8(str){ return btoa(unescape(encodeURIComponent(str))); }
+
+/* ---------- criar portal ---------- */
+async function createPortal(){
+  const msg=document.getElementById('formMsg');
+  const empresa=document.getElementById('empresa').value.trim();
+  if(!empresa){ msg.className='msg err show'; msg.textContent='Informe o nome da empresa.'; return; }
+  if(!ghToken()){ openToken(); return; }
+
+  const id = slugify(empresa)+'-'+randId();
+  const data={
+    empresa,
+    servico: document.getElementById('servico').value,
+    responsavel: document.getElementById('responsavel').value.trim(),
+    logo: LOGO_DATA,
+    calendarId: extractCalId(document.getElementById('calendarId').value),
+    trello: document.getElementById('trello').value.trim(),
+    drive: document.getElementById('drive').value.trim(),
+    boasVindas: document.getElementById('boasVindas').value.trim(),
+    criadoEm: new Date().toISOString()
+  };
+
+  const btn=document.getElementById('createBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Criando…';
+  msg.className='msg info show'; msg.textContent='Salvando portal no servidor…';
+
+  try{
+    const path=`clientes/${id}.json`;
+    const content=b64utf8(JSON.stringify(data,null,2));
+    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`,{
+      method:'PUT', headers:ghHeaders(),
+      body:JSON.stringify({message:`portal: ${empresa}`, content, branch:BRANCH})
+    });
+    if(!r.ok){ const b=await r.json().catch(()=>({})); throw new Error(b.message||('HTTP '+r.status)); }
+    const link=`${PAGES_BASE}/cliente.html?id=${id}`;
+    showResult(link, empresa);
+    msg.className='msg show'; msg.style.display='none';
+    listClients();
+  }catch(e){
+    msg.className='msg err show'; msg.textContent='Erro ao criar: '+e.message;
+  }finally{
+    btn.disabled=false; btn.innerHTML='✨ Criar portal do cliente';
+  }
+}
+
+function showResult(link, empresa){
+  const r=document.getElementById('result');
+  document.getElementById('resultLink').textContent=link;
+  document.getElementById('openLink').href=link;
+  const txt=`Olá! 👋 Este é o seu portal exclusivo de mentoria da Organize Empresas. Aqui você acessa agenda, gravações, Trello e Drive em um só lugar:\n${link}`;
+  document.getElementById('waLink').href='https://wa.me/?text='+encodeURIComponent(txt);
+  r.classList.add('show');
+  r.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function copyLink(){
+  navigator.clipboard.writeText(document.getElementById('resultLink').textContent)
+    .then(()=>{ const m=document.getElementById('formMsg'); m.className='msg info show'; m.textContent='✅ Link copiado!'; });
+}
+
+/* ---------- listar portais existentes ---------- */
+async function listClients(){
+  const box=document.getElementById('clientList');
+  if(!ghToken()){ box.innerHTML='<div style="color:var(--muted);font-size:13px">Conecte o GitHub para listar os portais.</div>'; return; }
+  box.innerHTML='<div style="color:var(--muted);font-size:13px"><span class="spin"></span> Carregando…</div>';
+  try{
+    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/clientes?ref=${BRANCH}`,{headers:ghHeaders()});
+    if(r.status===404){ box.innerHTML='<div style="color:var(--muted);font-size:13px">Nenhum portal criado ainda.</div>'; return; }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const files=(await r.json()).filter(f=>f.name.endsWith('.json'));
+    if(!files.length){ box.innerHTML='<div style="color:var(--muted);font-size:13px">Nenhum portal criado ainda.</div>'; return; }
+    box.innerHTML='';
+    files.sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{
+      const id=f.name.replace('.json','');
+      const link=`${PAGES_BASE}/cliente.html?id=${id}`;
+      const el=document.createElement('div'); el.className='cli-item';
+      el.innerHTML=`<span style="font-size:16px">🏢</span><span class="nm">${id}</span>
+        <a href="${link}" target="_blank">abrir ↗</a>`;
+      box.appendChild(el);
+    });
+  }catch(e){ box.innerHTML=`<div style="color:var(--red);font-size:13px">Erro: ${e.message}</div>`; }
+}
+
+/* ---------- boot ---------- */
+(function(){
+  if(ghToken()){ setGhState(true); listClients(); }
+  updatePreview();
+})();
+</script>
+</body>
+</html>
