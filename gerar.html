@@ -152,9 +152,14 @@ textarea{resize:vertical;min-height:70px}
         <h2>🔗 Acessos do cliente</h2>
         <div class="hint">Cole os links das ferramentas. Pode deixar em branco o que ainda não existir — aparece como "em breve".</div>
         <div class="field">
-          <label>ID / endereço do Google Agenda</label>
-          <input class="inp mono" id="calendarId" placeholder="cliente@group.calendar.google.com  ou  link de incorporação">
-          <div class="sub">Cole o <b>ID do calendário</b> (em Configurações da agenda → "ID da agenda") ou o link de incorporar — extraímos o ID automaticamente. A agenda deve estar compartilhada com a conta Google do cliente.</div>
+          <label class="req">E-mail do cliente no Google (Agenda)</label>
+          <input class="inp mono" id="clienteEmail" placeholder="cliente@gmail.com">
+          <div class="sub">O e-mail Google que o cliente usa e que <b>recebe os convites das mentorias</b>. A página lê a agenda de quem acessa e mostra só os eventos com esse e-mail — o cliente deve entrar com essa mesma conta. Ex.: <code>movimentokidsellennic@gmail.com</code></div>
+        </div>
+        <div class="field">
+          <label>Filtro por nome <span style="font-weight:500;color:var(--muted)">(opcional)</span></label>
+          <input class="inp mono" id="filtro" placeholder="Ex.: Movimento Kids">
+          <div class="sub">Reforço opcional: também exibe eventos cujo título ou descrição contenham este texto (útil para sessões em grupo).</div>
         </div>
         <div class="field">
           <label>Link do Trello (área de trabalho)</label>
@@ -325,7 +330,9 @@ async function createPortal(){
     servico: document.getElementById('servico').value,
     responsavel: document.getElementById('responsavel').value.trim(),
     logo: LOGO_DATA,
-    calendarId: extractCalId(document.getElementById('calendarId').value),
+    calendarId: 'primary',
+    clienteEmail: document.getElementById('clienteEmail').value.trim(),
+    filtro: document.getElementById('filtro').value.trim(),
     trello: document.getElementById('trello').value.trim(),
     drive: document.getElementById('drive').value.trim(),
     boasVindas: document.getElementById('boasVindas').value.trim(),
