@@ -152,9 +152,9 @@ textarea{resize:vertical;min-height:70px}
         <h2>🔗 Acessos do cliente</h2>
         <div class="hint">Cole os links das ferramentas. Pode deixar em branco o que ainda não existir — aparece como "em breve".</div>
         <div class="field">
-          <label class="req">E-mail do cliente no Google (Agenda)</label>
-          <input class="inp mono" id="clienteEmail" placeholder="cliente@gmail.com">
-          <div class="sub">O e-mail Google que o cliente usa e que <b>recebe os convites das mentorias</b>. A página lê a agenda de quem acessa e mostra só os eventos com esse e-mail — o cliente deve entrar com essa mesma conta. Ex.: <code>movimentokidsellennic@gmail.com</code></div>
+          <label class="req">E-mail(s) do cliente no Google (Agenda)</label>
+          <input class="inp mono" id="clienteEmail" placeholder="email1@gmail.com  email2@gmail.com">
+          <div class="sub">E-mail(s) Google que recebem os convites das mentorias. <b>Pode informar vários separados por espaço</b> (ex.: <code>ana@x.com joao@y.com</code>). É usado para mostrar as mentorias em grupo onde o cliente foi convidado.</div>
         </div>
         <div class="field">
           <label class="req">Nome da empresa na agenda (filtro)</label>
@@ -167,9 +167,9 @@ textarea{resize:vertical;min-height:70px}
           <div class="sub">Link de busca da empresa no Google Agenda. Usado no botão "Abrir no Google Agenda" do portal e como reforço do filtro (extrai o nome do <code>q=</code>).</div>
         </div>
         <div class="field">
-          <label>Link das apostilas</label>
+          <label>Pasta das apostilas (Drive)</label>
           <input class="inp mono" id="apostilas" placeholder="https://drive.google.com/drive/folders/...">
-          <div class="sub">Pasta ou arquivo com as apostilas e materiais de apoio do programa.</div>
+          <div class="sub">Link da <b>pasta</b> do Drive com as apostilas. O portal lista os arquivos para o cliente visualizar, ler online e baixar. A pasta deve estar compartilhada com a conta do cliente.</div>
         </div>
         <div class="field">
           <label>Link do Trello (planejamento e indicadores)</label>
@@ -178,6 +178,12 @@ textarea{resize:vertical;min-height:70px}
         <div class="field">
           <label>Link do Drive (materiais e documentos)</label>
           <input class="inp mono" id="drive" placeholder="https://drive.google.com/drive/folders/...">
+        </div>
+        <div class="field">
+          <label>Link adicional <span style="font-weight:500;color:var(--muted)">(opcional)</span></label>
+          <input class="inp mono" id="linkAdicional" placeholder="https://...">
+          <input class="inp" id="linkAdicionalLabel" placeholder="Nome do botão/aba (ex.: Formulário, Pagamentos)" style="margin-top:8px">
+          <div class="sub">Acesso complementar. Se preenchido, aparece como uma aba extra no portal com o nome informado.</div>
         </div>
       </div>
 
@@ -399,6 +405,8 @@ async function createPortal(){
     apostilas: document.getElementById('apostilas').value.trim(),
     trello: document.getElementById('trello').value.trim(),
     drive: document.getElementById('drive').value.trim(),
+    linkAdicional: document.getElementById('linkAdicional').value.trim(),
+    linkAdicionalLabel: document.getElementById('linkAdicionalLabel').value.trim(),
     boasVindas: document.getElementById('boasVindas').value.trim(),
     criadoEm: new Date().toISOString()
   };
@@ -448,6 +456,8 @@ async function editClient(id){
     document.getElementById('apostilas').value=d.apostilas||'';
     document.getElementById('trello').value=d.trello||'';
     document.getElementById('drive').value=d.drive||'';
+    document.getElementById('linkAdicional').value=d.linkAdicional||'';
+    document.getElementById('linkAdicionalLabel').value=d.linkAdicionalLabel||'';
     document.getElementById('boasVindas').value=d.boasVindas||'';
     LOGO_DATA=d.logo||'';
     if(LOGO_DATA) showLogo(); else removeLogoSilent();
@@ -487,7 +497,7 @@ function showEditBanner(){
 }
 function resetForm(){
   EDIT_ID=null;
-  ['empresa','servico','responsavel','clienteEmail','filtro','agendaBusca','apostilas','trello','drive','boasVindas']
+  ['empresa','servico','responsavel','clienteEmail','filtro','agendaBusca','apostilas','trello','drive','linkAdicional','linkAdicionalLabel','boasVindas']
     .forEach(id=>document.getElementById(id).value='');
   removeLogoSilent();
   document.getElementById('editBanner').style.display='none';
