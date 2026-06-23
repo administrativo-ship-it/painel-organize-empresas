@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal da Mentoria — Organize Empresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#000080;--navy-light:#0a0a9e;--teal:#8BD4E0;--teal-dark:#5bbece;
+  --slate:#41546A;--white:#fff;--off:#f4f6fb;--border:#e2e8f4;
+  --txt:#0d1526;--txt2:#41546A;--muted:#8a9bb5;--gold:#F4A800;
+  --green:#1a7a4a;--green-bg:#e8f5ee;--trello:#0052CC;--trello-bg:#e8f0ff;
+  --drive:#1a73e8;--drive-bg:#e8f0fe;
+  --sh:0 4px 20px rgba(0,0,80,.08);--sh-lg:0 12px 40px rgba(0,0,80,.12);
+  --r:16px;--r2:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ---------- TOP BAR ---------- */
+.topbar{background:var(--navy);color:#fff;padding:14px 0;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,80,.18);border-bottom:3px solid var(--teal)}
+.topbar-in{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.org-logo-box{display:flex;align-items:center}
+.org-logo{height:40px;width:auto;display:block}
+.topbar-right{display:flex;align-items:center;gap:14px;font-size:13px}
+.gauth-state{display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.85);font-size:12.5px}
+.gdot{width:8px;height:8px;border-radius:50%;background:#f59e0b}
+.gdot.on{background:#22c55e}
+
+/* ---------- HERO ---------- */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#0a1a7a 60%,#11227a 100%);color:#fff;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-80px;top:-80px;width:340px;height:340px;background:radial-gradient(circle,rgba(139,212,224,.22),transparent 70%);border-radius:50%}
+.hero-in{max-width:1100px;margin:0 auto;padding:46px 24px 54px;position:relative;z-index:2;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.client-logo-box{width:108px;height:108px;border-radius:22px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--sh-lg);overflow:hidden;padding:10px}
+.client-logo-box img{max-width:100%;max-height:100%;object-fit:contain}
+.client-logo-fallback{font-size:42px;font-weight:800;color:var(--navy)}
+.hero-text h1{font-size:32px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.hero-sub{margin-top:6px;color:rgba(255,255,255,.78);font-size:15px;max-width:560px;line-height:1.5}
+.service-badge{display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:rgba(139,212,224,.16);border:1px solid rgba(139,212,224,.35);color:var(--teal);padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600}
+
+/* next session strip */
+.next-strip{max-width:1100px;margin:-26px auto 0;padding:0 24px;position:relative;z-index:5}
+.next-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px 22px;display:flex;align-items:center;gap:16px;border-left:5px solid var(--gold)}
+.next-card .ico{font-size:24px}
+.next-card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700}
+.next-card .ttl{font-size:15.5px;font-weight:700;color:var(--txt);margin-top:2px}
+.next-card .when{font-size:13px;color:var(--txt2);margin-top:1px}
+.next-card .join{margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:var(--r2);font-family:inherit;font-weight:700;cursor:pointer;text-decoration:none;transition:all .18s;font-size:13.5px;padding:10px 18px}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-light)}
+.btn-teal{background:var(--teal);color:var(--navy)}.btn-teal:hover{background:var(--teal-dark)}
+.btn-ghost{background:var(--off);color:var(--navy);border:1px solid var(--border)}.btn-ghost:hover{background:#eef2fb}
+.btn-lg{padding:13px 24px;font-size:14.5px}
+
+/* ---------- TABS ---------- */
+.wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+.tabs{display:flex;gap:6px;margin:30px 0 22px;background:#fff;padding:6px;border-radius:14px;box-shadow:var(--sh);position:sticky;top:68px;z-index:40;overflow-x:auto}
+.tab{flex:1;min-width:max-content;padding:11px 16px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.tab:hover{color:var(--navy);background:var(--off)}
+.tab.active{background:var(--navy);color:#fff}
+.tab svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
+.tab .badge{background:var(--gold);color:#3a2a00;font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;min-width:18px;text-align:center}
+.tab.active .badge{background:var(--teal);color:var(--navy)}
+
+.panel{display:none;animation:fade .3s ease}
+.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.section-head h2{font-size:21px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:10px}
+.section-head h2 svg{width:23px;height:23px;fill:currentColor;flex-shrink:0}
+.section-head p{font-size:13.5px;color:var(--txt2);margin-top:2px}
+
+/* connect gate */
+.gate{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:48px 28px;text-align:center;border:1px dashed var(--border)}
+.gate .ic{font-size:46px;margin-bottom:8px}
+.gate h3{font-size:19px;color:var(--navy);font-weight:800}
+.gate p{color:var(--txt2);font-size:14px;margin:8px auto 20px;max-width:440px;line-height:1.55}
+
+/* event list */
+.evt-group-lbl{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+.evt{background:#fff;border-radius:var(--r2);box-shadow:var(--sh);padding:15px 18px;display:flex;align-items:center;gap:16px;margin-bottom:11px;transition:transform .15s,box-shadow .15s;border-left:4px solid var(--teal)}
+.evt:hover{transform:translateY(-2px);box-shadow:var(--sh-lg)}
+.evt.past{border-left-color:var(--border);opacity:.92}
+.evt-date{flex-shrink:0;width:62px;text-align:center;background:var(--off);border-radius:10px;padding:8px 4px}
+.evt-date .d{font-size:22px;font-weight:800;color:var(--navy);line-height:1}
+.evt-date .m{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.evt-body{flex:1;min-width:0}
+.evt-body .t{font-size:15px;font-weight:700;color:var(--txt)}
+.evt-body .meta{font-size:12.5px;color:var(--txt2);margin-top:3px;display:flex;gap:14px;flex-wrap:wrap}
+.evt-body .meta span{display:inline-flex;align-items:center;gap:5px}
+.evt-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:9px;font-size:12.5px;font-weight:700;text-decoration:none;transition:all .15s;white-space:nowrap}
+.chip-rec{background:var(--green-bg);color:var(--green)}.chip-rec:hover{background:#d5efe0}
+.chip-meet{background:var(--teal);color:var(--navy)}.chip-meet:hover{background:var(--teal-dark)}
+
+/* tool cards */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.tool-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:26px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.tool-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
+.tool-card .tic{width:56px;height:56px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;background:#e9eefb;color:var(--navy)}
+.tool-card .tic svg{width:30px;height:30px;fill:currentColor}
+.tool-card h3{font-size:18px;font-weight:800;color:var(--navy)}
+.tool-card p{font-size:13.5px;color:var(--txt2);line-height:1.5;flex:1}
+.tool-card .btn{margin-top:14px;align-self:flex-start}
+.tool-card.off{opacity:.6}
+.tool-card.off .btn{pointer-events:none;background:var(--off);color:var(--muted)}
+
+/* apostilas */
+.ap-list{display:flex;flex-direction:column;gap:10px}
+.ap-item{background:#fff;border-radius:var(--r2);box-shadow:var(--sh);padding:13px 16px;display:flex;align-items:center;gap:14px;transition:transform .15s,box-shadow .15s;border-left:4px solid var(--teal)}
+.ap-item:hover{transform:translateY(-2px);box-shadow:var(--sh-lg)}
+.ap-ic{width:26px;height:26px;flex-shrink:0;object-fit:contain}
+.ap-ic2{flex-shrink:0;display:flex}
+.ap-ic2 svg{width:24px;height:24px;fill:var(--navy);display:block}
+.ap-name{flex:1;min-width:0;font-size:14.5px;font-weight:600;color:var(--txt);word-break:break-word}
+.ap-act{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.chip svg{width:15px;height:15px;fill:currentColor;vertical-align:-2px}
+.chip-soft{background:#eef2fb;color:var(--navy)}
+.chip-soft:hover{background:#e1e8f7}
+.dz-crumbs{display:flex;align-items:center;flex-wrap:wrap;gap:2px;margin-bottom:14px}
+.dz-crumb{background:none;border:none;color:var(--navy);font-family:inherit;font-weight:700;cursor:pointer;padding:4px 7px;border-radius:6px;font-size:13.5px}
+.dz-crumb:hover{background:#eef2fb}
+.dz-sep{color:var(--muted);font-weight:700}
+.ap-modal{position:fixed;inset:0;background:rgba(13,21,38,.75);display:none;align-items:center;justify-content:center;z-index:120;padding:20px}
+.ap-modal.open{display:flex}
+.ap-modal-box{background:#fff;border-radius:var(--r);width:min(900px,100%);height:min(90vh,820px);display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--sh-lg)}
+.ap-modal-hd{background:var(--navy);color:#fff;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px}
+.ap-modal-hd button{background:rgba(255,255,255,.15);color:#fff;border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px}
+.ap-modal-box iframe{flex:1;width:100%;border:none}
+@media(max-width:640px){.ap-item{flex-wrap:wrap}.ap-act{width:100%;justify-content:flex-start}}
+
+/* empty / loading */
+.empty{text-align:center;padding:46px 20px;color:var(--muted)}
+.empty .ic{font-size:40px;opacity:.6;margin-bottom:8px}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+.spin{display:inline-block;width:22px;height:22px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:rot .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+footer{text-align:center;padding:40px 24px;color:var(--muted);font-size:12.5px;line-height:1.7}
+footer .org{color:var(--navy);font-weight:700}
+
+.err-box{background:#fdf0ee;border:1px solid #f3c9c2;color:#a93226;border-radius:var(--r2);padding:14px 18px;font-size:13.5px;margin:14px 0}
+
+@media(max-width:640px){
+  .hero-in{padding:34px 20px 44px}
+  .hero-text h1{font-size:25px}
+  .client-logo-box{width:84px;height:84px}
+  .next-card{flex-wrap:wrap}.next-card .join{margin-left:0;width:100%}
+  .next-card .join .btn{width:100%;justify-content:center}
+  .evt{flex-wrap:wrap}.evt-actions{width:100%;justify-content:flex-start}
+  .tab{flex:0 0 auto}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="org-logo-box"><img class="org-logo" src="organize-logo.png" alt="Organize Empresas"></div>
+    <div class="topbar-right">
+      <span class="gauth-state" id="authState"><span class="gdot" id="authDot"></span><span id="authLabel">Agenda não conectada</span></span>
+      <button class="btn btn-teal" id="connectBtn" style="display:none" onclick="connectGoogle()">Conectar agenda</button>
+      <button class="btn btn-ghost" id="signoutBtn" style="display:none;background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)" onclick="signOut()">Sair</button>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-in">
+    <div class="client-logo-box" id="clientLogoBox">
+      <span class="client-logo-fallback" id="clientLogoFallback">·</span>
+    </div>
+    <div class="hero-text">
+      <h1 id="clientName">Carregando…</h1>
+      <p class="hero-sub" id="clientWelcome">Seu portal de mentoria da Organize Empresas.</p>
+      <span class="service-badge" id="serviceBadge" style="display:none">★ <span id="serviceName"></span></span>
+    </div>
+  </div>
+</div>
+
+<!-- NEXT SESSION -->
+<div class="next-strip" id="nextStrip" style="display:none">
+  <div class="next-card">
+    <span class="ico">📅</span>
+    <div>
+      <div class="lbl">Próxima mentoria</div>
+      <div class="ttl" id="nextTitle">—</div>
+      <div class="when" id="nextWhen">—</div>
+    </div>
+    <div class="join" id="nextJoin"></div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="wrap">
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="agenda" onclick="switchTab('agenda')"><svg viewBox="0 0 24 24"><path d="M18.316 5.684H24v12.632h-5.684V5.684zM5.684 24h12.632v-5.684H5.684V24zM18.316 5.684V0H1.895A1.894 1.894 0 0 0 0 1.895v16.421h5.684V5.684h12.632zM22.105 0h-3.289v5.184H24V1.895A1.894 1.894 0 0 0 22.105 0zm-3.289 23.5l4.684-4.684h-4.684V23.5zM0 22.105C0 23.152.848 24 1.895 24h3.289v-5.184H0v3.289z"/></svg> Agenda</button>
+    <button class="tab" data-tab="gravacoes" onclick="switchTab('gravacoes')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> Mentorias Gravadas <span class="badge" id="recBadge" style="display:none">0</span></button>
+    <button class="tab" data-tab="apostilas" onclick="switchTab('apostilas')"><svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg> Apostilas</button>
+    <button class="tab" data-tab="trello" onclick="switchTab('trello')"><svg viewBox="0 0 24 24"><path d="M21.147 0H2.853A2.86 2.86 0 000 2.853v18.294A2.86 2.86 0 002.853 24h18.294A2.86 2.86 0 0024 21.147V2.853A2.86 2.86 0 0021.147 0zM10.34 17.287a.953.953 0 01-.953.953h-4a.954.954 0 01-.954-.953V5.38a.953.953 0 01.954-.953h4a.954.954 0 01.953.953zm9.233-5.467a.944.944 0 01-.953.947h-4a.947.947 0 01-.953-.947V5.38a.953.953 0 01.953-.953h4a.954.954 0 01.953.953z"/></svg> Trello</button>
+    <button class="tab" data-tab="drive" onclick="switchTab('drive')"><svg viewBox="0 0 24 24"><path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z"/></svg> Drive</button>
+    <button class="tab" data-tab="extra" id="tab-extra" style="display:none" onclick="switchTab('extra')"><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> <span id="tab-extra-label">Acesso Extra</span></button>
+  </div>
+
+  <!-- AGENDA -->
+  <div class="panel active" id="panel-agenda">
+    <div class="section-head">
+      <div><h2><svg viewBox="0 0 24 24"><path d="M18.316 5.684H24v12.632h-5.684V5.684zM5.684 24h12.632v-5.684H5.684V24zM18.316 5.684V0H1.895A1.894 1.894 0 0 0 0 1.895v16.421h5.684V5.684h12.632zM22.105 0h-3.289v5.184H24V1.895A1.894 1.894 0 0 0 22.105 0zm-3.289 23.5l4.684-4.684h-4.684V23.5zM0 22.105C0 23.152.848 24 1.895 24h3.289v-5.184H0v3.289z"/></svg> Calendário da Mentoria</h2><p>Todos os encontros, ao vivo e atualizados automaticamente.</p></div>
+      <div id="agendaActions"></div>
+    </div>
+    <div id="agendaContent">
+      <div class="gate" id="agendaGate">
+        <div class="ic">🔒</div>
+        <h3>Conecte sua agenda</h3>
+        <p>Para sua privacidade, o calendário da mentoria é exibido somente após você entrar com a conta Google autorizada.</p>
+        <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAVAÇÕES -->
+  <div class="panel" id="panel-gravacoes">
+    <div class="section-head">
+      <div><h2><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> Mentorias Gravadas</h2><p>Histórico completo das suas mentorias gravadas, em um só lugar.</p></div>
+    </div>
+    <div id="gravacoesContent">
+      <div class="gate">
+        <div class="ic">🔒</div>
+        <h3>Conecte sua agenda</h3>
+        <p>As gravações são vinculadas aos eventos da mentoria. Conecte sua conta Google para visualizá-las.</p>
+        <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APOSTILAS -->
+  <div class="panel" id="panel-apostilas">
+    <div class="section-head"><div><h2><svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg> Apostilas do Programa</h2><p>Materiais e apostilas de apoio da sua mentoria.</p></div></div>
+    <div id="apostilasContent"></div>
+  </div>
+
+  <!-- TRELLO -->
+  <div class="panel" id="panel-trello">
+    <div class="section-head"><div><h2><svg viewBox="0 0 24 24"><path d="M21.147 0H2.853A2.86 2.86 0 000 2.853v18.294A2.86 2.86 0 002.853 24h18.294A2.86 2.86 0 0024 21.147V2.853A2.86 2.86 0 0021.147 0zM10.34 17.287a.953.953 0 01-.953.953h-4a.954.954 0 01-.954-.953V5.38a.953.953 0 01.954-.953h4a.954.954 0 01.953.953zm9.233-5.467a.944.944 0 01-.953.947h-4a.947.947 0 01-.953-.947V5.38a.953.953 0 01.953-.953h4a.954.954 0 01.953.953z"/></svg> Área de Trabalho — Trello</h2><p>Planejamento estratégico e indicadores da sua empresa.</p></div></div>
+    <div class="tool-grid" id="trelloContent"></div>
+  </div>
+
+  <!-- DRIVE -->
+  <div class="panel" id="panel-drive">
+    <div class="section-head"><div><h2><svg viewBox="0 0 24 24"><path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z"/></svg> Drive da Empresa</h2><p>Materiais, documentos e arquivos desenvolvidos para você.</p></div></div>
+    <div id="driveContent"></div>
+  </div>
+
+  <!-- ACESSO EXTRA -->
+  <div class="panel" id="panel-extra">
+    <div class="section-head"><div><h2 id="extra-title"><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> Acesso Extra</h2><p>Acesso complementar disponibilizado pela Organize.</p></div></div>
+    <div class="tool-grid" id="extraContent"></div>
+  </div>
+</div>
+
+<!-- MODAL DE VISUALIZAÇÃO DE APOSTILA -->
+<div class="ap-modal" id="apModal" onclick="if(event.target===this)closePreview()">
+  <div class="ap-modal-box">
+    <div class="ap-modal-hd"><span>📄 Visualização da apostila</span><button onclick="closePreview()">✕</button></div>
+    <iframe id="apFrame" src="" allow="autoplay"></iframe>
+  </div>
+</div>
+
+<footer>
+  <div>Portal exclusivo de mentoria · <span class="org">Organize Empresas</span></div>
+  <div id="footNote" style="margin-top:4px"></div>
+</footer>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+/* ============================================================
+   CONFIG GLOBAL — Organize Empresas
+   ============================================================ */
+const GOOGLE_CLIENT_ID = '317582081175-hq9fhp12dnv67odbp1lamnb34e3ngvrn.apps.googleusercontent.com';
+const CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/drive.readonly';
+const CAL_OK_KEY = 'organize_cal_ok';   // lembra que o cliente já conectou (login persistente)
+// base do site (funciona em produção e no preview local)
+const REPO_BASE = location.pathname.indexOf('/painel-organize-empresas/')===0 ? '/painel-organize-empresas/' : '/';
+const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MES_FULL = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+
+let CLIENT = null;       // dados do cliente (JSON)
+let TOKEN = null;        // access token Google
+let tokenClient = null;
+let EVENTS = [];         // eventos carregados
+
+/* ---------- identificar o cliente (URL limpa por caminho OU ?id=) ---------- */
+function getClientId(){
+  const q = new URLSearchParams(location.search).get('id');
+  if(q) return q.replace(/^\/+|\/+$/g,'');
+  // caminho: ex. /painel-organize-empresas/organize-mentoring/movimento-kids
+  let p = location.pathname;
+  if(p.indexOf(REPO_BASE)===0) p = p.slice(REPO_BASE.length);
+  p = p.replace(/^\/+|\/+$/g,'');
+  if(!p || /(^|\/)(cliente|index|404)\.html?$/i.test(p)) return null;
+  try{ p = decodeURIComponent(p); }catch(e){}
+  return p;
+}
+function jsonUrl(id){
+  return REPO_BASE+'clientes/'+id.split('/').map(encodeURIComponent).join('/')+'.json?v='+Date.now();
+}
+/* ---------- carregar config do cliente ---------- */
+async function loadClient(){
+  const id = getClientId();
+  if(!id){
+    document.getElementById('clientName').textContent = 'Página não configurada';
+    document.getElementById('clientWelcome').textContent = 'Link inválido — falta o identificador do cliente.';
+    return;
+  }
+  try{
+    const res = await fetch(jsonUrl(id));
+    if(!res.ok) throw new Error('not found');
+    CLIENT = await res.json();
+    renderClient();
+  }catch(e){
+    document.getElementById('clientName').textContent = 'Cliente não encontrado';
+    document.getElementById('clientWelcome').textContent = 'Não localizamos os dados desta página. Confira o link recebido.';
+  }
+}
+
+function renderClient(){
+  // se não houver filtro definido, tenta extrair do link de busca da agenda (?q=)
+  if(!CLIENT.filtro && CLIENT.agendaBusca){
+    const m=(CLIENT.agendaBusca||'').match(/[?&]q=([^&]+)/);
+    if(m){ try{ CLIENT.filtro=decodeURIComponent(m[1].replace(/\+/g,' ')); }catch(e){} }
+  }
+  document.title = `${CLIENT.empresa} · Portal da Mentoria — Organize Empresas`;
+  document.getElementById('clientName').textContent = CLIENT.empresa || 'Cliente';
+  document.getElementById('clientWelcome').textContent = CLIENT.boasVindas
+    || `Bem-vindo(a) ao seu portal de mentoria. Aqui você encontra sua agenda, gravações e ferramentas em um só lugar.`;
+  // logo
+  if(CLIENT.logo){
+    const box = document.getElementById('clientLogoBox');
+    box.innerHTML = `<img src="${CLIENT.logo}" alt="${CLIENT.empresa}">`;
+  }else{
+    document.getElementById('clientLogoFallback').textContent = (CLIENT.empresa||'?').trim().charAt(0).toUpperCase();
+  }
+  // serviço
+  if(CLIENT.servico){
+    document.getElementById('serviceBadge').style.display='inline-flex';
+    document.getElementById('serviceName').textContent = CLIENT.servico;
+  }
+  // ferramentas
+  renderTools();
+  document.getElementById('footNote').textContent = CLIENT.responsavel ? `Mentoria conduzida por ${CLIENT.responsavel}` : '';
+}
+
+/* ---------- ícones oficiais (mesmo tom — navy) ---------- */
+const ICON = {
+  trello:'<svg viewBox="0 0 24 24"><path d="M21.147 0H2.853A2.86 2.86 0 000 2.853v18.294A2.86 2.86 0 002.853 24h18.294A2.86 2.86 0 0024 21.147V2.853A2.86 2.86 0 0021.147 0zM10.34 17.287a.953.953 0 01-.953.953h-4a.954.954 0 01-.954-.953V5.38a.953.953 0 01.954-.953h4a.954.954 0 01.953.953zm9.233-5.467a.944.944 0 01-.953.947h-4a.947.947 0 01-.953-.947V5.38a.953.953 0 01.953-.953h4a.954.954 0 01.953.953z"/></svg>',
+  drive:'<svg viewBox="0 0 24 24"><path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z"/></svg>',
+  apostilas:'<svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>',
+  extra:'<svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>'
+};
+
+/* ---------- Trello + Drive ---------- */
+function renderTools(){
+  const tr = document.getElementById('trelloContent');
+  if(CLIENT.trello){
+    tr.innerHTML = card(ICON.trello,'Quadro no Trello',
+      'Acesse o Planejamento Estratégico, os Indicadores Comerciais, os Indicadores Financeiros e o Fluxo de Caixa da sua empresa.',
+      CLIENT.trello,'Abrir Trello','btn-primary');
+  }else{
+    tr.innerHTML = offCard(ICON.trello,'Trello ainda não configurado','A área de trabalho do Trello será disponibilizada em breve.');
+  }
+  // Apostilas e Drive: navegador de pastas (sincronizado ao vivo com o Drive)
+  initArea('apostilas');
+  initArea('drive');
+  // link adicional (aba só aparece se houver link)
+  const extraTab=document.getElementById('tab-extra');
+  if(CLIENT.linkAdicional){
+    const label=CLIENT.linkAdicionalLabel || 'Acesso Extra';
+    document.getElementById('tab-extra-label').textContent=label;
+    document.getElementById('extra-title').lastChild.textContent=' '+label;
+    extraTab.style.display='';
+    document.getElementById('extraContent').innerHTML = card(ICON.extra,label,
+      'Acesso complementar disponibilizado pela Organize para a sua mentoria.',
+      CLIENT.linkAdicional,'Abrir '+label,'btn-primary');
+  }else{
+    extraTab.style.display='none';
+  }
+}
+function card(icon,title,desc,url,label,cls){
+  return `<div class="tool-card"><div class="tic">${icon}</div><h3>${title}</h3><p>${desc}</p>
+    <a class="btn ${cls}" href="${url}" target="_blank" rel="noopener">${label} →</a></div>`;
+}
+function offCard(icon,title,desc){
+  return `<div class="tool-card off"><div class="tic">${icon}</div><h3>${title}</h3><p>${desc}</p>
+    <span class="btn">Em breve</span></div>`;
+}
+
+/* ============================================================
+   NAVEGADOR DE DRIVE (Apostilas + Drive) — sincronizado ao vivo
+   ============================================================ */
+function driveRef(url){
+  url=url||'';
+  let m=url.match(/folders\/([A-Za-z0-9_-]+)/); if(m) return {type:'folder',id:m[1]};
+  m=url.match(/file\/d\/([A-Za-z0-9_-]+)/); if(m) return {type:'file',id:m[1]};
+  m=url.match(/[?&]id=([A-Za-z0-9_-]+)/); if(m) return {type:'folder',id:m[1]};
+  return null;
+}
+/* ícones minimalistas (mesmo tom navy) */
+const ICO_FOLDER='<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>';
+const ICO_DOC='<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>';
+const ICO_IMG='<svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>';
+const ICO_VID='<svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm6 4v8l6-4-6-4z"/></svg>';
+function fileTypeIcon(mime){ mime=mime||''; if(mime.includes('image'))return ICO_IMG; if(mime.includes('video'))return ICO_VID; return ICO_DOC; }
+/* ícones de ação */
+const ACT_EYE='<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5C21.3 7.6 17 4.5 12 4.5zm0 12.5a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/></svg>';
+const ACT_DL='<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+const ACT_OPEN='<svg viewBox="0 0 24 24"><path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7zM5 5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7H5V5z"/></svg>';
+const ACT_CHEV='<svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>';
+
+const DRV={};  // area -> pilha de navegação [{id,name}]
+function areaCfg(area){ return area==='drive'
+  ? {url:CLIENT.drive, label:'Drive da Empresa', ico:ICON.drive, empty:'O Drive da empresa será disponibilizado em breve.'}
+  : {url:CLIENT.apostilas, label:'Apostilas', ico:ICON.apostilas, empty:'As apostilas do programa serão disponibilizadas em breve.'}; }
+function initArea(area){
+  const c=document.getElementById(area+'Content'); const cfg=areaCfg(area);
+  if(!cfg.url){ c.innerHTML='<div class="tool-grid">'+offCard(cfg.ico, cfg.label+' ainda não disponível', cfg.empty)+'</div>'; return; }
+  if(!TOKEN){
+    c.innerHTML=`<div class="gate"><div class="ic">📁</div><h3>Conecte para navegar</h3>
+      <p>Entre com sua conta Google para ver as pastas e arquivos aqui dentro, sempre atualizados.</p>
+      <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button>
+      <div style="margin-top:12px"><a class="btn btn-ghost" href="${cfg.url}" target="_blank" rel="noopener">Ou abrir no Drive ↗</a></div></div>`;
+    return;
+  }
+  const ref=driveRef(cfg.url);
+  if(!ref){ c.innerHTML=`<div class="err-box">Link do Drive inválido.</div>`+extBtn(cfg.url); return; }
+  DRV[area]=[{id:ref.id, name:cfg.label}];
+  listArea(area);
+}
+async function listArea(area){
+  const c=document.getElementById(area+'Content');
+  const cur=DRV[area][DRV[area].length-1];
+  c.innerHTML=`<div class="loading"><span class="spin"></span>Carregando…</div>`;
+  try{
+    const q=encodeURIComponent(`'${cur.id}' in parents and trashed=false`);
+    const url=`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,webViewLink,webContentLink)&orderBy=folder,name&pageSize=300&supportsAllDrives=true&includeItemsFromAllDrives=true`;
+    const r=await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
+    if(r.status===401||r.status===403){ c.innerHTML=`<div class="err-box"><b>Sem acesso a esta pasta.</b><br>Verifique se ela está compartilhada com a conta usada no login.</div>`+extBtn(areaCfg(area).url); return; }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    renderArea(area,(await r.json()).files||[]);
+  }catch(e){ c.innerHTML=`<div class="err-box">Não foi possível carregar. ${e.message||''}</div>`+extBtn(areaCfg(area).url); }
+}
+function renderArea(area,files){
+  const c=document.getElementById(area+'Content'); const stack=DRV[area];
+  let bc='<div class="dz-crumbs">';
+  stack.forEach((s,i)=>{ bc+=(i?'<span class="dz-sep">›</span>':'')+`<button class="dz-crumb" onclick="crumbArea('${area}',${i})">${escapeHtml(s.name)}</button>`; });
+  bc+='</div>';
+  files.sort((a,b)=>(a.mimeType==='application/vnd.google-apps.folder'?0:1)-(b.mimeType==='application/vnd.google-apps.folder'?0:1));
+  let html=bc;
+  if(!files.length){ html+=`<div class="empty"><div class="ic">📂</div>Esta pasta está vazia.</div>`; }
+  else{
+    html+='<div class="ap-list">';
+    files.forEach(f=>{
+      const folder=f.mimeType==='application/vnd.google-apps.folder';
+      const isG=(f.mimeType||'').startsWith('application/vnd.google-apps');
+      const view=f.webViewLink||`https://drive.google.com/file/d/${f.id}/view`;
+      const dl=f.webContentLink||`https://drive.google.com/uc?export=download&id=${f.id}`;
+      let act;
+      if(folder){ act=`<button class="chip chip-soft" data-id="${f.id}" data-n="${escapeHtml(f.name)}" onclick="intoArea('${area}',this)">Abrir ${ACT_CHEV}</button>`; }
+      else{ act=`<button class="chip chip-soft" onclick="previewDrive('${f.id}')">${ACT_EYE} Visualizar</button>`
+              + (isG?`<a class="chip chip-soft" href="${view}" target="_blank" rel="noopener">${ACT_OPEN} Abrir</a>`
+                    :`<a class="chip chip-soft" href="${dl}" target="_blank" rel="noopener">${ACT_DL} Baixar</a>`); }
+      html+=`<div class="ap-item"><span class="ap-ic2">${folder?ICO_FOLDER:fileTypeIcon(f.mimeType)}</span>
+        <div class="ap-name">${escapeHtml(f.name)}</div><div class="ap-act">${act}</div></div>`;
+    });
+    html+='</div>';
+  }
+  html+=extBtn('https://drive.google.com/drive/folders/'+stack[stack.length-1].id);
+  c.innerHTML=html;
+}
+function intoArea(area,btn){ DRV[area].push({id:btn.dataset.id,name:btn.dataset.n}); listArea(area); }
+function crumbArea(area,i){ DRV[area].length=i+1; listArea(area); }
+function extBtn(url){ return `<div style="text-align:center;margin-top:16px"><a class="btn btn-ghost" href="${url}" target="_blank" rel="noopener">📁 Abrir no Drive ↗</a></div>`; }
+function previewDrive(id){ document.getElementById('apFrame').src=`https://drive.google.com/file/d/${id}/preview`; document.getElementById('apModal').classList.add('open'); }
+function closePreview(){ document.getElementById('apModal').classList.remove('open'); document.getElementById('apFrame').src=''; }
+
+/* ============================================================
+   GOOGLE — autenticação + calendário
+   ============================================================ */
+function initGoogle(){
+  if(!window.google || !google.accounts){ setTimeout(initGoogle,300); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: CAL_SCOPE,
+    callback: (resp)=>{
+      if(resp && resp.access_token){
+        TOKEN = resp.access_token;
+        localStorage.setItem(CAL_OK_KEY,'1');   // lembra para reconectar sozinho
+        setAuthState(true);
+        loadCalendar();
+        initArea('apostilas');
+        initArea('drive');
+        scheduleTokenRefresh();
+      }
+    },
+    error_callback: ()=>{ setAuthState(false); }  // login silencioso falhou → mostra botão
+  });
+  document.getElementById('connectBtn').style.display='inline-flex';
+  // LOGIN PERSISTENTE: se já conectou neste navegador, reconecta sem pedir nada
+  if(localStorage.getItem(CAL_OK_KEY)){
+    document.getElementById('authLabel').textContent='Reconectando…';
+    try{ tokenClient.requestAccessToken({prompt:''}); }catch(e){}
+  }
+}
+// renova o token em silêncio antes de expirar (~55 min) para manter a sessão viva
+let _refreshTimer=null;
+function scheduleTokenRefresh(){
+  clearTimeout(_refreshTimer);
+  _refreshTimer=setTimeout(()=>{ if(localStorage.getItem(CAL_OK_KEY)){ try{ tokenClient.requestAccessToken({prompt:''}); }catch(e){} } }, 55*60*1000);
+}
+function connectGoogle(){
+  if(!tokenClient){ alert('Carregando login do Google… tente novamente em alguns segundos.'); return; }
+  tokenClient.requestAccessToken({prompt: TOKEN ? '' : 'consent'});
+}
+function signOut(){
+  if(TOKEN){ google.accounts.oauth2.revoke(TOKEN,()=>{}); }
+  TOKEN=null; EVENTS=[];
+  localStorage.removeItem(CAL_OK_KEY);   // esquece o login persistente
+  clearTimeout(_refreshTimer);
+  setAuthState(false);
+  // restaurar gates
+  document.getElementById('agendaContent').innerHTML = gateHTML('agenda');
+  document.getElementById('gravacoesContent').innerHTML = gateHTML('grav');
+  initArea('apostilas');
+  initArea('drive');
+  document.getElementById('nextStrip').style.display='none';
+}
+function setAuthState(on){
+  document.getElementById('authDot').classList.toggle('on',on);
+  document.getElementById('authLabel').textContent = on ? 'Agenda conectada' : 'Agenda não conectada';
+  document.getElementById('connectBtn').style.display = on ? 'none':'inline-flex';
+  document.getElementById('signoutBtn').style.display = on ? 'inline-flex':'none';
+}
+function gateHTML(which){
+  const txt = which==='agenda'
+    ? 'Para sua privacidade, o calendário é exibido somente após você entrar com a conta Google autorizada.'
+    : 'As gravações são vinculadas aos eventos da mentoria. Conecte sua conta Google para visualizá-las.';
+  return `<div class="gate"><div class="ic">🔒</div><h3>Conecte sua agenda</h3>
+    <p>${txt}</p><button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button></div>`;
+}
+
+async function loadCalendar(){
+  const calId = (CLIENT && CLIENT.calendarId) ? CLIENT.calendarId : 'primary';
+  document.getElementById('agendaContent').innerHTML = `<div class="loading"><span class="spin"></span>Carregando agenda…</div>`;
+  const now = new Date();
+  const timeMin = new Date(now.getFullYear(), now.getMonth()-12, 1).toISOString();
+  const timeMax = new Date(now.getFullYear(), now.getMonth()+13, 1).toISOString();
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`
+    + `?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=2500`;
+  try{
+    const r = await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
+    if(r.status===401||r.status===403){
+      const body = await r.json().catch(()=>({}));
+      document.getElementById('agendaContent').innerHTML =
+        `<div class="err-box"><b>Sem acesso a este calendário.</b><br>Verifique se a conta Google usada tem permissão de leitura na agenda da mentoria. ${body.error?'('+body.error.message+')':''}</div>`;
+      return;
+    }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    EVENTS = (data.items||[])
+      .filter(e=>e.status!=='cancelled' && (e.start&&(e.start.dateTime||e.start.date)))
+      .filter(matchesClient);
+    renderAgenda();
+    renderGravacoes();
+    renderNext();
+  }catch(e){
+    document.getElementById('agendaContent').innerHTML =
+      `<div class="err-box">Não foi possível carregar a agenda agora. ${e.message||''}</div>`;
+  }
+}
+
+/* ---------- filtro RÍGIDO do cliente ----------
+   Regras (combinadas, todas obrigatórias):
+   1. EXCLUI qualquer evento com "Organize Empresas" no título (eventos internos).
+   2. O título precisa conter o NOME da empresa (filtro/empresa).
+   3. O título precisa seguir o padrão de programa: "Organize Mentoring/Master/
+      Estratégico/Marketing e Vendas - Nome da Empresa".
+   Assim, só aparecem agendas e gravações daquela empresa. */
+function norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
+const PROGRAMAS = ['organize mentoring','organize master','organize estrategico','organize marketing e vendas'];
+function clientEmails(){
+  return (CLIENT.clienteEmail||'').toLowerCase().split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean);
+}
+function matchesClient(e){
+  const title = norm(e.summary||'');
+  if(!title) return false;
+  // 1. eventos internos da Organize Empresas — nunca exibir
+  if(title.includes('organize empresas')) return false;
+  // 2. precisa ser um evento de programa de mentoria
+  if(!PROGRAMAS.some(p=>title.includes(p))) return false;
+  // 3a. mentoria individual: título contém o nome da empresa
+  const nome = norm(CLIENT.filtro || CLIENT.empresa || '');
+  if(nome && title.includes(nome)) return true;
+  // 3b. mentoria em GRUPO: o cliente é um dos convidados (aceita múltiplos e-mails)
+  const emails = clientEmails();
+  if(emails.length && (e.attendees||[]).some(a=>emails.includes((a.email||'').toLowerCase()))) return true;
+  return false;
+}
+
+/* ---------- parsing de gravações ---------- */
+function eventStart(e){ return new Date(e.start.dateTime || e.start.date+'T00:00:00'); }
+function isAllDay(e){ return !e.start.dateTime; }
+
+function recordingsOf(e){
+  const recs = [];
+  const seen = new Set();
+  const add = (url,title)=>{ if(url && !seen.has(url)){ seen.add(url); recs.push({url,title:title||'Gravação'}); } };
+  // anexos
+  (e.attachments||[]).forEach(a=>{
+    const t=(a.title||'').toLowerCase();
+    const isVideo=(a.mimeType||'').includes('video')||t.includes('gravaç')||t.includes('gravac')||t.includes('record');
+    if(a.fileUrl && (isVideo || (a.fileUrl||'').includes('drive.google'))) add(a.fileUrl, a.title);
+  });
+  // links na descrição
+  const desc = e.description||'';
+  const urls = desc.match(/https?:\/\/[^\s"'<>)]+/g)||[];
+  urls.forEach(u=>{
+    const low=u.toLowerCase();
+    if(low.includes('drive.google')||low.includes('youtu')||low.includes('loom.com')||
+       low.includes('vimeo')||low.includes('stream.')||low.match(/\.(mp4|mov|webm)$/)||
+       low.includes('record')||low.includes('gravac')||low.includes('gravaç')) add(u,'Gravação da mentoria');
+  });
+  return recs;
+}
+function meetLink(e){
+  if(e.hangoutLink) return e.hangoutLink;
+  const ep=(e.conferenceData&&e.conferenceData.entryPoints)||[];
+  const v=ep.find(p=>p.entryPointType==='video');
+  return v?v.uri:null;
+}
+
+/* ---------- render agenda ---------- */
+function renderAgenda(){
+  const c = document.getElementById('agendaContent');
+  if(!EVENTS.length){ c.innerHTML = `<div class="empty"><div class="ic">📭</div>Nenhuma mentoria agendada ainda.</div>`; return; }
+  const now=new Date();
+  const upcoming = EVENTS.filter(e=>eventStart(e)>=now);
+  const past = EVENTS.filter(e=>eventStart(e)<now).reverse();
+  let html='';
+  // botão abrir google agenda (usa o link de busca da empresa, se houver)
+  const agUrl = CLIENT.agendaBusca || 'https://calendar.google.com/calendar/u/0/r';
+  document.getElementById('agendaActions').innerHTML =
+    `<button class="btn btn-ghost" onclick="loadCalendar()" title="Buscar novidades">🔄 Atualizar</button>
+     <a class="btn btn-ghost" target="_blank" rel="noopener" href="${agUrl}">Abrir no Google Agenda ↗</a>`;
+  if(upcoming.length){
+    html += `<div class="evt-group-lbl">▸ Próximas (${upcoming.length})</div>`;
+    upcoming.forEach(e=>html+=evtHTML(e,false));
+  }
+  if(past.length){
+    html += `<div class="evt-group-lbl">▸ Realizadas (${past.length})</div>`;
+    past.forEach(e=>html+=evtHTML(e,true));
+  }
+  c.innerHTML = html;
+}
+function evtHTML(e,isPast){
+  const d=eventStart(e);
+  const recs=recordingsOf(e);
+  const meet=meetLink(e);
+  let timeStr;
+  if(isAllDay(e)) timeStr='Dia todo';
+  else timeStr=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let actions='';
+  if(!isPast && meet) actions+=`<a class="chip chip-meet" href="${meet}" target="_blank" rel="noopener">🎥 Entrar</a>`;
+  recs.forEach(r=>actions+=`<a class="chip chip-rec" href="${r.url}" target="_blank" rel="noopener">▶ Gravação</a>`);
+  return `<div class="evt ${isPast?'past':''}">
+    <div class="evt-date"><div class="d">${d.getDate()}</div><div class="m">${MES[d.getMonth()]}</div></div>
+    <div class="evt-body">
+      <div class="t">${escapeHtml(e.summary||'Mentoria')}</div>
+      <div class="meta"><span>🕒 ${timeStr}</span>${e.location?`<span>📍 ${escapeHtml(e.location)}</span>`:''}<span>${DIAS[d.getDay()]}</span></div>
+    </div>
+    <div class="evt-actions">${actions}</div>
+  </div>`;
+}
+
+/* ---------- render gravações ---------- */
+function renderGravacoes(){
+  const c=document.getElementById('gravacoesContent');
+  const withRec = EVENTS.filter(e=>recordingsOf(e).length>0).sort((a,b)=>eventStart(b)-eventStart(a));
+  const badge=document.getElementById('recBadge');
+  if(withRec.length){ badge.style.display='inline-block'; badge.textContent=withRec.length; }
+  else badge.style.display='none';
+  if(!withRec.length){
+    c.innerHTML=`<div class="empty"><div class="ic">🎬</div><div style="font-size:15px;color:var(--txt2);font-weight:600">Nenhuma mentoria gravada ainda</div>
+      <div style="font-size:13px;margin-top:6px">Assim que uma mentoria for gravada, ela aparece aqui automaticamente.</div></div>`;
+    return;
+  }
+  let html='';
+  withRec.forEach(e=>{
+    const d=eventStart(e);
+    const recs=recordingsOf(e);
+    let btns='';
+    recs.forEach((r,i)=>btns+=`<a class="chip chip-rec" href="${r.url}" target="_blank" rel="noopener">▶ ${recs.length>1?('Assistir '+(i+1)):'Assistir gravação'}</a>`);
+    html+=`<div class="evt past" style="border-left-color:var(--green)">
+      <div class="evt-date" style="background:var(--green-bg)"><div class="d" style="color:var(--green)">${d.getDate()}</div><div class="m">${MES[d.getMonth()]}</div></div>
+      <div class="evt-body"><div class="t">${escapeHtml(e.summary||'Mentoria')}</div>
+        <div class="meta"><span>📅 ${d.getDate()} de ${MES_FULL[d.getMonth()]} de ${d.getFullYear()}</span></div></div>
+      <div class="evt-actions">${btns}</div></div>`;
+  });
+  c.innerHTML=html;
+}
+
+/* ---------- próxima mentoria ---------- */
+function renderNext(){
+  const now=new Date();
+  const next=EVENTS.filter(e=>eventStart(e)>=now).sort((a,b)=>eventStart(a)-eventStart(b))[0];
+  const strip=document.getElementById('nextStrip');
+  if(!next){ strip.style.display='none'; return; }
+  const d=eventStart(next);
+  document.getElementById('nextTitle').textContent=next.summary||'Mentoria';
+  const dateStr=`${DIAS[d.getDay()]}, ${d.getDate()} de ${MES_FULL[d.getMonth()]}`;
+  const timeStr=isAllDay(next)?'':' · '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('nextWhen').textContent=dateStr+timeStr;
+  const meet=meetLink(next);
+  document.getElementById('nextJoin').innerHTML = meet
+    ? `<a class="btn btn-teal btn-lg" href="${meet}" target="_blank" rel="noopener">🎥 Entrar na mentoria</a>` : '';
+  strip.style.display='block';
+}
+
+/* ---------- tabs ---------- */
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));
+  if((t==='apostilas'||t==='drive') && TOKEN) initArea(t);
+}
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---------- atualização automática ----------
+   Ao voltar para a aba (ou reabrir), recarrega a agenda/gravações ao vivo. */
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && TOKEN){
+    loadCalendar();
+    const act=document.querySelector('.tab.active');
+    if(act && (act.dataset.tab==='apostilas'||act.dataset.tab==='drive')) initArea(act.dataset.tab);
+  }
+});
+
+/* ---------- boot ---------- */
+document.querySelector('.org-logo').src = REPO_BASE+'organize-logo.png';
+loadClient();
+initGoogle();
+</script>
+</body>
+</html>
