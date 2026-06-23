@@ -62,6 +62,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min
 .tab{flex:1;min-width:max-content;padding:11px 16px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
 .tab:hover{color:var(--navy);background:var(--off)}
 .tab.active{background:var(--navy);color:#fff}
+.tab svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
 .tab .badge{background:var(--gold);color:#3a2a00;font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;min-width:18px;text-align:center}
 .tab.active .badge{background:var(--teal);color:var(--navy)}
 
@@ -100,9 +101,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min
 .tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
 .tool-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:26px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
 .tool-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
-.tool-card .tic{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:8px}
-.tic-trello{background:var(--trello-bg);color:var(--trello)}
-.tic-drive{background:var(--drive-bg);color:var(--drive)}
+.tool-card .tic{width:56px;height:56px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;background:#e9eefb;color:var(--navy)}
+.tool-card .tic svg{width:30px;height:30px;fill:currentColor}
 .tool-card h3{font-size:18px;font-weight:800;color:var(--navy)}
 .tool-card p{font-size:13.5px;color:var(--txt2);line-height:1.5;flex:1}
 .tool-card .btn{margin-top:14px;align-self:flex-start}
@@ -176,10 +176,11 @@ footer .org{color:var(--navy);font-weight:700}
 <!-- CONTENT -->
 <div class="wrap">
   <div class="tabs" id="tabs">
-    <button class="tab active" data-tab="agenda" onclick="switchTab('agenda')">📆 Agenda</button>
-    <button class="tab" data-tab="gravacoes" onclick="switchTab('gravacoes')">🎬 Mentorias Gravadas <span class="badge" id="recBadge" style="display:none">0</span></button>
-    <button class="tab" data-tab="trello" onclick="switchTab('trello')">🗂️ Trello</button>
-    <button class="tab" data-tab="drive" onclick="switchTab('drive')">📁 Drive</button>
+    <button class="tab active" data-tab="agenda" onclick="switchTab('agenda')"><svg viewBox="0 0 24 24"><path d="M18.316 5.684H24v12.632h-5.684V5.684zM5.684 24h12.632v-5.684H5.684V24zM18.316 5.684V0H1.895A1.894 1.894 0 0 0 0 1.895v16.421h5.684V5.684h12.632zM22.105 0h-3.289v5.184H24V1.895A1.894 1.894 0 0 0 22.105 0zm-3.289 23.5l4.684-4.684h-4.684V23.5zM0 22.105C0 23.152.848 24 1.895 24h3.289v-5.184H0v3.289z"/></svg> Agenda</button>
+    <button class="tab" data-tab="gravacoes" onclick="switchTab('gravacoes')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> Mentorias Gravadas <span class="badge" id="recBadge" style="display:none">0</span></button>
+    <button class="tab" data-tab="apostilas" onclick="switchTab('apostilas')"><svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg> Apostilas</button>
+    <button class="tab" data-tab="trello" onclick="switchTab('trello')"><svg viewBox="0 0 24 24"><path d="M21.147 0H2.853A2.86 2.86 0 000 2.853v18.294A2.86 2.86 0 002.853 24h18.294A2.86 2.86 0 0024 21.147V2.853A2.86 2.86 0 0021.147 0zM10.34 17.287a.953.953 0 01-.953.953h-4a.954.954 0 01-.954-.953V5.38a.953.953 0 01.954-.953h4a.954.954 0 01.953.953zm9.233-5.467a.944.944 0 01-.953.947h-4a.947.947 0 01-.953-.947V5.38a.953.953 0 01.953-.953h4a.954.954 0 01.953.953z"/></svg> Trello</button>
+    <button class="tab" data-tab="drive" onclick="switchTab('drive')"><svg viewBox="0 0 24 24"><path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z"/></svg> Drive</button>
   </div>
 
   <!-- AGENDA -->
@@ -213,15 +214,21 @@ footer .org{color:var(--navy);font-weight:700}
     </div>
   </div>
 
+  <!-- APOSTILAS -->
+  <div class="panel" id="panel-apostilas">
+    <div class="section-head"><div><h2>Apostilas do Programa</h2><p>Materiais e apostilas de apoio da sua mentoria.</p></div></div>
+    <div class="tool-grid" id="apostilasContent"></div>
+  </div>
+
   <!-- TRELLO -->
   <div class="panel" id="panel-trello">
-    <div class="section-head"><div><h2>🗂️ Área de Trabalho — Trello</h2><p>Acompanhe as tarefas e o andamento dos seus projetos.</p></div></div>
+    <div class="section-head"><div><h2>Área de Trabalho — Trello</h2><p>Planejamento estratégico e indicadores da sua empresa.</p></div></div>
     <div class="tool-grid" id="trelloContent"></div>
   </div>
 
   <!-- DRIVE -->
   <div class="panel" id="panel-drive">
-    <div class="section-head"><div><h2>📁 Drive da Empresa</h2><p>Todos os documentos, materiais e entregas da sua mentoria.</p></div></div>
+    <div class="section-head"><div><h2>Drive da Empresa</h2><p>Materiais, documentos e arquivos desenvolvidos para você.</p></div></div>
     <div class="tool-grid" id="driveContent"></div>
   </div>
 </div>
@@ -268,6 +275,11 @@ async function loadClient(){
 }
 
 function renderClient(){
+  // se não houver filtro definido, tenta extrair do link de busca da agenda (?q=)
+  if(!CLIENT.filtro && CLIENT.agendaBusca){
+    const m=(CLIENT.agendaBusca||'').match(/[?&]q=([^&]+)/);
+    if(m){ try{ CLIENT.filtro=decodeURIComponent(m[1].replace(/\+/g,' ')); }catch(e){} }
+  }
   document.title = `${CLIENT.empresa} · Portal da Mentoria — Organize Empresas`;
   document.getElementById('clientName').textContent = CLIENT.empresa || 'Cliente';
   document.getElementById('clientWelcome').textContent = CLIENT.boasVindas
@@ -289,31 +301,46 @@ function renderClient(){
   document.getElementById('footNote').textContent = CLIENT.responsavel ? `Mentoria conduzida por ${CLIENT.responsavel}` : '';
 }
 
-/* ---------- Trello + Drive ---------- */
+/* ---------- ícones oficiais (mesmo tom — navy) ---------- */
+const ICON = {
+  trello:'<svg viewBox="0 0 24 24"><path d="M21.147 0H2.853A2.86 2.86 0 000 2.853v18.294A2.86 2.86 0 002.853 24h18.294A2.86 2.86 0 0024 21.147V2.853A2.86 2.86 0 0021.147 0zM10.34 17.287a.953.953 0 01-.953.953h-4a.954.954 0 01-.954-.953V5.38a.953.953 0 01.954-.953h4a.954.954 0 01.953.953zm9.233-5.467a.944.944 0 01-.953.947h-4a.947.947 0 01-.953-.947V5.38a.953.953 0 01.953-.953h4a.954.954 0 01.953.953z"/></svg>',
+  drive:'<svg viewBox="0 0 24 24"><path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z"/></svg>',
+  apostilas:'<svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>'
+};
+
+/* ---------- Apostilas + Trello + Drive ---------- */
 function renderTools(){
+  const ap = document.getElementById('apostilasContent');
+  if(CLIENT.apostilas){
+    ap.innerHTML = card(ICON.apostilas,'Apostilas da mentoria',
+      'Acesse as apostilas e os materiais de apoio do seu programa de mentoria.',
+      CLIENT.apostilas,'Abrir apostilas','btn-primary');
+  }else{
+    ap.innerHTML = offCard(ICON.apostilas,'Apostilas ainda não disponíveis','As apostilas do programa serão disponibilizadas em breve.');
+  }
   const tr = document.getElementById('trelloContent');
   if(CLIENT.trello){
-    tr.innerHTML = card('tic-trello','🗂️','Quadro no Trello',
-      'Veja as listas, cartões e o progresso das atividades da sua mentoria em tempo real.',
+    tr.innerHTML = card(ICON.trello,'Quadro no Trello',
+      'Acesse o Planejamento Estratégico, os Indicadores Comerciais, os Indicadores Financeiros e o Fluxo de Caixa da sua empresa.',
       CLIENT.trello,'Abrir Trello','btn-primary');
   }else{
-    tr.innerHTML = offCard('tic-trello','🗂️','Trello ainda não configurado','A área de trabalho do Trello será disponibilizada em breve.');
+    tr.innerHTML = offCard(ICON.trello,'Trello ainda não configurado','A área de trabalho do Trello será disponibilizada em breve.');
   }
   const dr = document.getElementById('driveContent');
   if(CLIENT.drive){
-    dr.innerHTML = card('tic-drive','📁','Drive da empresa',
-      'Acesse documentos, planilhas, materiais e todas as entregas da sua mentoria.',
+    dr.innerHTML = card(ICON.drive,'Drive da empresa',
+      'Materiais, documentos, ferramentas e todos os arquivos desenvolvidos para a sua empresa.',
       CLIENT.drive,'Abrir Drive','btn-primary');
   }else{
-    dr.innerHTML = offCard('tic-drive','📁','Drive ainda não configurado','A pasta do Drive será disponibilizada em breve.');
+    dr.innerHTML = offCard(ICON.drive,'Drive ainda não configurado','A pasta do Drive será disponibilizada em breve.');
   }
 }
-function card(ic,emo,title,desc,url,label,cls){
-  return `<div class="tool-card"><div class="tic ${ic}">${emo}</div><h3>${title}</h3><p>${desc}</p>
+function card(icon,title,desc,url,label,cls){
+  return `<div class="tool-card"><div class="tic">${icon}</div><h3>${title}</h3><p>${desc}</p>
     <a class="btn ${cls}" href="${url}" target="_blank" rel="noopener">${label} →</a></div>`;
 }
-function offCard(ic,emo,title,desc){
-  return `<div class="tool-card off"><div class="tic ${ic}">${emo}</div><h3>${title}</h3><p>${desc}</p>
+function offCard(icon,title,desc){
+  return `<div class="tool-card off"><div class="tic">${icon}</div><h3>${title}</h3><p>${desc}</p>
     <span class="btn">Em breve</span></div>`;
 }
 
@@ -392,25 +419,26 @@ async function loadCalendar(){
   }
 }
 
-/* ---------- filtro do cliente ----------
-   Os eventos de mentoria ficam numa agenda compartilhada da Organize.
-   Identificamos os eventos DESTE cliente pelo e-mail dele (convidado) e/ou
-   por um texto de filtro (nome). Sem filtro, mostra tudo. */
+/* ---------- filtro RÍGIDO do cliente ----------
+   Regras (combinadas, todas obrigatórias):
+   1. EXCLUI qualquer evento com "Organize Empresas" no título (eventos internos).
+   2. O título precisa conter o NOME da empresa (filtro/empresa).
+   3. O título precisa seguir o padrão de programa: "Organize Mentoring/Master/
+      Estratégico/Marketing e Vendas - Nome da Empresa".
+   Assim, só aparecem agendas e gravações daquela empresa. */
+function norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
+const PROGRAMAS = ['organize mentoring','organize master','organize estrategico','organize marketing e vendas'];
 function matchesClient(e){
-  const email=(CLIENT.clienteEmail||'').toLowerCase().trim();
-  const filtro=(CLIENT.filtro||'').toLowerCase().trim();
-  if(!email && !filtro) return true;
-  if(email){
-    const inAtt=(e.attendees||[]).some(a=>(a.email||'').toLowerCase()===email);
-    const isOrg=((e.organizer&&e.organizer.email)||'').toLowerCase()===email;
-    const isCre=((e.creator&&e.creator.email)||'').toLowerCase()===email;
-    if(inAtt||isOrg||isCre) return true;
-  }
-  if(filtro){
-    const hay=((e.summary||'')+' '+(e.description||'')).toLowerCase();
-    if(hay.includes(filtro)) return true;
-  }
-  return false;
+  const title = norm(e.summary||'');
+  if(!title) return false;
+  // 1. eventos internos da Organize Empresas — nunca exibir
+  if(title.includes('organize empresas')) return false;
+  // 2. precisa conter o nome da empresa
+  const nome = norm(CLIENT.filtro || CLIENT.empresa || '');
+  if(!nome || !title.includes(nome)) return false;
+  // 3. precisa seguir o padrão de programa de mentoria
+  if(!PROGRAMAS.some(p=>title.includes(p))) return false;
+  return true;
 }
 
 /* ---------- parsing de gravações ---------- */
@@ -453,9 +481,10 @@ function renderAgenda(){
   const upcoming = EVENTS.filter(e=>eventStart(e)>=now);
   const past = EVENTS.filter(e=>eventStart(e)<now).reverse();
   let html='';
-  // botão abrir google agenda
+  // botão abrir google agenda (usa o link de busca da empresa, se houver)
+  const agUrl = CLIENT.agendaBusca || 'https://calendar.google.com/calendar/u/0/r';
   document.getElementById('agendaActions').innerHTML =
-    `<a class="btn btn-ghost" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/u/0/r">Abrir no Google Agenda ↗</a>`;
+    `<a class="btn btn-ghost" target="_blank" rel="noopener" href="${agUrl}">Abrir no Google Agenda ↗</a>`;
   if(upcoming.length){
     html += `<div class="evt-group-lbl">▸ Próximas (${upcoming.length})</div>`;
     upcoming.forEach(e=>html+=evtHTML(e,false));
