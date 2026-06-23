@@ -245,7 +245,7 @@ tbody tr:hover{background:var(--off);}
 .rpt-cfg-field textarea{resize:vertical;min-height:70px;}
 .rpt-gen-btn{background:var(--navy);color:#fff;border:none;padding:10px 24px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;transition:background .2s;}
 .rpt-gen-btn:hover{background:var(--navy-light);}
-.rpt-kpi-highlight{background:linear-gradient(135deg,var(--navy) 0%,#0a1a7a 100%);color:#fff;border-radius:var(--r);padding:20px;margin-bottom:28px;}
+.rpt-kpi-highlight{background:linear-gradient(135deg,var(--navy) 0%,#2A3F8F 100%);color:#fff;border-radius:var(--r);padding:20px;margin-bottom:28px;}
 .rpt-kpi-highlight-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;}
 .rpt-kpi-h{text-align:center;}
 .rpt-kpi-h-val{font-size:22px;font-weight:800;color:#fff;line-height:1;}
@@ -1719,7 +1719,7 @@ var CLIENT_SHEETS = {
 };
 
 function gClientId() {
-  return localStorage.getItem('oe_gdrive_clientid') || '';
+  return localStorage.getItem('oe_gdrive_clientid') || '317582081175-tk5f2d86tbcqlp507m3jecrmf3utgkmq.apps.googleusercontent.com';
 }
 
 function gDriveInitClient() {
@@ -1777,18 +1777,18 @@ function showGDriveConfigModal(callback) {
   bg.className = 'gdrive-modal-bg';
   bg.innerHTML = '<div class="gdrive-modal">' +
     '<h3>Configurar integração com Google Drive</h3>' +
-    '<p>Para carregar dados das planilhas automaticamente, é necessário um <strong>Google OAuth2 Client ID</strong>.</p>' +
-    '<ol>' +
-    '<li>Acesse <strong>console.cloud.google.com</strong></li>' +
-    '<li>Crie um projeto → APIs e serviços → Credenciais</li>' +
-    '<li>Novo ID do cliente OAuth → <em>Aplicativo Web</em></li>' +
-    '<li>Origens autorizadas: <code>https://administrativo-ship-it.github.io</code></li>' +
-    '<li>Cole o Client ID abaixo e salve</li>' +
+    '<p style="background:#fef3cd;border:1px solid #f0a500;border-radius:6px;padding:10px 14px;font-size:12.5px;margin-bottom:14px;">⚠ <strong>Ação necessária no Google Cloud Console</strong><br>O Client ID já está configurado, mas o domínio do painel precisa ser autorizado:</p>' +
+    '<ol style="font-size:13px;line-height:1.8;">' +
+    '<li>Acesse <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#1B2B6B;font-weight:600;">console.cloud.google.com/apis/credentials</a></li>' +
+    '<li>Projeto: <strong>organize-painel</strong> → clique no Client ID OAuth existente</li>' +
+    '<li>Em <strong>Origens JavaScript autorizadas</strong>, adicione:<br><code style="background:#f4f6fb;padding:3px 8px;border-radius:4px;font-size:12px;">https://administrativo-ship-it.github.io</code></li>' +
+    '<li>Clique em <strong>Salvar</strong> e aguarde até 5 minutos</li>' +
     '</ol>' +
-    '<input id="gdrive-cid-input" placeholder="Cole o Client ID aqui (ex: 12345.apps.googleusercontent.com)" value="'+gClientId()+'">' +
+    '<p style="font-size:12px;color:#41546A;margin-top:10px;">Client ID atual:</p>' +
+    '<input id="gdrive-cid-input" placeholder="Client ID" value="'+gClientId()+'" style="font-size:11px;">' +
     '<div class="modal-btns">' +
     '<button class="modal-btn-save" onclick="saveGDriveClientId()">Salvar e conectar</button>' +
-    '<button class="modal-btn-cancel" onclick="document.getElementById(\'gdrive-modal-bg\').remove()">Cancelar</button>' +
+    '<button class="modal-btn-cancel" onclick="document.getElementById(\'gdrive-modal-bg\').remove()">Fechar</button>' +
     '</div></div>';
   document.body.appendChild(bg);
   window._gDriveModalCallback = callback;
@@ -2621,7 +2621,7 @@ function rptGenerateMensal() {
     html += '<span style="font-size:11px;font-weight:600;color:#6B7A99;text-transform:uppercase;letter-spacing:.8px;">Progresso da Meta Mensal</span>';
     html += '<span style="font-size:12px;color:#2C3E50"><strong style="color:#1B2B6B">'+fmtBRL(fatN)+'</strong> de <strong style="color:#1B2B6B">'+fmtBRL(metaN)+'</strong></span>';
     html += '</div><div style="height:10px;background:#DDE2EC;border-radius:99px;overflow:hidden;">';
-    html += '<div style="height:100%;width:'+barW+'%;background:linear-gradient(90deg,#1B2B6B,#2A4F9B);border-radius:99px;"></div></div>';
+    html += '<div style="height:100%;width:'+barW+'%;background:linear-gradient(90deg,#1B2B6B,#2A3F8F);border-radius:99px;"></div></div>';
     html += '<div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px;color:#8A94A8;">';
     html += '<span>R$ 0</span><span style="font-weight:700;color:#1B2B6B;">'+pctMeta+'% atingido</span><span>'+fmtBRL(metaN)+'</span></div></div>';
   }
@@ -2713,7 +2713,7 @@ function rptGenerateMensal() {
   // ── RESUMO EXECUTIVO ──
   if (_rmf.analise) {
     html += '<div style="'+S_sec+'">Resumo Executivo</div>';
-    html += '<div style="background:linear-gradient(135deg,#1B2B6B 0%,#2A4F9B 100%);border-radius:8px;padding:22px 26px;margin-top:0;">';
+    html += '<div style="background:linear-gradient(135deg,#1B2B6B 0%,#2A3F8F 100%);border-radius:8px;padding:22px 26px;margin-top:0;">';
     html += '<p style="color:rgba(255,255,255,.92);font-size:13px;line-height:1.75;font-style:italic;">'+_rmf.analise.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
   }
 
@@ -2797,9 +2797,9 @@ function rptMensal() {
     '</div>'+
     '<div class="rpt-form-grid" style="grid-template-columns:1fr 1fr;">'+linkFields+'</div>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">'+
-    ((_rmf.cliente && (links.planilhaComercialId || links.planilhaId))?'<button class="rpt-drive-btn" style="background:var(--teal-dark)" onclick="triggerDriveLoad(\'mensal\')">↺ Carregar dados da planilha</button>':'')+
-    '<button class="rpt-drive-btn rpt-connect-btn" onclick="'+(_gToken?'gDriveSignOut()':'gDriveSignIn()') + '" style="font-size:11px;">'+(_gToken?'<span style=\'color:#22c55e\'>● Drive</span> — Desconectar':'Conectar Google Drive')+
-    '</button><span class="rpt-drive-cfg-link" onclick="showGDriveConfigModal()" style="font-size:11px;">Configurar Client ID</span>'+
+    ((_rmf.cliente && (links.planilhaComercialId || links.planilhaId))?'<button class="rpt-drive-btn" style="background:var(--teal-dark)" onclick="triggerDriveLoad(\'mensal\')">↺ Atualizar via Google Drive</button>':'')+
+    (_gToken?'<span style="font-size:11px;color:#22c55e;font-weight:600;">● Google Drive conectado</span>':
+      '<span style="font-size:11px;color:var(--muted);">Dados carregados automaticamente. <span style="cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Drive</span> para atualização ao vivo.</span>')+
     '</div>'+
     '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">⏳ Carregando dados da planilha...</div>';
 
@@ -2891,20 +2891,17 @@ function rptEncerramento() {
 
   var kpiFields = labels.map(function(l,i){ return '<div class="rpt-cfg-field"><label>'+l+'</label><input id="ref-'+kpiKeys[i]+'" value="'+(_ref[kpiKeys[i]]||'')+'" oninput="_ref[\''+kpiKeys[i]+'\']=this.value" placeholder="—"></div>'; }).join('');
 
-  var driveBar = '<div class="rpt-drive-bar">' +
-    '<div class="rpt-drive-status"><div class="rpt-drive-dot' + (_gToken?' connected':'') + '"></div><span class="rpt-drive-status-txt">' + (_gToken?'Drive conectado':'Drive não conectado') + '</span></div>' +
-    '<button class="rpt-drive-btn rpt-connect-btn" onclick="' + (_gToken?'gDriveSignOut()':'gDriveSignIn()') + '">' + (_gToken?'Desconectar':'Conectar Google Drive') + '</button>' +
-    (_rmf.cliente ? '<button class="rpt-drive-btn" style="background:var(--teal-dark)" onclick="triggerDriveLoad(\'mensal\')">↺ Carregar dados do Drive</button>' : '') +
-    '<span class="rpt-drive-cfg-link" onclick="showGDriveConfigModal()">Configurar Client ID</span>' +
-    (_rmf._driveLoaded ? '<span style="font-size:11px;color:#22c55e;margin-left:auto">✔ Dados carregados do Drive</span>' : '') +
-    '</div>' +
-    '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">⏳ Carregando dados das planilhas do Drive...</div>';
+  var driveBar = '';
   var driveBarEnc = '<div class="rpt-drive-bar">' +
-    '<div class="rpt-drive-status"><div class="rpt-drive-dot' + (_gToken?' connected':'') + '"></div><span class="rpt-drive-status-txt">' + (_gToken?'Drive conectado':'Drive não conectado') + '</span></div>' +
-    '<button class="rpt-drive-btn rpt-connect-btn" onclick="' + (_gToken?'gDriveSignOut()':'gDriveSignIn()') + '">' + (_gToken?'Desconectar':'Conectar Google Drive') + '</button>' +
-    (_ref.cliente ? '<button class="rpt-drive-btn" style="background:var(--teal-dark)" onclick="triggerDriveLoad(\'encerramento\')">↺ Carregar dados do Drive</button>' : '') +
-    '<span class="rpt-drive-cfg-link" onclick="showGDriveConfigModal()">Configurar Client ID</span>' +
-    (_ref._driveLoaded ? '<span style="font-size:11px;color:#22c55e;margin-left:auto">✔ Dados carregados do Drive</span>' : '') +
+    (_gToken ?
+      '<span style="font-size:11px;color:#22c55e;font-weight:600;">● Google Drive conectado</span>' +
+      (_ref.cliente ? '<button class="rpt-drive-btn" style="background:var(--teal-dark);margin-left:8px" onclick="triggerDriveLoad(\'encerramento\')">↺ Atualizar via Drive</button>' : '') +
+      '<button class="rpt-drive-btn" style="margin-left:8px;font-size:11px;" onclick="gDriveSignOut()">Desconectar</button>'
+      :
+      '<span style="font-size:11px;color:var(--muted);">Dados carregados automaticamente. </span>' +
+      '<span style="font-size:11px;cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Google Drive</span>' +
+      '<span style="font-size:11px;color:var(--muted);"> para atualização ao vivo.</span>'
+    ) +
     '</div>' +
     '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">⏳ Carregando dados das planilhas do Drive...</div>';
   var formHtml = driveBarEnc + '<div class="rpt-form-panel">' +
