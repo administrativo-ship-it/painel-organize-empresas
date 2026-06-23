@@ -115,8 +115,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min
 .ap-item{background:#fff;border-radius:var(--r2);box-shadow:var(--sh);padding:13px 16px;display:flex;align-items:center;gap:14px;transition:transform .15s,box-shadow .15s;border-left:4px solid var(--teal)}
 .ap-item:hover{transform:translateY(-2px);box-shadow:var(--sh-lg)}
 .ap-ic{width:26px;height:26px;flex-shrink:0;object-fit:contain}
+.ap-ic2{flex-shrink:0;display:flex}
+.ap-ic2 svg{width:24px;height:24px;fill:var(--navy);display:block}
 .ap-name{flex:1;min-width:0;font-size:14.5px;font-weight:600;color:var(--txt);word-break:break-word}
 .ap-act{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.chip svg{width:15px;height:15px;fill:currentColor;vertical-align:-2px}
+.chip-soft{background:#eef2fb;color:var(--navy)}
+.chip-soft:hover{background:#e1e8f7}
+.dz-crumbs{display:flex;align-items:center;flex-wrap:wrap;gap:2px;margin-bottom:14px}
+.dz-crumb{background:none;border:none;color:var(--navy);font-family:inherit;font-weight:700;cursor:pointer;padding:4px 7px;border-radius:6px;font-size:13.5px}
+.dz-crumb:hover{background:#eef2fb}
+.dz-sep{color:var(--muted);font-weight:700}
 .ap-modal{position:fixed;inset:0;background:rgba(13,21,38,.75);display:none;align-items:center;justify-content:center;z-index:120;padding:20px}
 .ap-modal.open{display:flex}
 .ap-modal-box{background:#fff;border-radius:var(--r);width:min(900px,100%);height:min(90vh,820px);display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--sh-lg)}
@@ -234,7 +243,7 @@ footer .org{color:var(--navy);font-weight:700}
   <!-- APOSTILAS -->
   <div class="panel" id="panel-apostilas">
     <div class="section-head"><div><h2><svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg> Apostilas do Programa</h2><p>Materiais e apostilas de apoio da sua mentoria.</p></div></div>
-    <div class="tool-grid" id="apostilasContent"></div>
+    <div id="apostilasContent"></div>
   </div>
 
   <!-- TRELLO -->
@@ -246,7 +255,7 @@ footer .org{color:var(--navy);font-weight:700}
   <!-- DRIVE -->
   <div class="panel" id="panel-drive">
     <div class="section-head"><div><h2><svg viewBox="0 0 24 24"><path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z"/></svg> Drive da Empresa</h2><p>Materiais, documentos e arquivos desenvolvidos para você.</p></div></div>
-    <div class="tool-grid" id="driveContent"></div>
+    <div id="driveContent"></div>
   </div>
 
   <!-- ACESSO EXTRA -->
@@ -343,7 +352,6 @@ const ICON = {
 
 /* ---------- Trello + Drive ---------- */
 function renderTools(){
-  setApostilasInitial();
   const tr = document.getElementById('trelloContent');
   if(CLIENT.trello){
     tr.innerHTML = card(ICON.trello,'Quadro no Trello',
@@ -352,14 +360,9 @@ function renderTools(){
   }else{
     tr.innerHTML = offCard(ICON.trello,'Trello ainda não configurado','A área de trabalho do Trello será disponibilizada em breve.');
   }
-  const dr = document.getElementById('driveContent');
-  if(CLIENT.drive){
-    dr.innerHTML = card(ICON.drive,'Drive da empresa',
-      'Materiais, documentos, ferramentas e todos os arquivos desenvolvidos para a sua empresa.',
-      CLIENT.drive,'Abrir Drive','btn-primary');
-  }else{
-    dr.innerHTML = offCard(ICON.drive,'Drive ainda não configurado','A pasta do Drive será disponibilizada em breve.');
-  }
+  // Apostilas e Drive: navegador de pastas (sincronizado ao vivo com o Drive)
+  initArea('apostilas');
+  initArea('drive');
   // link adicional (aba só aparece se houver link)
   const extraTab=document.getElementById('tab-extra');
   if(CLIENT.linkAdicional){
@@ -383,18 +386,9 @@ function offCard(icon,title,desc){
     <span class="btn">Em breve</span></div>`;
 }
 
-/* ---------- APOSTILAS (lista os arquivos da pasta do Drive) ---------- */
-function setApostilasInitial(){
-  const ap=document.getElementById('apostilasContent');
-  if(!CLIENT.apostilas){ ap.innerHTML=offCard(ICON.apostilas,'Apostilas ainda não disponíveis','As apostilas do programa serão disponibilizadas em breve.'); return; }
-  if(!TOKEN){
-    ap.innerHTML=`<div class="gate"><div class="ic">📚</div><h3>Conecte para ver as apostilas</h3>
-      <p>As apostilas ficam no Drive da sua mentoria. Entre com sua conta Google para visualizá-las aqui.</p>
-      <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button></div>`;
-    return;
-  }
-  loadApostilas();
-}
+/* ============================================================
+   NAVEGADOR DE DRIVE (Apostilas + Drive) — sincronizado ao vivo
+   ============================================================ */
 function driveRef(url){
   url=url||'';
   let m=url.match(/folders\/([A-Za-z0-9_-]+)/); if(m) return {type:'folder',id:m[1]};
@@ -402,68 +396,83 @@ function driveRef(url){
   m=url.match(/[?&]id=([A-Za-z0-9_-]+)/); if(m) return {type:'folder',id:m[1]};
   return null;
 }
-async function loadApostilas(){
-  const ap=document.getElementById('apostilasContent');
-  if(!CLIENT.apostilas || !TOKEN){ setApostilasInitial(); return; }
-  const ref=driveRef(CLIENT.apostilas);
-  ap.innerHTML=`<div class="loading"><span class="spin"></span>Carregando apostilas…</div>`;
-  try{
-    let files=[];
-    if(ref && ref.type==='folder'){
-      const q=encodeURIComponent(`'${ref.id}' in parents and trashed=false`);
-      const url=`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,webViewLink,webContentLink,iconLink,modifiedTime,size)&orderBy=folder,name&pageSize=200&supportsAllDrives=true&includeItemsFromAllDrives=true`;
-      const r=await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
-      if(r.status===401||r.status===403){ ap.innerHTML=`<div class="err-box"><b>Sem acesso à pasta de apostilas.</b><br>Verifique se a pasta do Drive está compartilhada com a conta usada no login.</div>${openFolderBtn()}`; return; }
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      files=(await r.json()).files||[];
-    }else if(ref && ref.type==='file'){
-      const r=await fetch(`https://www.googleapis.com/drive/v3/files/${ref.id}?fields=id,name,mimeType,webViewLink,webContentLink,iconLink&supportsAllDrives=true`,{headers:{Authorization:'Bearer '+TOKEN}});
-      if(r.ok) files=[await r.json()];
-    }
-    renderApostilas(files);
-  }catch(e){ ap.innerHTML=`<div class="err-box">Não foi possível carregar as apostilas. ${e.message||''}</div>${openFolderBtn()}`; }
-}
-function openFolderBtn(){
-  return `<div style="text-align:center;margin-top:16px"><a class="btn btn-ghost" href="${CLIENT.apostilas}" target="_blank" rel="noopener">📁 Abrir pasta no Drive ↗</a></div>`;
-}
-function renderApostilas(files){
-  const ap=document.getElementById('apostilasContent');
-  if(!files.length){
-    ap.innerHTML=`<div class="empty"><div class="ic">📚</div><div style="font-size:15px;color:var(--txt2);font-weight:600">Nenhum arquivo encontrado na pasta.</div></div>${openFolderBtn()}`;
+/* ícones minimalistas (mesmo tom navy) */
+const ICO_FOLDER='<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>';
+const ICO_DOC='<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>';
+const ICO_IMG='<svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>';
+const ICO_VID='<svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm6 4v8l6-4-6-4z"/></svg>';
+function fileTypeIcon(mime){ mime=mime||''; if(mime.includes('image'))return ICO_IMG; if(mime.includes('video'))return ICO_VID; return ICO_DOC; }
+/* ícones de ação */
+const ACT_EYE='<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5C21.3 7.6 17 4.5 12 4.5zm0 12.5a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/></svg>';
+const ACT_DL='<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+const ACT_OPEN='<svg viewBox="0 0 24 24"><path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7zM5 5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7H5V5z"/></svg>';
+const ACT_CHEV='<svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>';
+
+const DRV={};  // area -> pilha de navegação [{id,name}]
+function areaCfg(area){ return area==='drive'
+  ? {url:CLIENT.drive, label:'Drive da Empresa', ico:ICON.drive, empty:'O Drive da empresa será disponibilizado em breve.'}
+  : {url:CLIENT.apostilas, label:'Apostilas', ico:ICON.apostilas, empty:'As apostilas do programa serão disponibilizadas em breve.'}; }
+function initArea(area){
+  const c=document.getElementById(area+'Content'); const cfg=areaCfg(area);
+  if(!cfg.url){ c.innerHTML='<div class="tool-grid">'+offCard(cfg.ico, cfg.label+' ainda não disponível', cfg.empty)+'</div>'; return; }
+  if(!TOKEN){
+    c.innerHTML=`<div class="gate"><div class="ic">📁</div><h3>Conecte para navegar</h3>
+      <p>Entre com sua conta Google para ver as pastas e arquivos aqui dentro, sempre atualizados.</p>
+      <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button>
+      <div style="margin-top:12px"><a class="btn btn-ghost" href="${cfg.url}" target="_blank" rel="noopener">Ou abrir no Drive ↗</a></div></div>`;
     return;
   }
-  // pastas primeiro, depois arquivos
+  const ref=driveRef(cfg.url);
+  if(!ref){ c.innerHTML=`<div class="err-box">Link do Drive inválido.</div>`+extBtn(cfg.url); return; }
+  DRV[area]=[{id:ref.id, name:cfg.label}];
+  listArea(area);
+}
+async function listArea(area){
+  const c=document.getElementById(area+'Content');
+  const cur=DRV[area][DRV[area].length-1];
+  c.innerHTML=`<div class="loading"><span class="spin"></span>Carregando…</div>`;
+  try{
+    const q=encodeURIComponent(`'${cur.id}' in parents and trashed=false`);
+    const url=`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,webViewLink,webContentLink)&orderBy=folder,name&pageSize=300&supportsAllDrives=true&includeItemsFromAllDrives=true`;
+    const r=await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
+    if(r.status===401||r.status===403){ c.innerHTML=`<div class="err-box"><b>Sem acesso a esta pasta.</b><br>Verifique se ela está compartilhada com a conta usada no login.</div>`+extBtn(areaCfg(area).url); return; }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    renderArea(area,(await r.json()).files||[]);
+  }catch(e){ c.innerHTML=`<div class="err-box">Não foi possível carregar. ${e.message||''}</div>`+extBtn(areaCfg(area).url); }
+}
+function renderArea(area,files){
+  const c=document.getElementById(area+'Content'); const stack=DRV[area];
+  let bc='<div class="dz-crumbs">';
+  stack.forEach((s,i)=>{ bc+=(i?'<span class="dz-sep">›</span>':'')+`<button class="dz-crumb" onclick="crumbArea('${area}',${i})">${escapeHtml(s.name)}</button>`; });
+  bc+='</div>';
   files.sort((a,b)=>(a.mimeType==='application/vnd.google-apps.folder'?0:1)-(b.mimeType==='application/vnd.google-apps.folder'?0:1));
-  let html='<div class="ap-list">';
-  files.forEach(f=>{
-    const isFolder=f.mimeType==='application/vnd.google-apps.folder';
-    const isGoogleDoc=(f.mimeType||'').startsWith('application/vnd.google-apps');
-    const view=f.webViewLink||`https://drive.google.com/file/d/${f.id}/view`;
-    const dl=f.webContentLink||`https://drive.google.com/uc?export=download&id=${f.id}`;
-    let actions;
-    if(isFolder){
-      actions=`<a class="chip chip-meet" href="${view}" target="_blank" rel="noopener">📂 Abrir pasta</a>`;
-    }else{
-      actions=`<button class="chip chip-meet" onclick="previewDrive('${f.id}')">👁️ Visualizar</button>`
-        + (isGoogleDoc?`<a class="chip chip-rec" href="${view}" target="_blank" rel="noopener">↗ Abrir</a>`
-                      :`<a class="chip chip-rec" href="${dl}" target="_blank" rel="noopener">⬇️ Baixar</a>`);
-    }
-    html+=`<div class="ap-item">
-      <img class="ap-ic" src="${f.iconLink||''}" alt="" onerror="this.style.display='none'">
-      <div class="ap-name">${escapeHtml(f.name)}</div>
-      <div class="ap-act">${actions}</div></div>`;
-  });
-  html+='</div>'+openFolderBtn();
-  ap.innerHTML=html;
+  let html=bc;
+  if(!files.length){ html+=`<div class="empty"><div class="ic">📂</div>Esta pasta está vazia.</div>`; }
+  else{
+    html+='<div class="ap-list">';
+    files.forEach(f=>{
+      const folder=f.mimeType==='application/vnd.google-apps.folder';
+      const isG=(f.mimeType||'').startsWith('application/vnd.google-apps');
+      const view=f.webViewLink||`https://drive.google.com/file/d/${f.id}/view`;
+      const dl=f.webContentLink||`https://drive.google.com/uc?export=download&id=${f.id}`;
+      let act;
+      if(folder){ act=`<button class="chip chip-soft" data-id="${f.id}" data-n="${escapeHtml(f.name)}" onclick="intoArea('${area}',this)">Abrir ${ACT_CHEV}</button>`; }
+      else{ act=`<button class="chip chip-soft" onclick="previewDrive('${f.id}')">${ACT_EYE} Visualizar</button>`
+              + (isG?`<a class="chip chip-soft" href="${view}" target="_blank" rel="noopener">${ACT_OPEN} Abrir</a>`
+                    :`<a class="chip chip-soft" href="${dl}" target="_blank" rel="noopener">${ACT_DL} Baixar</a>`); }
+      html+=`<div class="ap-item"><span class="ap-ic2">${folder?ICO_FOLDER:fileTypeIcon(f.mimeType)}</span>
+        <div class="ap-name">${escapeHtml(f.name)}</div><div class="ap-act">${act}</div></div>`;
+    });
+    html+='</div>';
+  }
+  html+=extBtn('https://drive.google.com/drive/folders/'+stack[stack.length-1].id);
+  c.innerHTML=html;
 }
-function previewDrive(id){
-  document.getElementById('apFrame').src=`https://drive.google.com/file/d/${id}/preview`;
-  document.getElementById('apModal').classList.add('open');
-}
-function closePreview(){
-  document.getElementById('apModal').classList.remove('open');
-  document.getElementById('apFrame').src='';
-}
+function intoArea(area,btn){ DRV[area].push({id:btn.dataset.id,name:btn.dataset.n}); listArea(area); }
+function crumbArea(area,i){ DRV[area].length=i+1; listArea(area); }
+function extBtn(url){ return `<div style="text-align:center;margin-top:16px"><a class="btn btn-ghost" href="${url}" target="_blank" rel="noopener">📁 Abrir no Drive ↗</a></div>`; }
+function previewDrive(id){ document.getElementById('apFrame').src=`https://drive.google.com/file/d/${id}/preview`; document.getElementById('apModal').classList.add('open'); }
+function closePreview(){ document.getElementById('apModal').classList.remove('open'); document.getElementById('apFrame').src=''; }
 
 /* ============================================================
    GOOGLE — autenticação + calendário
@@ -479,7 +488,8 @@ function initGoogle(){
         localStorage.setItem(CAL_OK_KEY,'1');   // lembra para reconectar sozinho
         setAuthState(true);
         loadCalendar();
-        loadApostilas();
+        initArea('apostilas');
+        initArea('drive');
         scheduleTokenRefresh();
       }
     },
@@ -511,7 +521,8 @@ function signOut(){
   // restaurar gates
   document.getElementById('agendaContent').innerHTML = gateHTML('agenda');
   document.getElementById('gravacoesContent').innerHTML = gateHTML('grav');
-  setApostilasInitial();
+  initArea('apostilas');
+  initArea('drive');
   document.getElementById('nextStrip').style.display='none';
 }
 function setAuthState(on){
@@ -709,13 +720,19 @@ function renderNext(){
 function switchTab(t){
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));
-  if(t==='apostilas' && TOKEN) loadApostilas();
+  if((t==='apostilas'||t==='drive') && TOKEN) initArea(t);
 }
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 /* ---------- atualização automática ----------
    Ao voltar para a aba (ou reabrir), recarrega a agenda/gravações ao vivo. */
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden && TOKEN) loadCalendar(); });
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && TOKEN){
+    loadCalendar();
+    const act=document.querySelector('.tab.active');
+    if(act && (act.dataset.tab==='apostilas'||act.dataset.tab==='drive')) initArea(act.dataset.tab);
+  }
+});
 
 /* ---------- boot ---------- */
 loadClient();
