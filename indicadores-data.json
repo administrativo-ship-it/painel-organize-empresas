@@ -6,99 +6,196 @@
       "comercialId": "1YO8Q3a5K5AXcNvzjMdpUwxgKQb_qwt3X",
       "financeiroId": "129OE8LjjP78visfwm1G0pMocYEw4-qgq",
       "fluxoId": null,
-      "historico": [],
+      "historico": [
+        {
+          "mes": "Jan",
+          "mesNum": 1,
+          "fat2025": 0.0,
+          "fat2026": 40001.0,
+          "meta2026": 0.0,
+          "cresc": null
+        },
+        {
+          "mes": "Fev",
+          "mesNum": 2,
+          "fat2025": 31733.0,
+          "fat2026": 60000.0,
+          "meta2026": 36492.95,
+          "cresc": 89.1
+        },
+        {
+          "mes": "Mar",
+          "mesNum": 3,
+          "fat2025": 19025.85,
+          "fat2026": 70000.0,
+          "meta2026": 38051.7,
+          "cresc": 267.9
+        },
+        {
+          "mes": "Abr",
+          "mesNum": 4,
+          "fat2025": 22373.64,
+          "fat2026": 50000.0,
+          "meta2026": 40272.551999999996,
+          "cresc": 123.5
+        },
+        {
+          "mes": "Mai",
+          "mesNum": 5,
+          "fat2025": 48720.58,
+          "fat2026": 60000.0,
+          "meta2026": 56028.667,
+          "cresc": 23.2
+        },
+        {
+          "mes": "Jun",
+          "mesNum": 6,
+          "fat2025": 52685.8,
+          "fat2026": 120000.0,
+          "meta2026": 60588.670000000006,
+          "cresc": 127.8
+        },
+        {
+          "mes": "Jul",
+          "mesNum": 7,
+          "fat2025": 60436.0,
+          "fat2026": 400000.0,
+          "meta2026": 69501.4,
+          "cresc": 561.9
+        },
+        {
+          "mes": "Ago",
+          "mesNum": 8,
+          "fat2025": 46796.0,
+          "fat2026": 125000.0,
+          "meta2026": 53815.4,
+          "cresc": 167.1
+        },
+        {
+          "mes": "Set",
+          "mesNum": 9,
+          "fat2025": 47840.0,
+          "fat2026": 80000.0,
+          "meta2026": 55016.0,
+          "cresc": 67.2
+        },
+        {
+          "mes": "Out",
+          "mesNum": 10,
+          "fat2025": 50070.0,
+          "fat2026": 400000.0,
+          "meta2026": 57580.5,
+          "cresc": 698.9
+        },
+        {
+          "mes": "Nov",
+          "mesNum": 11,
+          "fat2025": 0.0,
+          "fat2026": 60000.0,
+          "meta2026": 0.0,
+          "cresc": null
+        },
+        {
+          "mes": "Dez",
+          "mesNum": 12,
+          "fat2025": 0.0,
+          "fat2026": 95000.0,
+          "meta2026": 0.0,
+          "cresc": null
+        }
+      ],
       "mensal": {
         "1": {
-          "fat": 0,
-          "meta": 0,
+          "fat": 40001.0,
+          "meta": 0.0,
           "cresc": null,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "2": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
+          "fat": 60000.0,
+          "meta": 36492.95,
+          "cresc": 89.1,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "3": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
+          "fat": 70000.0,
+          "meta": 38051.7,
+          "cresc": 267.9,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "4": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
+          "fat": 50000.0,
+          "meta": 40272.551999999996,
+          "cresc": 123.5,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "5": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
+          "fat": 60000.0,
+          "meta": 56028.667,
+          "cresc": 23.2,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "6": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
+          "fat": 120000.0,
+          "meta": 60588.670000000006,
+          "cresc": 127.8,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "7": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
+          "fat": 400000.0,
+          "meta": 69501.4,
+          "cresc": 561.9,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "8": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
+          "fat": 125000.0,
+          "meta": 53815.4,
+          "cresc": 167.1,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "9": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
+          "fat": 80000.0,
+          "meta": 55016.0,
+          "cresc": 67.2,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "10": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
+          "fat": 400000.0,
+          "meta": 57580.5,
+          "cresc": 698.9,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "11": {
-          "fat": 0,
-          "meta": 0,
+          "fat": 60000.0,
+          "meta": 0.0,
           "cresc": null,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "12": {
-          "fat": 0,
-          "meta": 0,
+          "fat": 95000.0,
+          "meta": 0.0,
           "cresc": null,
           "conv": null,
           "ticket": null,
@@ -113,64 +210,7 @@
       "financeiroId": null,
       "fluxoId": null,
       "historico": [],
-      "mensal": {
-        "6": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
-          "conv": null,
-          "ticket": null,
-          "cativos": null
-        },
-        "7": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
-          "conv": null,
-          "ticket": null,
-          "cativos": null
-        },
-        "8": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
-          "conv": null,
-          "ticket": null,
-          "cativos": null
-        },
-        "9": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
-          "conv": null,
-          "ticket": null,
-          "cativos": null
-        },
-        "10": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
-          "conv": null,
-          "ticket": null,
-          "cativos": null
-        },
-        "11": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
-          "conv": null,
-          "ticket": null,
-          "cativos": null
-        },
-        "12": {
-          "fat": 0,
-          "meta": 0,
-          "cresc": null,
-          "conv": null,
-          "ticket": null,
-          "cativos": null
-        }
-      },
+      "mensal": {},
       "dre": {}
     }
   }
