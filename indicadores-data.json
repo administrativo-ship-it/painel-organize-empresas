@@ -12,7 +12,7 @@
           "mesNum": 1,
           "fat2025": 0.0,
           "fat2026": 40001.0,
-          "meta2026": 2026.0,
+          "meta2026": 50000.0,
           "cresc": null
         },
         {
@@ -60,7 +60,7 @@
           "mesNum": 7,
           "fat2025": 60436.0,
           "fat2026": 400000.0,
-          "meta2026": 2026.0,
+          "meta2026": 524928.339,
           "cresc": 5.6
         },
         {
@@ -107,7 +107,7 @@
       "mensal": {
         "1": {
           "fat": 40001.0,
-          "meta": 2026.0,
+          "meta": 50000.0,
           "cresc": null,
           "conv": null,
           "ticket": null,
@@ -155,7 +155,7 @@
         },
         "7": {
           "fat": 400000.0,
-          "meta": 2026.0,
+          "meta": 524928.339,
           "cresc": 5.6,
           "conv": null,
           "ticket": null,
@@ -375,7 +375,7 @@
         "9": {
           "fat": 78049.78,
           "meta": 97562.225,
-          "cresc": -100.0,
+          "cresc": null,
           "conv": null,
           "ticket": null,
           "cativos": null
@@ -383,7 +383,7 @@
         "10": {
           "fat": 87500.9,
           "meta": 87500.9,
-          "cresc": -100.0,
+          "cresc": null,
           "conv": null,
           "ticket": null,
           "cativos": null
@@ -391,7 +391,7 @@
         "11": {
           "fat": 77979.74,
           "meta": 77979.74,
-          "cresc": -100.0,
+          "cresc": null,
           "conv": null,
           "ticket": null,
           "cativos": null
@@ -399,7 +399,7 @@
         "12": {
           "fat": 76346.97,
           "meta": 76346.97,
-          "cresc": -100.0,
+          "cresc": null,
           "conv": null,
           "ticket": null,
           "cativos": null
