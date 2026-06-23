@@ -6,8 +6,12 @@
   "calendarId": "primary",
   "clienteEmail": "movimentokidsellennic@gmail.com",
   "filtro": "Movimento Kids",
+  "agendaBusca": "https://calendar.google.com/calendar/u/0/r/search?q=Movimento%20Kids",
+  "apostilas": "https://drive.google.com/drive/folders/1bM0VVsoqYSSlCh5_H-w9yoJCWWkplkPz?usp=sharing",
   "trello": "https://trello.com/invite/69275b5f6dc1f60bf3325f2c/ATTI2c5bdfce03036fc392dbc1798c99e70fCD9C7EC3",
   "drive": "https://drive.google.com/drive/folders/1Vcu95-B9Gd-9QMvt6haZ1Tkekl3Gysbe?usp=sharing",
+  "linkAdicional": "",
+  "linkAdicionalLabel": "",
   "boasVindas": "",
-  "criadoEm": "2026-06-23T17:45:23.926Z"
+  "criadoEm": "2026-06-23T23:48:51.630Z"
 }
