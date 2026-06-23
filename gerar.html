@@ -18,8 +18,8 @@
 body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);-webkit-font-smoothing:antialiased;padding-bottom:60px}
 .topbar{background:var(--navy);color:#fff;padding:16px 0;box-shadow:0 2px 12px rgba(0,0,80,.18)}
 .topbar-in{max-width:980px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:14px}
-.org-logo-box{background:#fff;border-radius:11px;padding:7px 14px;display:flex;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.org-logo{height:32px;width:auto;display:block}
+.org-logo-box{display:flex;align-items:center}
+.org-logo{height:38px;width:auto;display:block}
 .gh-state{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(255,255,255,.85);cursor:pointer}
 .gh-dot{width:9px;height:9px;border-radius:50%;background:#f59e0b}.gh-dot.on{background:#22c55e}
 .wrap{max-width:980px;margin:0 auto;padding:30px 24px}
@@ -222,6 +222,22 @@ textarea{resize:vertical;min-height:70px}
         <div class="hint">Clientes com portal ativo.</div>
         <div id="clientList"><div style="color:var(--muted);font-size:13px"><span class="spin"></span> Conecte o GitHub para listar.</div></div>
       </div>
+
+      <div class="card">
+        <h2>🖼️ Logo da Organize</h2>
+        <div class="hint">Logo compartilhada por <b>todos os portais</b> e pelo painel. Ao trocar aqui, atualiza em todos automaticamente.</div>
+        <div style="background:var(--navy);border-radius:var(--r2);padding:14px;text-align:center;margin-bottom:12px">
+          <img id="sharedLogoPrev" src="organize-logo.png" alt="logo" style="height:40px;max-width:90%;object-fit:contain">
+        </div>
+        <div class="logo-drop" id="sharedDrop" onclick="document.getElementById('sharedLogoFile').click()"
+             ondragover="event.preventDefault();this.style.borderColor='var(--navy)'"
+             ondragleave="this.style.borderColor='var(--border)'" ondrop="dropSharedLogo(event)">
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">Trocar logo (todos os portais)</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px">PNG com fundo transparente, na cor clara</div>
+        </div>
+        <input type="file" id="sharedLogoFile" accept="image/png,image/*" style="display:none" onchange="pickSharedLogo(event)">
+        <div class="msg" id="sharedLogoMsg"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -302,6 +318,36 @@ function showLogo(){
   updatePreview();
 }
 function removeLogo(){ LOGO_DATA=''; document.getElementById('logoPrev').style.display='none'; document.getElementById('logoFile').value=''; updatePreview(); }
+
+/* ---------- logo compartilhada (todos os portais) ---------- */
+function pickSharedLogo(e){ const f=e.target.files[0]; if(f) uploadSharedLogo(f); }
+function dropSharedLogo(e){ e.preventDefault(); e.currentTarget.style.borderColor='var(--border)'; const f=e.dataTransfer.files[0]; if(f) uploadSharedLogo(f); }
+async function uploadSharedLogo(file){
+  const m=document.getElementById('sharedLogoMsg');
+  if(!ghToken()){ openToken(); return; }
+  m.className='msg info show'; m.textContent='Processando logo…';
+  try{
+    const dataUrl=await new Promise((res,rej)=>{
+      const fr=new FileReader();
+      fr.onload=ev=>{ const img=new Image(); img.onload=()=>{
+        const max=480, sc=Math.min(1,max/Math.max(img.width,img.height));
+        const cv=document.createElement('canvas'); cv.width=Math.round(img.width*sc); cv.height=Math.round(img.height*sc);
+        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        res(cv.toDataURL('image/png'));   // PNG preserva a transparência
+      }; img.onerror=rej; img.src=ev.target.result; };
+      fr.onerror=rej; fr.readAsDataURL(file);
+    });
+    const content=dataUrl.split(',')[1];
+    m.textContent='Enviando logo para todos os portais…';
+    const g=await fetch(`https://api.github.com/repos/${REPO}/contents/organize-logo.png?ref=${BRANCH}`,{headers:ghHeaders()});
+    const sha=g.ok ? (await g.json()).sha : null;
+    const body={message:'troca logo compartilhada da Organize', content, branch:BRANCH}; if(sha) body.sha=sha;
+    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/organize-logo.png`,{method:'PUT', headers:ghHeaders(), body:JSON.stringify(body)});
+    if(!r.ok){ const b=await r.json().catch(()=>({})); throw new Error(b.message||('HTTP '+r.status)); }
+    document.getElementById('sharedLogoPrev').src='organize-logo.png?v='+Date.now();
+    m.className='msg info show'; m.textContent='✅ Logo atualizada! Pode levar ~1 min para refletir em todos os portais.';
+  }catch(e){ m.className='msg err show'; m.textContent='Erro ao enviar: '+e.message; }
+}
 
 /* ---------- preview ---------- */
 function updatePreview(){
