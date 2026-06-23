@@ -12,7 +12,7 @@
           "mesNum": 1,
           "fat2025": 0.0,
           "fat2026": 40001.0,
-          "meta2026": 0.0,
+          "meta2026": 2026.0,
           "cresc": null
         },
         {
@@ -60,8 +60,8 @@
           "mesNum": 7,
           "fat2025": 60436.0,
           "fat2026": 400000.0,
-          "meta2026": 69501.4,
-          "cresc": 561.9
+          "meta2026": 2026.0,
+          "cresc": 5.6
         },
         {
           "mes": "Ago",
@@ -85,14 +85,14 @@
           "fat2025": 50070.0,
           "fat2026": 400000.0,
           "meta2026": 57580.5,
-          "cresc": 698.9
+          "cresc": 7.0
         },
         {
           "mes": "Nov",
           "mesNum": 11,
           "fat2025": 0.0,
           "fat2026": 60000.0,
-          "meta2026": 0.0,
+          "meta2026": 50000.0,
           "cresc": null
         },
         {
@@ -100,14 +100,14 @@
           "mesNum": 12,
           "fat2025": 0.0,
           "fat2026": 95000.0,
-          "meta2026": 0.0,
+          "meta2026": 50000.0,
           "cresc": null
         }
       ],
       "mensal": {
         "1": {
           "fat": 40001.0,
-          "meta": 0.0,
+          "meta": 2026.0,
           "cresc": null,
           "conv": null,
           "ticket": null,
@@ -155,8 +155,8 @@
         },
         "7": {
           "fat": 400000.0,
-          "meta": 69501.4,
-          "cresc": 561.9,
+          "meta": 2026.0,
+          "cresc": 5.6,
           "conv": null,
           "ticket": null,
           "cativos": null
@@ -180,14 +180,14 @@
         "10": {
           "fat": 400000.0,
           "meta": 57580.5,
-          "cresc": 698.9,
+          "cresc": 7.0,
           "conv": null,
           "ticket": null,
           "cativos": null
         },
         "11": {
           "fat": 60000.0,
-          "meta": 0.0,
+          "meta": 50000.0,
           "cresc": null,
           "conv": null,
           "ticket": null,
@@ -195,7 +195,7 @@
         },
         "12": {
           "fat": 95000.0,
-          "meta": 0.0,
+          "meta": 50000.0,
           "cresc": null,
           "conv": null,
           "ticket": null,
@@ -209,8 +209,202 @@
       "comercialId": "1qMH-rQXZvssHWeivaEOkCNQdLegwaI_Y",
       "financeiroId": null,
       "fluxoId": null,
-      "historico": [],
-      "mensal": {},
+      "historico": [
+        {
+          "mes": "Jan",
+          "mesNum": 1,
+          "fat2025": 79969.34,
+          "fat2026": 80171.0,
+          "meta2026": 80171.0,
+          "cresc": 0.3
+        },
+        {
+          "mes": "Fev",
+          "mesNum": 2,
+          "fat2025": 79969.34,
+          "fat2026": 66244.59,
+          "meta2026": 66244.59,
+          "cresc": -17.2
+        },
+        {
+          "mes": "Mar",
+          "mesNum": 3,
+          "fat2025": 79969.34,
+          "fat2026": 71612.4,
+          "meta2026": 71612.4,
+          "cresc": -10.5
+        },
+        {
+          "mes": "Abr",
+          "mesNum": 4,
+          "fat2025": 79969.34,
+          "fat2026": 78694.65,
+          "meta2026": 78694.65,
+          "cresc": -1.6
+        },
+        {
+          "mes": "Mai",
+          "mesNum": 5,
+          "fat2025": 79969.34,
+          "fat2026": 72676.73,
+          "meta2026": 72676.73,
+          "cresc": -9.1
+        },
+        {
+          "mes": "Jun",
+          "mesNum": 6,
+          "fat2025": 79969.34,
+          "fat2026": 73006.59,
+          "meta2026": 73006.59,
+          "cresc": -8.7
+        },
+        {
+          "mes": "Jul",
+          "mesNum": 7,
+          "fat2025": 79969.34,
+          "fat2026": 76411.9,
+          "meta2026": 76411.9,
+          "cresc": -4.4
+        },
+        {
+          "mes": "Ago",
+          "mesNum": 8,
+          "fat2025": 79969.34,
+          "fat2026": 18276.190000000002,
+          "meta2026": 87966.274,
+          "cresc": -77.1
+        },
+        {
+          "mes": "Set",
+          "mesNum": 9,
+          "fat2025": 78049.78,
+          "fat2026": 0.0,
+          "meta2026": 97562.225,
+          "cresc": -100.0
+        },
+        {
+          "mes": "Out",
+          "mesNum": 10,
+          "fat2025": 87500.9,
+          "fat2026": 0.0,
+          "meta2026": 87500.9,
+          "cresc": -100.0
+        },
+        {
+          "mes": "Nov",
+          "mesNum": 11,
+          "fat2025": 77979.74,
+          "fat2026": 0.0,
+          "meta2026": 77979.74,
+          "cresc": -100.0
+        },
+        {
+          "mes": "Dez",
+          "mesNum": 12,
+          "fat2025": 76346.97,
+          "fat2026": 0.0,
+          "meta2026": 76346.97,
+          "cresc": -100.0
+        }
+      ],
+      "mensal": {
+        "1": {
+          "fat": 80171.0,
+          "meta": 80171.0,
+          "cresc": 0.3,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "2": {
+          "fat": 66244.59,
+          "meta": 66244.59,
+          "cresc": -17.2,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "3": {
+          "fat": 71612.4,
+          "meta": 71612.4,
+          "cresc": -10.5,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "4": {
+          "fat": 78694.65,
+          "meta": 78694.65,
+          "cresc": -1.6,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "5": {
+          "fat": 72676.73,
+          "meta": 72676.73,
+          "cresc": -9.1,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "6": {
+          "fat": 73006.59,
+          "meta": 73006.59,
+          "cresc": -8.7,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "7": {
+          "fat": 76411.9,
+          "meta": 76411.9,
+          "cresc": -4.4,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "8": {
+          "fat": 18276.190000000002,
+          "meta": 87966.274,
+          "cresc": -77.1,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "9": {
+          "fat": 78049.78,
+          "meta": 97562.225,
+          "cresc": -100.0,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "10": {
+          "fat": 87500.9,
+          "meta": 87500.9,
+          "cresc": -100.0,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "11": {
+          "fat": 77979.74,
+          "meta": 77979.74,
+          "cresc": -100.0,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        },
+        "12": {
+          "fat": 76346.97,
+          "meta": 76346.97,
+          "cresc": -100.0,
+          "conv": null,
+          "ticket": null,
+          "cativos": null
+        }
+      },
       "dre": {}
     }
   }
