@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal da Mentoria — Organize Empresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#000080;--navy-light:#0a0a9e;--teal:#8BD4E0;--teal-dark:#5bbece;
+  --slate:#41546A;--white:#fff;--off:#f4f6fb;--border:#e2e8f4;
+  --txt:#0d1526;--txt2:#41546A;--muted:#8a9bb5;--gold:#F4A800;
+  --green:#1a7a4a;--green-bg:#e8f5ee;--trello:#0052CC;--trello-bg:#e8f0ff;
+  --drive:#1a73e8;--drive-bg:#e8f0fe;
+  --sh:0 4px 20px rgba(0,0,80,.08);--sh-lg:0 12px 40px rgba(0,0,80,.12);
+  --r:16px;--r2:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ---------- TOP BAR ---------- */
+.topbar{background:var(--navy);color:#fff;padding:14px 0;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,80,.18)}
+.topbar-in{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.org-logo-box{background:#fff;border-radius:11px;padding:7px 14px;display:flex;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.org-logo{height:34px;width:auto;display:block}
+.topbar-right{display:flex;align-items:center;gap:14px;font-size:13px}
+.gauth-state{display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.85);font-size:12.5px}
+.gdot{width:8px;height:8px;border-radius:50%;background:#f59e0b}
+.gdot.on{background:#22c55e}
+
+/* ---------- HERO ---------- */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#0a1a7a 60%,#11227a 100%);color:#fff;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-80px;top:-80px;width:340px;height:340px;background:radial-gradient(circle,rgba(139,212,224,.22),transparent 70%);border-radius:50%}
+.hero-in{max-width:1100px;margin:0 auto;padding:46px 24px 54px;position:relative;z-index:2;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.client-logo-box{width:108px;height:108px;border-radius:22px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--sh-lg);overflow:hidden;padding:10px}
+.client-logo-box img{max-width:100%;max-height:100%;object-fit:contain}
+.client-logo-fallback{font-size:42px;font-weight:800;color:var(--navy)}
+.hero-text h1{font-size:32px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.hero-sub{margin-top:6px;color:rgba(255,255,255,.78);font-size:15px;max-width:560px;line-height:1.5}
+.service-badge{display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:rgba(139,212,224,.16);border:1px solid rgba(139,212,224,.35);color:var(--teal);padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600}
+
+/* next session strip */
+.next-strip{max-width:1100px;margin:-26px auto 0;padding:0 24px;position:relative;z-index:5}
+.next-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px 22px;display:flex;align-items:center;gap:16px;border-left:5px solid var(--gold)}
+.next-card .ico{font-size:24px}
+.next-card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700}
+.next-card .ttl{font-size:15.5px;font-weight:700;color:var(--txt);margin-top:2px}
+.next-card .when{font-size:13px;color:var(--txt2);margin-top:1px}
+.next-card .join{margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:var(--r2);font-family:inherit;font-weight:700;cursor:pointer;text-decoration:none;transition:all .18s;font-size:13.5px;padding:10px 18px}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-light)}
+.btn-teal{background:var(--teal);color:var(--navy)}.btn-teal:hover{background:var(--teal-dark)}
+.btn-ghost{background:var(--off);color:var(--navy);border:1px solid var(--border)}.btn-ghost:hover{background:#eef2fb}
+.btn-lg{padding:13px 24px;font-size:14.5px}
+
+/* ---------- TABS ---------- */
+.wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+.tabs{display:flex;gap:6px;margin:30px 0 22px;background:#fff;padding:6px;border-radius:14px;box-shadow:var(--sh);position:sticky;top:68px;z-index:40;overflow-x:auto}
+.tab{flex:1;min-width:max-content;padding:11px 16px;border:none;background:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.tab:hover{color:var(--navy);background:var(--off)}
+.tab.active{background:var(--navy);color:#fff}
+.tab .badge{background:var(--gold);color:#3a2a00;font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;min-width:18px;text-align:center}
+.tab.active .badge{background:var(--teal);color:var(--navy)}
+
+.panel{display:none;animation:fade .3s ease}
+.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.section-head h2{font-size:21px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:10px}
+.section-head p{font-size:13.5px;color:var(--txt2);margin-top:2px}
+
+/* connect gate */
+.gate{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:48px 28px;text-align:center;border:1px dashed var(--border)}
+.gate .ic{font-size:46px;margin-bottom:8px}
+.gate h3{font-size:19px;color:var(--navy);font-weight:800}
+.gate p{color:var(--txt2);font-size:14px;margin:8px auto 20px;max-width:440px;line-height:1.55}
+
+/* event list */
+.evt-group-lbl{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+.evt{background:#fff;border-radius:var(--r2);box-shadow:var(--sh);padding:15px 18px;display:flex;align-items:center;gap:16px;margin-bottom:11px;transition:transform .15s,box-shadow .15s;border-left:4px solid var(--teal)}
+.evt:hover{transform:translateY(-2px);box-shadow:var(--sh-lg)}
+.evt.past{border-left-color:var(--border);opacity:.92}
+.evt-date{flex-shrink:0;width:62px;text-align:center;background:var(--off);border-radius:10px;padding:8px 4px}
+.evt-date .d{font-size:22px;font-weight:800;color:var(--navy);line-height:1}
+.evt-date .m{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.evt-body{flex:1;min-width:0}
+.evt-body .t{font-size:15px;font-weight:700;color:var(--txt)}
+.evt-body .meta{font-size:12.5px;color:var(--txt2);margin-top:3px;display:flex;gap:14px;flex-wrap:wrap}
+.evt-body .meta span{display:inline-flex;align-items:center;gap:5px}
+.evt-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:9px;font-size:12.5px;font-weight:700;text-decoration:none;transition:all .15s;white-space:nowrap}
+.chip-rec{background:var(--green-bg);color:var(--green)}.chip-rec:hover{background:#d5efe0}
+.chip-meet{background:var(--teal);color:var(--navy)}.chip-meet:hover{background:var(--teal-dark)}
+
+/* tool cards */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.tool-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:26px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.tool-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
+.tool-card .tic{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:8px}
+.tic-trello{background:var(--trello-bg);color:var(--trello)}
+.tic-drive{background:var(--drive-bg);color:var(--drive)}
+.tool-card h3{font-size:18px;font-weight:800;color:var(--navy)}
+.tool-card p{font-size:13.5px;color:var(--txt2);line-height:1.5;flex:1}
+.tool-card .btn{margin-top:14px;align-self:flex-start}
+.tool-card.off{opacity:.6}
+.tool-card.off .btn{pointer-events:none;background:var(--off);color:var(--muted)}
+
+/* empty / loading */
+.empty{text-align:center;padding:46px 20px;color:var(--muted)}
+.empty .ic{font-size:40px;opacity:.6;margin-bottom:8px}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+.spin{display:inline-block;width:22px;height:22px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:rot .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+footer{text-align:center;padding:40px 24px;color:var(--muted);font-size:12.5px;line-height:1.7}
+footer .org{color:var(--navy);font-weight:700}
+
+.err-box{background:#fdf0ee;border:1px solid #f3c9c2;color:#a93226;border-radius:var(--r2);padding:14px 18px;font-size:13.5px;margin:14px 0}
+
+@media(max-width:640px){
+  .hero-in{padding:34px 20px 44px}
+  .hero-text h1{font-size:25px}
+  .client-logo-box{width:84px;height:84px}
+  .next-card{flex-wrap:wrap}.next-card .join{margin-left:0;width:100%}
+  .next-card .join .btn{width:100%;justify-content:center}
+  .evt{flex-wrap:wrap}.evt-actions{width:100%;justify-content:flex-start}
+  .tab{flex:0 0 auto}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="org-logo-box"><img class="org-logo" src="organize-logo.png" alt="Organize Empresas"></div>
+    <div class="topbar-right">
+      <span class="gauth-state" id="authState"><span class="gdot" id="authDot"></span><span id="authLabel">Agenda não conectada</span></span>
+      <button class="btn btn-teal" id="connectBtn" style="display:none" onclick="connectGoogle()">Conectar agenda</button>
+      <button class="btn btn-ghost" id="signoutBtn" style="display:none;background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)" onclick="signOut()">Sair</button>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-in">
+    <div class="client-logo-box" id="clientLogoBox">
+      <span class="client-logo-fallback" id="clientLogoFallback">·</span>
+    </div>
+    <div class="hero-text">
+      <h1 id="clientName">Carregando…</h1>
+      <p class="hero-sub" id="clientWelcome">Seu portal de mentoria da Organize Empresas.</p>
+      <span class="service-badge" id="serviceBadge" style="display:none">★ <span id="serviceName"></span></span>
+    </div>
+  </div>
+</div>
+
+<!-- NEXT SESSION -->
+<div class="next-strip" id="nextStrip" style="display:none">
+  <div class="next-card">
+    <span class="ico">📅</span>
+    <div>
+      <div class="lbl">Próxima mentoria</div>
+      <div class="ttl" id="nextTitle">—</div>
+      <div class="when" id="nextWhen">—</div>
+    </div>
+    <div class="join" id="nextJoin"></div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="wrap">
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="agenda" onclick="switchTab('agenda')">📆 Agenda</button>
+    <button class="tab" data-tab="gravacoes" onclick="switchTab('gravacoes')">🎬 Mentorias Gravadas <span class="badge" id="recBadge" style="display:none">0</span></button>
+    <button class="tab" data-tab="trello" onclick="switchTab('trello')">🗂️ Trello</button>
+    <button class="tab" data-tab="drive" onclick="switchTab('drive')">📁 Drive</button>
+  </div>
+
+  <!-- AGENDA -->
+  <div class="panel active" id="panel-agenda">
+    <div class="section-head">
+      <div><h2>📆 Calendário da Mentoria</h2><p>Todos os encontros, ao vivo e atualizados automaticamente.</p></div>
+      <div id="agendaActions"></div>
+    </div>
+    <div id="agendaContent">
+      <div class="gate" id="agendaGate">
+        <div class="ic">🔒</div>
+        <h3>Conecte sua agenda</h3>
+        <p>Para sua privacidade, o calendário da mentoria é exibido somente após você entrar com a conta Google autorizada.</p>
+        <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRAVAÇÕES -->
+  <div class="panel" id="panel-gravacoes">
+    <div class="section-head">
+      <div><h2>🎬 Mentorias Gravadas</h2><p>Histórico completo das suas mentorias gravadas, em um só lugar.</p></div>
+    </div>
+    <div id="gravacoesContent">
+      <div class="gate">
+        <div class="ic">🔒</div>
+        <h3>Conecte sua agenda</h3>
+        <p>As gravações são vinculadas aos eventos da mentoria. Conecte sua conta Google para visualizá-las.</p>
+        <button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRELLO -->
+  <div class="panel" id="panel-trello">
+    <div class="section-head"><div><h2>🗂️ Área de Trabalho — Trello</h2><p>Acompanhe as tarefas e o andamento dos seus projetos.</p></div></div>
+    <div class="tool-grid" id="trelloContent"></div>
+  </div>
+
+  <!-- DRIVE -->
+  <div class="panel" id="panel-drive">
+    <div class="section-head"><div><h2>📁 Drive da Empresa</h2><p>Todos os documentos, materiais e entregas da sua mentoria.</p></div></div>
+    <div class="tool-grid" id="driveContent"></div>
+  </div>
+</div>
+
+<footer>
+  <div>Portal exclusivo de mentoria · <span class="org">Organize Empresas</span></div>
+  <div id="footNote" style="margin-top:4px"></div>
+</footer>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+/* ============================================================
+   CONFIG GLOBAL — Organize Empresas
+   ============================================================ */
+const GOOGLE_CLIENT_ID = '317582081175-hq9fhp12dnv67odbp1lamnb34e3ngvrn.apps.googleusercontent.com';
+const CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MES_FULL = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+
+let CLIENT = null;       // dados do cliente (JSON)
+let TOKEN = null;        // access token Google
+let tokenClient = null;
+let EVENTS = [];         // eventos carregados
+
+/* ---------- carregar config do cliente ---------- */
+async function loadClient(){
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  if(!id){
+    document.getElementById('clientName').textContent = 'Página não configurada';
+    document.getElementById('clientWelcome').textContent = 'Link inválido — falta o identificador do cliente (?id=).';
+    return;
+  }
+  try{
+    const res = await fetch(`clientes/${encodeURIComponent(id)}.json?v=`+Date.now());
+    if(!res.ok) throw new Error('not found');
+    CLIENT = await res.json();
+    renderClient();
+  }catch(e){
+    document.getElementById('clientName').textContent = 'Cliente não encontrado';
+    document.getElementById('clientWelcome').textContent = 'Não localizamos os dados desta página. Confira o link recebido.';
+  }
+}
+
+function renderClient(){
+  document.title = `${CLIENT.empresa} · Portal da Mentoria — Organize Empresas`;
+  document.getElementById('clientName').textContent = CLIENT.empresa || 'Cliente';
+  document.getElementById('clientWelcome').textContent = CLIENT.boasVindas
+    || `Bem-vindo(a) ao seu portal de mentoria. Aqui você encontra sua agenda, gravações e ferramentas em um só lugar.`;
+  // logo
+  if(CLIENT.logo){
+    const box = document.getElementById('clientLogoBox');
+    box.innerHTML = `<img src="${CLIENT.logo}" alt="${CLIENT.empresa}">`;
+  }else{
+    document.getElementById('clientLogoFallback').textContent = (CLIENT.empresa||'?').trim().charAt(0).toUpperCase();
+  }
+  // serviço
+  if(CLIENT.servico){
+    document.getElementById('serviceBadge').style.display='inline-flex';
+    document.getElementById('serviceName').textContent = CLIENT.servico;
+  }
+  // ferramentas
+  renderTools();
+  document.getElementById('footNote').textContent = CLIENT.responsavel ? `Mentoria conduzida por ${CLIENT.responsavel}` : '';
+}
+
+/* ---------- Trello + Drive ---------- */
+function renderTools(){
+  const tr = document.getElementById('trelloContent');
+  if(CLIENT.trello){
+    tr.innerHTML = card('tic-trello','🗂️','Quadro no Trello',
+      'Veja as listas, cartões e o progresso das atividades da sua mentoria em tempo real.',
+      CLIENT.trello,'Abrir Trello','btn-primary');
+  }else{
+    tr.innerHTML = offCard('tic-trello','🗂️','Trello ainda não configurado','A área de trabalho do Trello será disponibilizada em breve.');
+  }
+  const dr = document.getElementById('driveContent');
+  if(CLIENT.drive){
+    dr.innerHTML = card('tic-drive','📁','Drive da empresa',
+      'Acesse documentos, planilhas, materiais e todas as entregas da sua mentoria.',
+      CLIENT.drive,'Abrir Drive','btn-primary');
+  }else{
+    dr.innerHTML = offCard('tic-drive','📁','Drive ainda não configurado','A pasta do Drive será disponibilizada em breve.');
+  }
+}
+function card(ic,emo,title,desc,url,label,cls){
+  return `<div class="tool-card"><div class="tic ${ic}">${emo}</div><h3>${title}</h3><p>${desc}</p>
+    <a class="btn ${cls}" href="${url}" target="_blank" rel="noopener">${label} →</a></div>`;
+}
+function offCard(ic,emo,title,desc){
+  return `<div class="tool-card off"><div class="tic ${ic}">${emo}</div><h3>${title}</h3><p>${desc}</p>
+    <span class="btn">Em breve</span></div>`;
+}
+
+/* ============================================================
+   GOOGLE — autenticação + calendário
+   ============================================================ */
+function initGoogle(){
+  if(!window.google || !google.accounts){ setTimeout(initGoogle,300); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: CAL_SCOPE,
+    callback: (resp)=>{
+      if(resp && resp.access_token){
+        TOKEN = resp.access_token;
+        setAuthState(true);
+        loadCalendar();
+      }
+    }
+  });
+  document.getElementById('connectBtn').style.display='inline-flex';
+}
+function connectGoogle(){
+  if(!tokenClient){ alert('Carregando login do Google… tente novamente em alguns segundos.'); return; }
+  tokenClient.requestAccessToken({prompt: TOKEN ? '' : 'consent'});
+}
+function signOut(){
+  if(TOKEN){ google.accounts.oauth2.revoke(TOKEN,()=>{}); }
+  TOKEN=null; EVENTS=[];
+  setAuthState(false);
+  // restaurar gates
+  document.getElementById('agendaContent').innerHTML = gateHTML('agenda');
+  document.getElementById('gravacoesContent').innerHTML = gateHTML('grav');
+  document.getElementById('nextStrip').style.display='none';
+}
+function setAuthState(on){
+  document.getElementById('authDot').classList.toggle('on',on);
+  document.getElementById('authLabel').textContent = on ? 'Agenda conectada' : 'Agenda não conectada';
+  document.getElementById('connectBtn').style.display = on ? 'none':'inline-flex';
+  document.getElementById('signoutBtn').style.display = on ? 'inline-flex':'none';
+}
+function gateHTML(which){
+  const txt = which==='agenda'
+    ? 'Para sua privacidade, o calendário é exibido somente após você entrar com a conta Google autorizada.'
+    : 'As gravações são vinculadas aos eventos da mentoria. Conecte sua conta Google para visualizá-las.';
+  return `<div class="gate"><div class="ic">🔒</div><h3>Conecte sua agenda</h3>
+    <p>${txt}</p><button class="btn btn-primary btn-lg" onclick="connectGoogle()">🔗 Conectar com Google</button></div>`;
+}
+
+async function loadCalendar(){
+  if(!CLIENT || !CLIENT.calendarId){
+    document.getElementById('agendaContent').innerHTML =
+      `<div class="err-box">Esta página ainda não tem um calendário configurado pela assessoria.</div>`;
+    document.getElementById('gravacoesContent').innerHTML =
+      `<div class="empty"><div class="ic">📭</div>Nenhum calendário configurado ainda.</div>`;
+    return;
+  }
+  document.getElementById('agendaContent').innerHTML = `<div class="loading"><span class="spin"></span>Carregando agenda…</div>`;
+  const now = new Date();
+  const timeMin = new Date(now.getFullYear(), now.getMonth()-12, 1).toISOString();
+  const timeMax = new Date(now.getFullYear(), now.getMonth()+13, 1).toISOString();
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CLIENT.calendarId)}/events`
+    + `?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=2500`;
+  try{
+    const r = await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
+    if(r.status===401||r.status===403){
+      const body = await r.json().catch(()=>({}));
+      document.getElementById('agendaContent').innerHTML =
+        `<div class="err-box"><b>Sem acesso a este calendário.</b><br>Verifique se a conta Google usada tem permissão de leitura na agenda da mentoria. ${body.error?'('+body.error.message+')':''}</div>`;
+      return;
+    }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    EVENTS = (data.items||[]).filter(e=>e.status!=='cancelled' && (e.start&&(e.start.dateTime||e.start.date)));
+    renderAgenda();
+    renderGravacoes();
+    renderNext();
+  }catch(e){
+    document.getElementById('agendaContent').innerHTML =
+      `<div class="err-box">Não foi possível carregar a agenda agora. ${e.message||''}</div>`;
+  }
+}
+
+/* ---------- parsing de gravações ---------- */
+function eventStart(e){ return new Date(e.start.dateTime || e.start.date+'T00:00:00'); }
+function isAllDay(e){ return !e.start.dateTime; }
+
+function recordingsOf(e){
+  const recs = [];
+  const seen = new Set();
+  const add = (url,title)=>{ if(url && !seen.has(url)){ seen.add(url); recs.push({url,title:title||'Gravação'}); } };
+  // anexos
+  (e.attachments||[]).forEach(a=>{
+    const t=(a.title||'').toLowerCase();
+    const isVideo=(a.mimeType||'').includes('video')||t.includes('gravaç')||t.includes('gravac')||t.includes('record');
+    if(a.fileUrl && (isVideo || (a.fileUrl||'').includes('drive.google'))) add(a.fileUrl, a.title);
+  });
+  // links na descrição
+  const desc = e.description||'';
+  const urls = desc.match(/https?:\/\/[^\s"'<>)]+/g)||[];
+  urls.forEach(u=>{
+    const low=u.toLowerCase();
+    if(low.includes('drive.google')||low.includes('youtu')||low.includes('loom.com')||
+       low.includes('vimeo')||low.includes('stream.')||low.match(/\.(mp4|mov|webm)$/)||
+       low.includes('record')||low.includes('gravac')||low.includes('gravaç')) add(u,'Gravação da mentoria');
+  });
+  return recs;
+}
+function meetLink(e){
+  if(e.hangoutLink) return e.hangoutLink;
+  const ep=(e.conferenceData&&e.conferenceData.entryPoints)||[];
+  const v=ep.find(p=>p.entryPointType==='video');
+  return v?v.uri:null;
+}
+
+/* ---------- render agenda ---------- */
+function renderAgenda(){
+  const c = document.getElementById('agendaContent');
+  if(!EVENTS.length){ c.innerHTML = `<div class="empty"><div class="ic">📭</div>Nenhuma mentoria agendada ainda.</div>`; return; }
+  const now=new Date();
+  const upcoming = EVENTS.filter(e=>eventStart(e)>=now);
+  const past = EVENTS.filter(e=>eventStart(e)<now).reverse();
+  let html='';
+  // botão abrir google agenda
+  document.getElementById('agendaActions').innerHTML =
+    `<a class="btn btn-ghost" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/u/0/r">Abrir no Google Agenda ↗</a>`;
+  if(upcoming.length){
+    html += `<div class="evt-group-lbl">▸ Próximas (${upcoming.length})</div>`;
+    upcoming.forEach(e=>html+=evtHTML(e,false));
+  }
+  if(past.length){
+    html += `<div class="evt-group-lbl">▸ Realizadas (${past.length})</div>`;
+    past.forEach(e=>html+=evtHTML(e,true));
+  }
+  c.innerHTML = html;
+}
+function evtHTML(e,isPast){
+  const d=eventStart(e);
+  const recs=recordingsOf(e);
+  const meet=meetLink(e);
+  let timeStr;
+  if(isAllDay(e)) timeStr='Dia todo';
+  else timeStr=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let actions='';
+  if(!isPast && meet) actions+=`<a class="chip chip-meet" href="${meet}" target="_blank" rel="noopener">🎥 Entrar</a>`;
+  recs.forEach(r=>actions+=`<a class="chip chip-rec" href="${r.url}" target="_blank" rel="noopener">▶ Gravação</a>`);
+  return `<div class="evt ${isPast?'past':''}">
+    <div class="evt-date"><div class="d">${d.getDate()}</div><div class="m">${MES[d.getMonth()]}</div></div>
+    <div class="evt-body">
+      <div class="t">${escapeHtml(e.summary||'Mentoria')}</div>
+      <div class="meta"><span>🕒 ${timeStr}</span>${e.location?`<span>📍 ${escapeHtml(e.location)}</span>`:''}<span>${DIAS[d.getDay()]}</span></div>
+    </div>
+    <div class="evt-actions">${actions}</div>
+  </div>`;
+}
+
+/* ---------- render gravações ---------- */
+function renderGravacoes(){
+  const c=document.getElementById('gravacoesContent');
+  const withRec = EVENTS.filter(e=>recordingsOf(e).length>0).sort((a,b)=>eventStart(b)-eventStart(a));
+  const badge=document.getElementById('recBadge');
+  if(withRec.length){ badge.style.display='inline-block'; badge.textContent=withRec.length; }
+  else badge.style.display='none';
+  if(!withRec.length){
+    c.innerHTML=`<div class="empty"><div class="ic">🎬</div><div style="font-size:15px;color:var(--txt2);font-weight:600">Nenhuma mentoria gravada ainda</div>
+      <div style="font-size:13px;margin-top:6px">Assim que uma mentoria for gravada, ela aparece aqui automaticamente.</div></div>`;
+    return;
+  }
+  let html='';
+  withRec.forEach(e=>{
+    const d=eventStart(e);
+    const recs=recordingsOf(e);
+    let btns='';
+    recs.forEach((r,i)=>btns+=`<a class="chip chip-rec" href="${r.url}" target="_blank" rel="noopener">▶ ${recs.length>1?('Assistir '+(i+1)):'Assistir gravação'}</a>`);
+    html+=`<div class="evt past" style="border-left-color:var(--green)">
+      <div class="evt-date" style="background:var(--green-bg)"><div class="d" style="color:var(--green)">${d.getDate()}</div><div class="m">${MES[d.getMonth()]}</div></div>
+      <div class="evt-body"><div class="t">${escapeHtml(e.summary||'Mentoria')}</div>
+        <div class="meta"><span>📅 ${d.getDate()} de ${MES_FULL[d.getMonth()]} de ${d.getFullYear()}</span></div></div>
+      <div class="evt-actions">${btns}</div></div>`;
+  });
+  c.innerHTML=html;
+}
+
+/* ---------- próxima mentoria ---------- */
+function renderNext(){
+  const now=new Date();
+  const next=EVENTS.filter(e=>eventStart(e)>=now).sort((a,b)=>eventStart(a)-eventStart(b))[0];
+  const strip=document.getElementById('nextStrip');
+  if(!next){ strip.style.display='none'; return; }
+  const d=eventStart(next);
+  document.getElementById('nextTitle').textContent=next.summary||'Mentoria';
+  const dateStr=`${DIAS[d.getDay()]}, ${d.getDate()} de ${MES_FULL[d.getMonth()]}`;
+  const timeStr=isAllDay(next)?'':' · '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('nextWhen').textContent=dateStr+timeStr;
+  const meet=meetLink(next);
+  document.getElementById('nextJoin').innerHTML = meet
+    ? `<a class="btn btn-teal btn-lg" href="${meet}" target="_blank" rel="noopener">🎥 Entrar na mentoria</a>` : '';
+  strip.style.display='block';
+}
+
+/* ---------- tabs ---------- */
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));
+}
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---------- boot ---------- */
+loadClient();
+initGoogle();
+</script>
+</body>
+</html>
