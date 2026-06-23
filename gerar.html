@@ -414,6 +414,26 @@ async function editClient(id){
     window.scrollTo({top:0,behavior:'smooth'});
   }catch(e){ msg.className='msg err show'; msg.textContent='Erro ao carregar: '+e.message; }
 }
+async function deleteClient(id){
+  if(!ghToken()){ openToken(); return; }
+  if(!confirm(`Tem certeza que deseja EXCLUIR o portal "${id}"?\n\nO link deixará de funcionar. Esta ação não pode ser desfeita.`)) return;
+  const msg=document.getElementById('formMsg');
+  msg.className='msg info show'; msg.textContent='Excluindo portal…';
+  try{
+    const path=`clientes/${id}.json`;
+    const g=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`,{headers:ghHeaders()});
+    if(!g.ok) throw new Error('Portal não encontrado (HTTP '+g.status+')');
+    const sha=(await g.json()).sha;
+    const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`,{
+      method:'DELETE', headers:ghHeaders(),
+      body:JSON.stringify({message:`exclui portal: ${id}`, sha, branch:BRANCH})
+    });
+    if(!r.ok){ const b=await r.json().catch(()=>({})); throw new Error(b.message||('HTTP '+r.status)); }
+    if(EDIT_ID===id) resetForm();
+    msg.className='msg info show'; msg.textContent=`✅ Portal "${id}" excluído.`;
+    listClients();
+  }catch(e){ msg.className='msg err show'; msg.textContent='Erro ao excluir: '+e.message; }
+}
 function showEditBanner(){
   const b=document.getElementById('editBanner');
   b.style.display='flex';
@@ -466,6 +486,7 @@ async function listClients(){
       const el=document.createElement('div'); el.className='cli-item';
       el.innerHTML=`<span style="font-size:16px">🏢</span><span class="nm">${id}</span>
         <button class="btn btn-ghost btn-sm" onclick="editClient('${id}')">✏️ Editar</button>
+        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid #f3c9c2" onclick="deleteClient('${id}')">🗑️ Excluir</button>
         <a href="${link}" target="_blank">abrir ↗</a>`;
       box.appendChild(el);
     });
