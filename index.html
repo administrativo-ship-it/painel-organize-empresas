@@ -2086,18 +2086,29 @@ function saveGDriveClientId() {
 
 // ── Sheets API helpers ──
 
+function gAuthHeaders() {
+  return { 'Authorization': 'Bearer ' + _gToken };
+}
+
 async function gSheetsGetAllSheets(spreadsheetId) {
-  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + spreadsheetId + '?fields=sheets.properties.title&access_token=' + _gToken;
-  var res = await fetch(url);
-  if (!res.ok) throw new Error('Sheets meta error: ' + res.status);
+  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + spreadsheetId + '?fields=sheets.properties.title';
+  var res = await fetch(url, { headers: gAuthHeaders() });
+  if (!res.ok) {
+    var errText = '';
+    try { var ej = await res.json(); errText = (ej.error && ej.error.message) || res.status; } catch(e) { errText = res.status; }
+    throw new Error('Sheets API ' + res.status + ': ' + errText);
+  }
   var data = await res.json();
   return (data.sheets || []).map(function(s){ return s.properties.title; });
 }
 
 async function gSheetsRead(spreadsheetId, sheetName) {
-  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + spreadsheetId + '/values/' + encodeURIComponent(sheetName) + '?access_token=' + _gToken;
-  var res = await fetch(url);
-  if (!res.ok) return [];
+  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + spreadsheetId + '/values/' + encodeURIComponent(sheetName);
+  var res = await fetch(url, { headers: gAuthHeaders() });
+  if (!res.ok) {
+    console.warn('[Sheets] Read failed for', sheetName, 'status:', res.status);
+    return [];
+  }
   var data = await res.json();
   return data.values || [];
 }
@@ -2149,8 +2160,8 @@ async function readAllLinkedSheetsViaOAuth(links) {
 
 async function gDriveSearchSheet(clienteName, keyword) {
   var q = "name contains '" + keyword + "' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false";
-  var url = 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&access_token=' + _gToken;
-  var res = await fetch(url);
+  var url = 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)';
+  var res = await fetch(url, { headers: gAuthHeaders() });
   if (!res.ok) return null;
   var data = await res.json();
   var files = (data.files || []).filter(function(f){ return f.name.toUpperCase().indexOf(clienteName.toUpperCase()) >= 0; });
@@ -3010,8 +3021,8 @@ function updateDiagPanel(tipo, statusObj) {
     statusObj.planilhas.forEach(function(p){
       var pColor = p.ok ? '#22c55e' : '#ef4444';
       html += '<div style="font-size:11px;color:#41546A;margin-left:14px;margin-top:4px;">' +
-        '<span style="color:' + pColor + ';">●</span> <strong>' + p.key + '</strong>: ' +
-        (p.ok ? p.tabsCount + ' aba(s) lida(s)' + (p.tabs ? ' [' + p.tabs.slice(0,8).join(', ') + (p.tabs.length>8?', +'+(p.tabs.length-8):'') + ']' : '') : 'falha na leitura') +
+        '<span style="color:' + pColor + ';">●</span> <strong>' + p.key + '</strong> (ID: <code style="font-size:10px;">' + (p.id||'?').substring(0,16) + '…</code>): ' +
+        (p.ok ? p.tabsCount + ' aba(s) → [' + p.tabs.slice(0,8).join(', ') + (p.tabs.length>8?', +'+(p.tabs.length-8):'') + ']' : '<span style="color:#ef4444;">FALHA: ' + (p.error||'desconhecido') + '</span>') +
         '</div>';
     });
   } else {
@@ -3061,7 +3072,7 @@ async function testarFontesIA(tipo) {
         status.ok = true;
         status.tabsCount = tabs.length;
         status.tabs = tabs;
-      } catch(e) { status.error = e.message; }
+      } catch(e) { status.error = e.message; console.error('[Diag] Sheet '+id+':', e); }
     } else {
       // Fallback: tenta a 1ª aba pública
       var csv = await fetchSheetTabCSV(id, null, 500);
