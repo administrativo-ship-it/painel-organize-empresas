@@ -2142,6 +2142,7 @@ function oeSetDriveIndex(idx) {
 }
 
 // Lista filhos de uma pasta no Drive (pastas + arquivos)
+// CRÍTICO: usa supportsAllDrives + includeItemsFromAllDrives para acessar Shared Drives
 async function oeListChildren(folderId) {
   if (!_gToken) throw new Error('Drive não conectado');
   var all = [];
@@ -2149,12 +2150,16 @@ async function oeListChildren(folderId) {
   do {
     var q = "'" + folderId + "' in parents and trashed=false";
     var url = 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) +
-      '&fields=files(id,name,mimeType),nextPageToken&pageSize=200' +
+      '&fields=files(id,name,mimeType,driveId),nextPageToken' +
+      '&pageSize=200' +
+      '&supportsAllDrives=true' +
+      '&includeItemsFromAllDrives=true' +
+      '&corpora=allDrives' +
       (pageToken ? '&pageToken=' + pageToken : '');
     var res = await fetch(url, { headers: gAuthHeaders() });
     if (!res.ok) {
       var t = await res.text().catch(function(){return '';});
-      throw new Error('Drive list ' + res.status + ': ' + t.substring(0,150));
+      throw new Error('Drive list ' + res.status + ': ' + t.substring(0,250));
     }
     var data = await res.json();
     all = all.concat(data.files || []);
@@ -2177,14 +2182,18 @@ function oeClassificarArquivo(filename) {
 // Indexa TODA a pasta raiz: descobre subpastas (clientes) e suas planilhas
 async function oeIndexarDriveCompleto(rootIdOpt, onProgress) {
   var rootId = rootIdOpt || oeGetDriveRoot();
-  if (!_gToken) { gDriveSignIn(function(){ oeIndexarDriveCompleto(rootIdOpt, onProgress); }); return null; }
+  if (!_gToken) throw new Error('Drive não conectado — autorize primeiro.');
   if (onProgress) onProgress({ stage: 'listando-pasta-raiz', rootId: rootId });
 
   var children = await oeListChildren(rootId);
   var subfolders = children.filter(function(f){ return f.mimeType === 'application/vnd.google-apps.folder'; });
   var directFiles = children.filter(function(f){ return f.mimeType !== 'application/vnd.google-apps.folder'; });
 
-  var index = { root: rootId, indexedAt: new Date().toISOString(), clientes: {} };
+  if (onProgress) onProgress({ stage: 'raiz-conteudo', subpastas: subfolders.length, arquivos: directFiles.length });
+  console.log('[Indexação] Raiz contém:', subfolders.length, 'subpastas e', directFiles.length, 'arquivos diretos.');
+  console.log('[Indexação] Subpastas:', subfolders.map(function(f){return f.name;}));
+
+  var index = { root: rootId, indexedAt: new Date().toISOString(), clientes: {}, rootStats: { subpastas: subfolders.length, arquivos: directFiles.length } };
 
   // Caso 1: arquivos direto na raiz — todos são para "Organize" geral (sem subpastas)
   if (directFiles.length && !subfolders.length) {
@@ -2242,10 +2251,10 @@ function oeBuscarClienteNoIndice(clienteName) {
   return null;
 }
 
-// Baixa arquivo binário do Drive (para XLSX)
+// Baixa arquivo binário do Drive (para XLSX) — suporta Shared Drives
 async function oeDownloadFileBinary(fileId) {
   if (!_gToken) throw new Error('Drive não conectado');
-  var url = 'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media';
+  var url = 'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media&supportsAllDrives=true';
   var res = await fetch(url, { headers: gAuthHeaders() });
   if (!res.ok) {
     var t = await res.text().catch(function(){return '';});
@@ -2341,31 +2350,43 @@ function abrirModalIndexarDrive() {
   var idx = oeGetDriveIndex();
   var nClientes = idx.clientes ? Object.keys(idx.clientes).length : 0;
   var lastIdx = idx.indexedAt ? new Date(idx.indexedAt).toLocaleString('pt-BR') : 'nunca';
+  var conectado = !!_gToken;
+
+  var statusBox = '<div style="background:' + (conectado?'#e8f5ee':'#fdf0ee') + ';border:1px solid ' + (conectado?'#b9e3cc':'#f3c9c2') + ';border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
+      '<div><strong>Status do Drive:</strong> <span style="color:' + (conectado?'#22c55e':'#ef4444') + ';font-weight:600;">' + (conectado?'✓ Conectado':'✗ Desconectado') + '</span></div>' +
+      (conectado ?
+        '<button onclick="gDriveSignOut();document.getElementById(\'oe-index-modal\').remove();abrirModalIndexarDrive();" style="background:transparent;color:#ef4444;border:1px solid #f3c9c2;padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">Desconectar</button>'
+        :
+        '<button onclick="gDriveSignIn(function(){document.getElementById(\'oe-index-modal\').remove();abrirModalIndexarDrive();})" style="background:#1B2B6B;color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:700;">▸ Conectar Drive agora</button>'
+      ) +
+    '</div>' +
+    '<div style="margin-top:6px;"><strong>Última indexação:</strong> ' + lastIdx + ' · <strong>Clientes:</strong> ' + nClientes + '</div>' +
+    (conectado ? '' : '<div style="margin-top:6px;color:#41546A;font-size:11px;">⚠ É necessário conectar o Drive antes de indexar. A autorização Google abrirá um popup.</div>') +
+  '</div>';
 
   var bg = document.createElement('div');
   bg.id = 'oe-index-modal';
   bg.style.cssText = 'position:fixed;inset:0;background:rgba(13,21,38,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
-  bg.innerHTML = '<div style="background:#fff;border-radius:12px;padding:26px;max-width:580px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">' +
+  bg.innerHTML = '<div style="background:#fff;border-radius:12px;padding:26px;max-width:620px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">' +
     '<h3 style="color:#1B2B6B;font-size:18px;margin-bottom:8px;">Drive Organize — Indexação Automática</h3>' +
     '<p style="font-size:12.5px;color:#41546A;line-height:1.5;margin-bottom:16px;">O painel busca automaticamente as planilhas de cada cliente dentro da pasta raiz do Drive da Organize, sem precisar de links manuais.</p>' +
-    '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;">' +
-      '<div><strong>Status do Drive:</strong> <span style="color:' + (_gToken?'#22c55e':'#ef4444') + ';font-weight:600;">' + (_gToken?'✓ Conectado':'✗ Desconectado') + '</span></div>' +
-      '<div><strong>Última indexação:</strong> ' + lastIdx + '</div>' +
-      '<div><strong>Clientes indexados:</strong> ' + nClientes + '</div>' +
-    '</div>' +
+    statusBox +
     '<label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#41546A;">ID ou link da pasta raiz no Drive</label>' +
     '<input id="oe-root-input" value="' + rootAtual + '" style="width:100%;padding:9px 11px;border:1px solid #E0E5EE;border-radius:8px;font-family:DM Mono,monospace;font-size:12px;margin-top:6px;margin-bottom:6px;">' +
-    '<div style="font-size:10.5px;color:#8A94A8;margin-bottom:14px;">Pasta com subpastas dos clientes. Cada subpasta deve conter as planilhas com nomes: INDICADORES COMERCIAIS, INDICADORES FINANCEIROS, PROJEÇÃO DE FLUXO DE CAIXA, CONTROLADORIA FINANCEIRA, DRE.</div>' +
-    '<div id="oe-index-progress" style="font-size:12px;color:#41546A;margin-bottom:10px;display:none;"></div>' +
-    '<div id="oe-index-result" style="font-size:12px;color:#41546A;margin-bottom:10px;max-height:200px;overflow-y:auto;"></div>' +
+    '<div style="font-size:10.5px;color:#8A94A8;margin-bottom:14px;">Pasta com subpastas dos clientes. Cada subpasta deve conter planilhas com nomes: INDICADORES COMERCIAIS, INDICADORES FINANCEIROS, PROJEÇÃO DE FLUXO DE CAIXA, CONTROLADORIA FINANCEIRA, DRE. Suporta Shared Drives.</div>' +
+    '<div id="oe-index-progress" style="font-size:12px;color:#41546A;margin-bottom:10px;display:none;padding:8px 12px;background:#e8f0ff;border-radius:6px;border:1px solid #b9d2f7;"></div>' +
+    '<div id="oe-index-result" style="font-size:12px;color:#41546A;margin-bottom:10px;max-height:280px;overflow-y:auto;border:1px solid #E0E5EE;border-radius:6px;padding:8px;background:#fafbfd;"></div>' +
     '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">' +
       '<button onclick="document.getElementById(\'oe-index-modal\').remove()" style="background:#fff;border:1px solid #E0E5EE;color:#41546A;border-radius:8px;padding:9px 16px;font-weight:600;font-size:12.5px;cursor:pointer;">Fechar</button>' +
       '<button id="oe-btn-ver-index" onclick="oeMostrarIndexAtual()" style="background:#fff;border:1px solid #1B2B6B;color:#1B2B6B;border-radius:8px;padding:9px 16px;font-weight:600;font-size:12.5px;cursor:pointer;">Ver índice atual</button>' +
-      '<button id="oe-btn-indexar" onclick="oeExecutarIndexacao()" style="background:#1B2B6B;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:12.5px;cursor:pointer;">🔄 Indexar agora</button>' +
+      '<button id="oe-btn-indexar" onclick="oeExecutarIndexacao()" style="background:' + (conectado?'#1B2B6B':'#9ca3af') + ';color:#fff;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:12.5px;cursor:pointer;"' + (conectado?'':' disabled') + '>🔄 Indexar agora</button>' +
     '</div>' +
     '</div>';
   document.body.appendChild(bg);
   bg.addEventListener('click', function(e){ if (e.target === bg) bg.remove(); });
+  // Renderiza índice atual se houver
+  setTimeout(oeMostrarIndexAtual, 100);
 }
 
 async function oeExecutarIndexacao() {
@@ -2374,26 +2395,31 @@ async function oeExecutarIndexacao() {
   if (!rootId) { alert('Cole um link ou ID válido da pasta raiz.'); return; }
   oeSetDriveRoot(rootId);
   if (!_gToken) {
-    alert('Conecte o Google Drive primeiro (botão "Conectar Drive" na tela de relatórios).');
-    gDriveSignIn(function(){ oeExecutarIndexacao(); });
+    alert('Conecte o Google Drive primeiro — clique em "Conectar Drive agora" no topo do modal.');
     return;
   }
   var btn = document.getElementById('oe-btn-indexar');
   var prog = document.getElementById('oe-index-progress');
   var resultEl = document.getElementById('oe-index-result');
   if (btn) { btn.disabled = true; btn.textContent = 'Indexando…'; }
-  if (prog) prog.style.display = 'block';
+  if (prog) { prog.style.display = 'block'; prog.textContent = '⏳ Iniciando…'; }
   if (resultEl) resultEl.innerHTML = '';
   try {
     var idx = await oeIndexarDriveCompleto(rootId, function(p){
       if (!prog) return;
-      if (p.stage === 'listando-pasta-raiz') prog.textContent = '⏳ Lendo pasta raiz…';
+      if (p.stage === 'listando-pasta-raiz') prog.textContent = '⏳ Lendo pasta raiz ' + p.rootId.substring(0,12) + '…';
+      else if (p.stage === 'raiz-conteudo') prog.textContent = '⏳ Pasta raiz contém: ' + p.subpastas + ' subpastas, ' + p.arquivos + ' arquivos diretos.';
       else if (p.stage === 'indexando-cliente') prog.textContent = '⏳ Indexando ' + p.atual + '/' + p.total + ': ' + p.cliente;
-      else if (p.stage === 'concluido') prog.textContent = '✅ Indexação concluída: ' + p.total + ' clientes.';
+      else if (p.stage === 'concluido') prog.textContent = '✅ Indexação concluída: ' + p.total + ' clientes encontrados.';
     });
-    oeMostrarIndexAtual();
+    if (idx && (!idx.clientes || !Object.keys(idx.clientes).length)) {
+      if (resultEl) resultEl.innerHTML = '<div style="color:#b45309;padding:8px;font-size:12px;line-height:1.5;">⚠ Nenhum cliente foi indexado.<br><br>Possíveis causas:<br>• A pasta raiz está vazia<br>• A pasta raiz tem arquivos diretos sem subpastas de clientes<br>• Sua conta Google não tem acesso à pasta<br>• A pasta está num Shared Drive que requer permissão especial<br><br><strong>Verifique no Drive:</strong> abra <a href="https://drive.google.com/drive/folders/' + rootId + '" target="_blank" style="color:#1B2B6B;">a pasta</a> e confirme se há subpastas com nome de clientes.</div>';
+    } else {
+      oeMostrarIndexAtual();
+    }
   } catch(e) {
-    if (resultEl) resultEl.innerHTML = '<div style="color:#ef4444;">Erro: ' + e.message + '</div>';
+    console.error('[Indexação] Erro:', e);
+    if (resultEl) resultEl.innerHTML = '<div style="color:#ef4444;padding:8px;font-size:12px;">❌ Erro: ' + e.message + '<br><br>Se o erro for <strong>403</strong> ou <strong>permission</strong>, sua conta Google não tem acesso a essa pasta. Verifique se a pasta foi compartilhada com você.</div>';
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🔄 Re-indexar'; }
   }
