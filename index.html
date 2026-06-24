@@ -221,7 +221,11 @@ tbody tr:hover{background:var(--off);}
 .rpt-filters-row{display:flex;gap:8px;flex-wrap:wrap;flex:1;}
 .btn-pdf{background:#c0392b;color:#fff;border:none;padding:9px 20px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;white-space:nowrap;}
 .btn-pdf:hover{background:#a93226;}
-.report-preview{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:36px;box-shadow:var(--sh);}
+.report-preview{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:36px;box-shadow:var(--sh);max-width:100%;overflow-x:auto;}
+.report-preview *{max-width:100%;box-sizing:border-box;}
+.report-preview img,.report-preview canvas,.report-preview table{max-width:100%;height:auto;}
+.report-preview .rpt-kpi-highlight-grid{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));}
+#rpt-prev{max-width:100%;overflow-x:auto;}
 .rpt-header{display:flex;justify-content:space-between;align-items:flex-start;padding:24px 32px;background:var(--navy);border-radius:var(--r) var(--r) 0 0;margin-bottom:0;}
 .rpt-meta{text-align:right;}
 .rpt-title{font-size:18px;font-weight:800;color:#fff;line-height:1.2;}
@@ -2768,11 +2772,14 @@ function buildAIContextForClient(cliente) {
   };
 }
 
-async function callClaude(apiKey, userPrompt, maxTokens, systemPrompt) {
+async function callClaude(apiKey, userPrompt, maxTokens, systemPrompt, forceJSON) {
+  var messages = [{ role: 'user', content: userPrompt }];
+  // Prefill: força a IA a começar a resposta com "{" — assim ela não pode responder com texto explicativo
+  if (forceJSON) messages.push({ role: 'assistant', content: '{' });
   var body = {
     model: 'claude-haiku-4-5-20251001',
     max_tokens: maxTokens || 2000,
-    messages: [{ role: 'user', content: userPrompt }]
+    messages: messages
   };
   if (systemPrompt) body.system = systemPrompt;
   var resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2790,7 +2797,10 @@ async function callClaude(apiKey, userPrompt, maxTokens, systemPrompt) {
     throw new Error((err.error && err.error.message) || 'Erro na API: ' + resp.status);
   }
   var data = await resp.json();
-  return (data.content[0].text || '').trim();
+  var text = (data.content[0].text || '').trim();
+  // Se usou prefill, prepende o "{" que foi enviado como prefill
+  if (forceJSON && text.charAt(0) !== '{') text = '{' + text;
+  return text;
 }
 
 function extractJSON(text) {
@@ -2885,7 +2895,7 @@ async function generateAnalysisWithAI() {
   if (btn) { btn.textContent = 'Gerando análise...'; btn.disabled = true; }
 
   try {
-    var text = await callClaude(apiKey, prompt2, 2500, sysPrompt);
+    var text = await callClaude(apiKey, prompt2, 2500, sysPrompt, true);
     var parsed = extractJSON(text);
 
     // Preenche todos os campos esperados em _rmf e nos inputs
@@ -2973,7 +2983,7 @@ async function generateAnalysisEncerramento() {
       'RESPONDA APENAS COM ESTE JSON (preencha TODOS os campos):\n' +
       '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"NUM","modnom":"TEXTO","dtini":"AAAA-MM-DD","dtfim":"AAAA-MM-DD","proxmod":"TEXTO","nment":"NUM","analise":"TEXTO","proximos":"TEXTO"}';
 
-    var text = await callClaude(apiKey, prompt_text, 3000, sysPromptEnc);
+    var text = await callClaude(apiKey, prompt_text, 3000, sysPromptEnc, true);
     var parsed = extractJSON(text);
 
     // KPIs
@@ -3326,9 +3336,9 @@ function rptMensal() {
     '<div class="rpt-cfg-field"><label>Próximos Passos e Recomendações</label><textarea id="rmf-proximos" rows="4" oninput="_rmf.proximos=this.value" placeholder="Ações planejadas e foco para o próximo período...">'+(_rmf.proximos||'')+'</textarea></div>' +
     '</div>' +
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;">'+
-    '<button class="rpt-gen-btn" style="margin-top:0" onclick="rptGenerateMensal()">▶ Gerar Relatório</button>'+
-    '<button id="btn-gerar-ia" class="rpt-drive-btn" style="background:#7C3AED;color:#fff;font-size:13px;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;border:none;" onclick="generateAnalysisWithAI()">Gerar Análise com IA</button>'+
-    '<span style="font-size:11px;color:#8A94A8;">(usa Claude para gerar resumo executivo automaticamente)</span>'+
+    '<button id="btn-gerar-ia" class="rpt-drive-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;border:none;" onclick="generateAnalysisWithAI()">Gerar Relatório com IA</button>'+
+    '<button class="rpt-gen-btn" style="margin-top:0;background:transparent;color:#7C3AED;border:1px solid #7C3AED;" onclick="rptGenerateMensal()">Regenerar Pré-visualização</button>'+
+    '<span style="font-size:11px;color:#8A94A8;">A IA lê planilhas, Trello, FlowUp e preenche tudo automaticamente</span>'+
     '</div>' +
     '</div>';
 
@@ -3440,9 +3450,10 @@ function rptEncerramento() {
       return fields.map(function(f){ return encMkLink(f.label, f.key); }).join('');
     })() +
     '</div>' +
-    '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">' +
-    '<button class="rpt-gen-btn" onclick="rptGenerateEncerramento()">Gerar Pré-visualização</button>' +
-    '<button id="btn-gerar-ia-enc" class="rpt-gen-btn" style="background:var(--teal);color:#fff;" onclick="generateAnalysisEncerramento()">Gerar Análise com IA</button>' +
+    '<div style="display:flex;gap:12px;margin-top:16px;align-items:center;flex-wrap:wrap;">' +
+    '<button id="btn-gerar-ia-enc" class="rpt-gen-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;font-weight:700;" onclick="generateAnalysisEncerramento()">Gerar Relatório com IA</button>' +
+    '<button class="rpt-gen-btn" style="background:transparent;color:#7C3AED;border:1px solid #7C3AED;" onclick="rptGenerateEncerramento()">Regenerar Pré-visualização</button>' +
+    '<span style="font-size:11px;color:#8A94A8;">A IA lê planilhas, Trello, FlowUp e preenche tudo automaticamente</span>' +
     '</div>' +
     '</div>';
 
