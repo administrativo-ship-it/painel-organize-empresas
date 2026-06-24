@@ -2768,7 +2768,13 @@ function buildAIContextForClient(cliente) {
   };
 }
 
-async function callClaude(apiKey, userPrompt, maxTokens) {
+async function callClaude(apiKey, userPrompt, maxTokens, systemPrompt) {
+  var body = {
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: maxTokens || 2000,
+    messages: [{ role: 'user', content: userPrompt }]
+  };
+  if (systemPrompt) body.system = systemPrompt;
   var resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -2777,11 +2783,7 @@ async function callClaude(apiKey, userPrompt, maxTokens) {
       'content-type': 'application/json',
       'anthropic-dangerous-direct-browser-access': 'true'
     },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: maxTokens || 2000,
-      messages: [{ role: 'user', content: userPrompt }]
-    })
+    body: JSON.stringify(body)
   });
   if (!resp.ok) {
     var err = await resp.json().catch(function(){return{};});
@@ -2797,8 +2799,27 @@ function extractJSON(text) {
   // Procura o primeiro { até o último }
   var first = t.indexOf('{');
   var last = t.lastIndexOf('}');
-  if (first >= 0 && last > first) t = t.substring(first, last + 1);
-  return JSON.parse(t);
+  if (first < 0 || last <= first) {
+    var err = new Error('A IA não retornou JSON. Resposta: ' + text.substring(0, 200));
+    err.rawText = text;
+    throw err;
+  }
+  t = t.substring(first, last + 1);
+  try {
+    return JSON.parse(t);
+  } catch(e) {
+    // Tenta consertar JSON malformado comum (vírgulas finais, aspas mal escapadas)
+    var cleaned = t
+      .replace(/,(\s*[}\]])/g, '$1')
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'");
+    try { return JSON.parse(cleaned); }
+    catch(e2) {
+      var err = new Error('JSON inválido. Resposta: ' + text.substring(0, 200));
+      err.rawText = text;
+      throw err;
+    }
+  }
 }
 
 // ═══════════════ MENSAL — IA preenche TUDO ═══════════════
@@ -2832,15 +2853,14 @@ async function generateAnalysisWithAI() {
     'fat=Faturamento Bruto (R$, número), cmv=CMV (R$, número), dfixas=Despesas Fixas (R$), dvar=Despesas Variáveis (R$), impost=Impostos (R$), ll=Lucro Líquido (R$), cgiro=Capital de Giro (R$), inadim=Inadimplência (% sem o símbolo)' :
     'fat=Faturamento do Mês (R$, número), meta=Meta do Mês (R$, número), cresc=Crescimento vs. ano anterior (% sem símbolo), cativos=Clientes Ativos (número inteiro), conv=Taxa de Conversão (% sem símbolo), ticket=Ticket Médio (R$, número)';
 
-  var prompt2 = 'Você é um consultor sênior de negócios da Organize Empresas, especialista em mentoria empresarial. Sua tarefa é GERAR AUTOMATICAMENTE um relatório mensal completo a partir dos dados disponíveis sobre o cliente.\n\n' +
+  var sysPrompt = 'Você é um gerador JSON. Você SEMPRE responde APENAS com JSON válido — nada antes, nada depois, sem markdown, sem texto explicativo, sem desculpas, sem avisos. Mesmo que dados estejam faltando, você ESTIMA valores plausíveis com base no contexto e no que é típico para empresas brasileiras desse porte/segmento. Nunca recusa nem diz "não posso". Sua única saída é JSON.';
+
+  var prompt2 = 'Gere um relatório mensal a partir destes dados.\n\n' +
     'CLIENTE: ' + cliente + '\n' +
     'PROGRAMA: ' + programaLabel + '\n' +
     'PERÍODO: ' + mesNome + '/' + ano + '\n\n' +
-    'FONTES DE DADOS DISPONÍVEIS:\n' +
-    '═══ LINKS CADASTRADOS ═══\n' +
-    JSON.stringify(ctx.links, null, 2) + '\n\n' +
-    '═══ INDICADORES DA PLANILHA (carregados via Drive) ═══\n' +
-    (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(sem dados de planilha disponíveis)') + '\n\n' +
+    '═══ LINKS CADASTRADOS ═══\n' + JSON.stringify(ctx.links, null, 2) + '\n\n' +
+    '═══ INDICADORES DA PLANILHA ═══\n' + (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(planilha não carregada)') + '\n\n' +
     '═══ TAREFAS FLOWUP ═══\n' +
     'Total: ' + ctx.flowup.total + ' | Concluídas: ' + ctx.flowup.concluidas + ' | Em andamento: ' + ctx.flowup.andamento + ' | Atrasadas: ' + ctx.flowup.atrasadas + '\n' +
     'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
@@ -2850,26 +2870,22 @@ async function generateAnalysisWithAI() {
     'Boards: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
     'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n' +
     'Cards vencidos: ' + ctx.trello.vencidosNomes.join('; ') + '\n\n' +
-    'INSTRUÇÕES:\n' +
-    '1. Analise TODOS os dados acima (links, planilhas, Drive, Trello, FlowUp).\n' +
-    '2. EXTRAIA dos dados das planilhas (campo indicadores) os valores numéricos para os indicadores do mês de referência (' + mesNome + '/' + ano + '). Procure por dados que correspondam ao mês/ano específicos.\n' +
-    '3. Se a planilha tiver "fat2025", "fat2026", "meta2026", "cresc", etc., use esses valores.\n' +
-    '4. Se algum indicador não estiver disponível nas fontes, ESTIME com base nas tendências e nos demais dados (ex.: se há tarefas concluídas e meta atingida em meses anteriores, projete coerentemente). Nunca deixe vazio.\n' +
-    '5. Para o programa "' + programa + '", os campos a preencher são: ' + camposExplicacao + '\n' +
-    '6. Gere uma análise executiva (3-5 frases) interpretando os resultados, e próximos passos (3-5 ações concretas).\n\n' +
-    'RESPONDA APENAS COM ESTE JSON VÁLIDO (sem markdown, sem backticks, sem texto antes ou depois):\n' +
-    '{\n' +
-    camposEsperados.map(function(k){return '  "'+k+'": "valor_numérico_como_string"';}).join(',\n') + ',\n' +
-    '  "analise": "Resumo executivo de 3-5 frases interpretando os resultados do mês, mencionando números e contexto.",\n' +
-    '  "proximos": "3-5 próximos passos concretos e acionáveis baseados nos dados, com prioridades claras."\n' +
-    '}\n\n' +
-    'Use ponto como separador decimal. Não use R$, %, vírgula como decimal nem milhar nos valores numéricos. Apenas o número (ex.: "98500.00", "23.7").';
+    'REGRAS:\n' +
+    '- Use os dados da planilha quando existirem (campos como "fat2025", "fat2026", "meta", "cresc"). Procure os valores para ' + mesNome + '/' + ano + '.\n' +
+    '- Se algum indicador não estiver na planilha, ESTIME com base nas tendências disponíveis e em valores típicos para o segmento. NUNCA deixe vazio. NUNCA recuse.\n' +
+    '- Campos do programa "' + programa + '": ' + camposExplicacao + '\n' +
+    '- Valores numéricos sem R$, sem %, sem separador de milhar, ponto como decimal (ex.: "98500.00", "23.7").\n' +
+    '- "analise": 3-5 frases interpretando resultados.\n' +
+    '- "proximos": 3-5 ações concretas.\n\n' +
+    'RESPONDA APENAS COM ESTE JSON (preencha TODOS os campos):\n' +
+    '{' +
+    camposEsperados.map(function(k){return '"'+k+'":"NUMERO"';}).join(',') + ',"analise":"TEXTO","proximos":"TEXTO"}';
 
   var btn = document.getElementById('btn-gerar-ia');
   if (btn) { btn.textContent = 'Gerando análise...'; btn.disabled = true; }
 
   try {
-    var text = await callClaude(apiKey, prompt2, 2500);
+    var text = await callClaude(apiKey, prompt2, 2500, sysPrompt);
     var parsed = extractJSON(text);
 
     // Preenche todos os campos esperados em _rmf e nos inputs
@@ -2927,19 +2943,18 @@ async function generateAnalysisEncerramento() {
     var kpiKeys = ['k1','k2','k3','k4','k5','k6'];
     var kpisExp = kpiKeys.map(function(k,i){return k+'='+kpiLabels[i];}).join('; ');
 
-    var prompt_text = 'Você é consultor sênior da Organize Empresas. Sua tarefa é GERAR AUTOMATICAMENTE um Relatório de Encerramento de Módulo completo a partir dos dados disponíveis sobre o cliente.\n\n' +
+    var sysPromptEnc = 'Você é um gerador JSON. Você SEMPRE responde APENAS com JSON válido — nada antes, nada depois, sem markdown, sem texto explicativo, sem desculpas, sem avisos. Mesmo que dados estejam faltando, você ESTIMA valores plausíveis com base no contexto e no que é típico para empresas brasileiras desse porte/segmento. Nunca recusa nem diz "não posso". Sua única saída é JSON.';
+
+    var prompt_text = 'Gere um relatório de encerramento de módulo a partir destes dados.\n\n' +
       'CLIENTE: ' + (_ref.cliente || 'N/A') + '\n' +
       'PROGRAMA: ' + programaLabel + '\n' +
-      'MÓDULO Nº: ' + (_ref.modnum || 'a inferir') + '\n' +
-      'NOME DO MÓDULO: ' + (_ref.modnom || 'a inferir') + '\n' +
+      'MÓDULO Nº: ' + (_ref.modnum || '(inferir)') + '\n' +
+      'NOME DO MÓDULO: ' + (_ref.modnom || '(inferir)') + '\n' +
       'PERÍODO: ' + (_ref.dtini || '?') + ' a ' + (_ref.dtfim || '?') + '\n' +
-      'PRÓXIMO MÓDULO: ' + (_ref.proxmod || 'a inferir') + '\n' +
-      'MENTORIAS REALIZADAS: ' + (_ref.nment || 'a inferir') + '\n\n' +
-      'FONTES DE DADOS DISPONÍVEIS:\n' +
-      '═══ LINKS CADASTRADOS ═══\n' +
-      JSON.stringify(ctx.links, null, 2) + '\n\n' +
-      '═══ INDICADORES DA PLANILHA ═══\n' +
-      (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(sem dados de planilha disponíveis)') + '\n\n' +
+      'PRÓXIMO MÓDULO: ' + (_ref.proxmod || '(inferir)') + '\n' +
+      'MENTORIAS REALIZADAS: ' + (_ref.nment || '(inferir)') + '\n\n' +
+      '═══ LINKS CADASTRADOS ═══\n' + JSON.stringify(ctx.links, null, 2) + '\n\n' +
+      '═══ INDICADORES DA PLANILHA ═══\n' + (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(planilha não carregada)') + '\n\n' +
       '═══ TAREFAS FLOWUP DO CLIENTE ═══\n' +
       'Total: ' + ctx.flowup.total + ' | Concluídas: ' + ctx.flowup.concluidas + ' | Em andamento: ' + ctx.flowup.andamento + ' | Atrasadas: ' + ctx.flowup.atrasadas + '\n' +
       'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
@@ -2948,28 +2963,17 @@ async function generateAnalysisEncerramento() {
       '═══ PLANEJAMENTO TRELLO ═══\n' +
       'Boards: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
       'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n\n' +
-      'INSTRUÇÕES:\n' +
-      '1. Analise TODOS os dados acima (links, planilhas, Drive, Trello, FlowUp).\n' +
-      '2. Extraia/calcule os valores dos KPIs do módulo a partir das planilhas e demais fontes. Se ausente, ESTIME com base nas tendências.\n' +
-      '3. KPIs deste programa: ' + kpisExp + '\n' +
-      '4. Se modnum, modnom, dtini, dtfim, proxmod ou nment não estiverem preenchidos, INFIRA valores plausíveis a partir do contexto (ex.: módulo 4 - Estrutura Financeira; nment = nº de mentorias concluídas no FlowUp).\n' +
-      '5. Gere uma análise executiva (3-5 parágrafos) com resultados, pontos fortes, oportunidades. Em seguida 4-6 próximos passos concretos.\n\n' +
-      'RESPONDA APENAS COM ESTE JSON VÁLIDO (sem markdown, sem backticks):\n' +
-      '{\n' +
-      '  "k1": "valor numérico", "k2": "valor numérico", "k3": "valor numérico",\n' +
-      '  "k4": "valor numérico", "k5": "valor numérico", "k6": "valor numérico",\n' +
-      '  "modnum": "número do módulo",\n' +
-      '  "modnom": "nome do módulo",\n' +
-      '  "dtini": "AAAA-MM-DD",\n' +
-      '  "dtfim": "AAAA-MM-DD",\n' +
-      '  "proxmod": "nome do próximo módulo",\n' +
-      '  "nment": "número inteiro de mentorias",\n' +
-      '  "analise": "Análise executiva de 3-5 parágrafos do módulo, com resultados, pontos fortes e oportunidades.",\n' +
-      '  "proximos": "4-6 próximos passos concretos para o próximo módulo, em formato de lista numerada ou bullets dentro da string."\n' +
-      '}\n\n' +
-      'Use ponto como separador decimal nos números, sem R$, sem %, sem milhar.';
+      'REGRAS:\n' +
+      '- KPIs deste programa: ' + kpisExp + '\n' +
+      '- Extraia valores das planilhas quando existirem. Se ausentes, ESTIME com base nas tendências e em valores típicos do segmento. NUNCA recuse.\n' +
+      '- Se modnum/modnom/dtini/dtfim/proxmod/nment estiverem como "(inferir)", deduza valores plausíveis (ex.: nment = nº mentorias concluídas no FlowUp; modnom típico: "Diagnóstico Estratégico", "Estrutura Financeira", "Marketing e Vendas").\n' +
+      '- Valores numéricos sem R$, sem %, sem milhar, ponto como decimal.\n' +
+      '- "analise": 3-5 parágrafos com resultados, pontos fortes, oportunidades.\n' +
+      '- "proximos": 4-6 ações concretas para o próximo módulo.\n\n' +
+      'RESPONDA APENAS COM ESTE JSON (preencha TODOS os campos):\n' +
+      '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"NUM","modnom":"TEXTO","dtini":"AAAA-MM-DD","dtfim":"AAAA-MM-DD","proxmod":"TEXTO","nment":"NUM","analise":"TEXTO","proximos":"TEXTO"}';
 
-    var text = await callClaude(apiKey, prompt_text, 3000);
+    var text = await callClaude(apiKey, prompt_text, 3000, sysPromptEnc);
     var parsed = extractJSON(text);
 
     // KPIs
