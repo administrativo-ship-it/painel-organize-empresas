@@ -289,7 +289,79 @@ tbody tr:hover{background:var(--off);}
 .gdrive-modal input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:10px;}
 .gdrive-modal .modal-btns{display:flex;gap:8px;margin-top:16px;}
 .gdrive-modal .modal-btn-save{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;}
-.gdrive-modal .modal-btn-cancel{background:transparent;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.sidebar,.topbar,.filter-bar,.rpt-top,.rpt-filters-row,.btn-pdf{display:none!important;}.main{margin-left:0!important;}.page{display:none!important;padding:0!important;}.page.active{display:block!important;}#page-reports{padding:0!important;}.report-preview{border:none!important;box-shadow:none!important;padding:20px 0!important;border-radius:0!important;}body{background:#fff!important;}.table-wrap{box-shadow:none!important;border:1px solid #ccc!important;}tr{page-break-inside:avoid;}.rpt-header{page-break-after:avoid;}.rpt-sec{page-break-after:avoid;}}
+.gdrive-modal .modal-btn-cancel{background:transparent;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;}
+
+/* ═══════════════ PORTAL DO CLIENTE ═══════════════ */
+.portal-shell{max-width:1280px;margin:0 auto;width:100%;}
+.portal-header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.portal-h2{font-size:22px;font-weight:800;color:var(--navy);line-height:1.2;}
+.portal-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.portal-tabs{display:flex;gap:6px;background:var(--white);border:1px solid var(--border);padding:4px;border-radius:10px;}
+.portal-tab{display:flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border-radius:7px;cursor:pointer;transition:all .15s;}
+.portal-tab:hover{color:var(--navy);}
+.portal-tab.active{background:var(--navy);color:#fff;}
+.portal-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start;}
+.portal-col-form{min-width:0;}
+.portal-col-preview{position:sticky;top:80px;}
+@media (max-width:1100px){.portal-grid{grid-template-columns:1fr;}.portal-col-preview{position:static;}}
+.portal-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(27,43,107,.04);}
+.portal-card-h{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+.portal-card-s{font-size:12.5px;color:var(--muted);margin-bottom:18px;}
+.portal-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.portal-field{display:flex;flex-direction:column;}
+.portal-field-wide{grid-column:span 2;}
+.portal-field label{font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.portal-field input,.portal-field select,.portal-field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--txt);background:var(--off);outline:none;transition:all .15s;}
+.portal-field input.mono{font-family:'DM Mono',monospace;font-size:12px;}
+.portal-field input:focus,.portal-field select:focus,.portal-field textarea:focus{border-color:var(--navy);background:var(--white);}
+.portal-field textarea{resize:vertical;min-height:60px;}
+.portal-hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4;}
+.portal-drop{border:2px dashed var(--border);border-radius:10px;padding:18px 20px;cursor:pointer;background:var(--off);transition:all .15s;display:flex;align-items:center;gap:14px;}
+.portal-drop:hover{border-color:var(--navy);background:#eef2fb;}
+.portal-logo-prev{display:none;align-items:center;gap:14px;background:var(--navy);border-radius:10px;padding:12px 16px;margin-top:10px;}
+.portal-logo-prev img{max-height:48px;max-width:120px;object-fit:contain;background:#fff;border-radius:6px;padding:5px;}
+.portal-btn-remove{margin-top:6px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.portal-btn-remove:hover{background:rgba(255,255,255,.25);}
+.portal-edit-banner{display:none;background:#e8f0ff;border:1px solid #b9d2f7;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#0050b3;align-items:center;justify-content:space-between;gap:10px;}
+.portal-edit-banner button{background:transparent;border:1px solid #b9d2f7;color:#0050b3;border-radius:6px;padding:5px 10px;font-size:11.5px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;}
+.portal-create-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 4px 14px rgba(27,43,107,.18);}
+.portal-create-btn:hover{background:var(--navy-light);transform:translateY(-1px);box-shadow:0 6px 18px rgba(27,43,107,.22);}
+.portal-create-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.portal-msg{display:none;font-size:13px;padding:11px 14px;border-radius:8px;margin-top:12px;}
+.portal-result{display:none;background:linear-gradient(135deg,var(--green-bg),#fff);border:1.5px solid #b9e3cc;border-radius:var(--r);padding:22px 24px;margin-top:14px;}
+.portal-result-title{font-size:17px;font-weight:800;color:var(--green);margin-bottom:4px;}
+.portal-result-p{font-size:13px;color:var(--txt2);margin-bottom:12px;}
+.portal-result-link{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:'DM Mono',monospace;font-size:12.5px;color:var(--navy);word-break:break-all;margin-bottom:14px;}
+.portal-result-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.portal-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:none;border:none;transition:all .15s;}
+.portal-btn-ghost{background:var(--off);color:var(--navy);border:1px solid var(--border);}
+.portal-btn-ghost:hover{background:#eef2fb;}
+.portal-btn-navy{background:var(--navy);color:#fff;}
+.portal-btn-navy:hover{background:var(--navy-light);}
+.portal-btn-wa{background:#25D366;color:#fff;}
+.portal-btn-wa:hover{background:#1da851;}
+.portal-pv-frame{border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+.portal-pv-hero{background:linear-gradient(135deg,var(--navy),#0a1a7a);padding:22px 18px;color:#fff;display:flex;align-items:center;gap:14px;}
+.portal-pv-logo{width:56px;height:56px;border-radius:13px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:6px;font-size:24px;font-weight:800;color:var(--navy);}
+.portal-pv-logo img{max-width:100%;max-height:100%;object-fit:contain;}
+.portal-pv-name{font-size:16px;font-weight:800;line-height:1.2;}
+.portal-pv-badge{display:none;margin-top:6px;background:rgba(139,212,224,.18);border:1px solid rgba(139,212,224,.35);color:var(--teal);padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;}
+.portal-pv-tabs{display:flex;gap:4px;padding:10px;flex-wrap:wrap;background:var(--white);}
+.portal-pv-tab{font-size:11px;font-weight:600;color:var(--muted);background:var(--off);padding:5px 10px;border-radius:7px;}
+.portal-pv-tab.on{background:var(--navy);color:#fff;}
+.portal-list{display:flex;flex-direction:column;gap:8px;}
+.portal-list-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--off);border:1px solid var(--border);border-radius:10px;transition:all .15s;}
+.portal-list-item:hover{border-color:var(--navy);background:#fff;}
+.portal-list-item-name{flex:1;font-size:13.5px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.portal-list-item-actions{display:flex;gap:6px;align-items:center;}
+.portal-list-btn{background:var(--white);border:1px solid var(--border);color:var(--navy);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s;}
+.portal-list-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+.portal-list-btn.danger{color:var(--red);border-color:#f3c9c2;}
+.portal-list-btn.danger:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.portal-list-link{color:var(--teal-dark);font-weight:700;font-size:11.5px;text-decoration:none;padding:6px 8px;}
+.portal-list-link:hover{text-decoration:underline;}
+
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.sidebar,.topbar,.filter-bar,.rpt-top,.rpt-filters-row,.btn-pdf{display:none!important;}.main{margin-left:0!important;}.page{display:none!important;padding:0!important;}.page.active{display:block!important;}#page-reports{padding:0!important;}.report-preview{border:none!important;box-shadow:none!important;padding:20px 0!important;border-radius:0!important;}body{background:#fff!important;}.table-wrap{box-shadow:none!important;border:1px solid #ccc!important;}tr{page-break-inside:avoid;}.rpt-header{page-break-after:avoid;}.rpt-sec{page-break-after:avoid;}}
 </style>
 </head>
 <body>
@@ -540,31 +612,37 @@ tbody tr:hover{background:var(--off);}
 
   <!-- PORTAL DO CLIENTE (Gerador de Portais integrado) -->
   <div class="page" id="page-portal">
+    <div class="portal-shell">
 
-    <!-- Tabs: Criar/Editar | Portais Existentes -->
-    <div style="display:flex;gap:8px;margin-bottom:20px;">
-      <button class="rpt-type-btn active" id="ptab-form" onclick="switchPortalTab('form',this)">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M12 4v16m8-8H4"/></svg>
-        Criar / Editar Portal
-      </button>
-      <button class="rpt-type-btn" id="ptab-list" onclick="switchPortalTab('list',this)">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        Portais Existentes
-      </button>
-    </div>
-
-    <!-- TAB: FORMULÁRIO -->
-    <div id="portal-tab-form">
-      <div style="display:grid;grid-template-columns:1.3fr .9fr;gap:20px;align-items:start;">
-        <!-- COLUNA ESQUERDA: FORM -->
+      <!-- Header da página -->
+      <div class="portal-header">
         <div>
-          <!-- Dados do cliente -->
-          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:16px;">
-            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;">Dados do cliente</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Informações que aparecem no topo do portal.</div>
-            <div class="rpt-form-grid">
-              <div class="rpt-cfg-field"><label>Nome da empresa *</label><input id="p-empresa" placeholder="Ex.: Padaria Pão Quente" oninput="portalUpdatePreview()"></div>
-              <div class="rpt-cfg-field"><label>Serviço contratado</label>
+          <h2 class="portal-h2">Gerador de Portais de Mentoria</h2>
+          <p class="portal-sub">Cada cliente ganha sua própria página com agenda, gravações, Trello e Drive.</p>
+        </div>
+        <div class="portal-tabs">
+          <button class="portal-tab active" id="ptab-form" onclick="switchPortalTab('form',this)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 4v16m8-8H4"/></svg>
+            Criar / Editar
+          </button>
+          <button class="portal-tab" id="ptab-list" onclick="switchPortalTab('list',this)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            Portais Existentes
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB: FORMULÁRIO -->
+      <div id="portal-tab-form" class="portal-grid">
+        <!-- COLUNA ESQUERDA: FORM -->
+        <div class="portal-col-form">
+          <!-- Card: Dados do cliente -->
+          <div class="portal-card">
+            <div class="portal-card-h">Dados do cliente</div>
+            <div class="portal-card-s">Informações que aparecem no topo do portal.</div>
+            <div class="portal-fields">
+              <div class="portal-field"><label>Nome da empresa *</label><input id="p-empresa" placeholder="Ex.: Padaria Pão Quente" oninput="portalUpdatePreview()"></div>
+              <div class="portal-field"><label>Serviço contratado</label>
                 <select id="p-servico" onchange="portalUpdatePreview()">
                   <option value="">— selecione —</option>
                   <option>Organize Mentoring</option>
@@ -574,92 +652,100 @@ tbody tr:hover{background:var(--off);}
                   <option>Organize Finance</option>
                 </select>
               </div>
-              <div class="rpt-cfg-field"><label>Responsável / Mentor(a)</label><input id="p-responsavel" placeholder="Ex.: Wmadson"></div>
-              <div class="rpt-cfg-field"><label>Logo do cliente</label>
-                <div id="p-logo-drop" style="border:2px dashed var(--border);border-radius:8px;padding:16px;text-align:center;cursor:pointer;background:var(--off);transition:border-color .15s;" onclick="document.getElementById('p-logo-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--navy)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="portalDropLogo(event)">
-                  <div style="font-size:12px;font-weight:700;color:var(--navy);">Clique ou arraste a logo</div>
-                  <div style="font-size:11px;color:var(--muted);margin-top:2px;">PNG ou JPG</div>
+              <div class="portal-field"><label>Responsável / Mentor(a)</label><input id="p-responsavel" placeholder="Ex.: Wmadson"></div>
+              <div class="portal-field portal-field-wide"><label>Mensagem de boas-vindas (opcional)</label><textarea id="p-boasVindas" rows="2" placeholder="Bem-vindo(a) ao seu portal de mentoria..." oninput="portalUpdatePreview()"></textarea></div>
+              <div class="portal-field portal-field-wide"><label>Logo do cliente</label>
+                <div id="p-logo-drop" class="portal-drop" onclick="document.getElementById('p-logo-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--navy)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="portalDropLogo(event)">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="22" height="22" style="color:var(--navy);"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <div><div style="font-size:13px;font-weight:700;color:var(--navy);">Clique ou arraste a logo</div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:2px;">PNG ou JPG · será otimizada automaticamente</div></div>
                 </div>
                 <input type="file" id="p-logo-file" accept="image/*" style="display:none" onchange="portalPickLogo(event)">
-                <div id="p-logo-prev" style="display:none;align-items:center;gap:12px;background:var(--navy);border-radius:8px;padding:10px 14px;margin-top:8px;">
-                  <img id="p-logo-prev-img" style="max-height:48px;max-width:100px;object-fit:contain;background:#fff;border-radius:6px;padding:4px;">
-                  <div style="flex:1"><div style="color:#fff;font-weight:700;font-size:12px;">Logo carregada</div>
-                    <button class="f-clr" style="margin-top:4px;font-size:11px;color:#fff;border-color:rgba(255,255,255,.3);" onclick="portalRemoveLogo()">Remover</button></div>
+                <div id="p-logo-prev" class="portal-logo-prev">
+                  <img id="p-logo-prev-img">
+                  <div style="flex:1"><div style="color:#fff;font-weight:700;font-size:13px;">Logo carregada</div>
+                    <button class="portal-btn-remove" onclick="portalRemoveLogo()">Remover</button></div>
                 </div>
               </div>
-              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>Mensagem de boas-vindas (opcional)</label><textarea id="p-boasVindas" rows="2" placeholder="Bem-vindo(a) ao seu portal de mentoria..." oninput="portalUpdatePreview()"></textarea></div>
             </div>
           </div>
 
-          <!-- Acessos do cliente -->
-          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:16px;">
-            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;">Acessos do cliente</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Links das ferramentas. Deixe em branco o que não existir.</div>
-            <div class="rpt-form-grid">
-              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>E-mail(s) do cliente no Google *</label><input id="p-clienteEmail" class="mono" placeholder="email1@gmail.com email2@gmail.com" style="font-family:'DM Mono',monospace;font-size:12px;"><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">E-mail(s) separados por espaço. Usado para mostrar eventos da agenda.</div></div>
-              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>Nome na agenda (filtro) *</label><input id="p-filtro" class="mono" placeholder="Ex.: Movimento Kids" style="font-family:'DM Mono',monospace;font-size:12px;"><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Nome exatamente como aparece no título dos eventos do Google Agenda.</div></div>
-              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>Link de busca da agenda (opcional)</label><input id="p-agendaBusca" class="mono" placeholder="https://calendar.google.com/calendar/u/0/r/search?q=..." style="font-family:'DM Mono',monospace;font-size:12px;"></div>
-              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>Pasta das apostilas (Drive)</label><input id="p-apostilas" class="mono" placeholder="https://drive.google.com/drive/folders/..." style="font-family:'DM Mono',monospace;font-size:12px;"><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Pasta com apostilas. O portal lista os arquivos automaticamente.</div></div>
-              <div class="rpt-cfg-field"><label>Link do Trello</label><input id="p-trello" class="mono" placeholder="https://trello.com/b/..." style="font-family:'DM Mono',monospace;font-size:12px;"></div>
-              <div class="rpt-cfg-field"><label>Link do Drive</label><input id="p-drive" class="mono" placeholder="https://drive.google.com/drive/folders/..." style="font-family:'DM Mono',monospace;font-size:12px;"></div>
-              <div class="rpt-cfg-field"><label>Link adicional (opcional)</label><input id="p-linkAdicional" class="mono" placeholder="https://..." style="font-family:'DM Mono',monospace;font-size:12px;"></div>
-              <div class="rpt-cfg-field"><label>Nome do link adicional</label><input id="p-linkAdicionalLabel" placeholder="Ex.: Formulário, Pagamentos"></div>
+          <!-- Card: Acessos -->
+          <div class="portal-card">
+            <div class="portal-card-h">Acessos do cliente</div>
+            <div class="portal-card-s">Links das ferramentas. Deixe em branco o que ainda não existir.</div>
+            <div class="portal-fields">
+              <div class="portal-field portal-field-wide"><label>E-mail(s) do cliente no Google *</label><input id="p-clienteEmail" class="mono" placeholder="email1@gmail.com email2@gmail.com"><div class="portal-hint">E-mail(s) separados por espaço. Usado para mostrar eventos da agenda.</div></div>
+              <div class="portal-field portal-field-wide"><label>Nome na agenda (filtro) *</label><input id="p-filtro" class="mono" placeholder="Ex.: Movimento Kids"><div class="portal-hint">Nome exatamente como aparece no título dos eventos do Google Agenda.</div></div>
+              <div class="portal-field portal-field-wide"><label>Link de busca da agenda (opcional)</label><input id="p-agendaBusca" class="mono" placeholder="https://calendar.google.com/calendar/u/0/r/search?q=..."></div>
+              <div class="portal-field portal-field-wide"><label>Pasta das apostilas (Drive)</label><input id="p-apostilas" class="mono" placeholder="https://drive.google.com/drive/folders/..."><div class="portal-hint">Pasta com apostilas. O portal lista os arquivos automaticamente.</div></div>
+              <div class="portal-field"><label>Link do Trello</label><input id="p-trello" class="mono" placeholder="https://trello.com/b/..."></div>
+              <div class="portal-field"><label>Link do Drive</label><input id="p-drive" class="mono" placeholder="https://drive.google.com/drive/folders/..."></div>
+              <div class="portal-field"><label>Link adicional (opcional)</label><input id="p-linkAdicional" class="mono" placeholder="https://..."></div>
+              <div class="portal-field"><label>Nome do link adicional</label><input id="p-linkAdicionalLabel" placeholder="Ex.: Formulário, Pagamentos"></div>
             </div>
           </div>
 
           <!-- Banner de edição -->
-          <div id="p-edit-banner" style="display:none;background:#e8f0ff;border:1px solid #b9d2f7;border-radius:8px;padding:11px 14px;margin-bottom:12px;font-size:13px;color:#0050b3;align-items:center;justify-content:space-between;gap:10px;">
+          <div id="p-edit-banner" class="portal-edit-banner">
             <span id="p-edit-banner-txt"></span>
-            <button class="f-clr" onclick="portalResetForm()" style="white-space:nowrap;font-size:11px;">Novo portal</button>
+            <button onclick="portalResetForm()">✕ Novo portal</button>
           </div>
 
-          <!-- Botões -->
-          <button class="sync-btn" style="width:100%;justify-content:center;padding:13px;font-size:14px;" id="p-create-btn" onclick="portalCreate()">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg>
+          <!-- Botão criar -->
+          <button class="portal-create-btn" id="p-create-btn" onclick="portalCreate()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M12 4v16m8-8H4"/></svg>
             Criar portal do cliente
           </button>
-          <div id="p-form-msg" style="display:none;font-size:13px;padding:11px 14px;border-radius:8px;margin-top:12px;"></div>
+          <div id="p-form-msg" class="portal-msg"></div>
 
           <!-- Resultado -->
-          <div id="p-result" style="display:none;background:var(--green-bg);border:1.5px solid #b9e3cc;border-radius:var(--r);padding:22px;margin-top:12px;">
-            <div style="font-size:16px;font-weight:800;color:var(--green);margin-bottom:4px;" id="p-result-title">Portal criado com sucesso!</div>
-            <p style="font-size:12.5px;color:var(--txt2);margin-bottom:10px;">Link exclusivo do cliente — envie no WhatsApp:</p>
-            <div id="p-result-link" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--navy);word-break:break-all;margin-bottom:12px;"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button class="sync-btn" style="font-size:12px;padding:8px 14px;" onclick="portalCopyLink()">Copiar link</button>
-              <a class="sync-btn" id="p-open-link" target="_blank" style="font-size:12px;padding:8px 14px;text-decoration:none;background:var(--teal-dark);">Abrir portal</a>
-              <a class="sync-btn" id="p-wa-link" target="_blank" style="font-size:12px;padding:8px 14px;text-decoration:none;background:#25D366;">Enviar no WhatsApp</a>
+          <div id="p-result" class="portal-result">
+            <div class="portal-result-title" id="p-result-title">Portal criado com sucesso!</div>
+            <p class="portal-result-p">Link exclusivo do cliente — envie no WhatsApp:</p>
+            <div id="p-result-link" class="portal-result-link"></div>
+            <div class="portal-result-actions">
+              <button class="portal-btn portal-btn-ghost" onclick="portalCopyLink()">Copiar link</button>
+              <a class="portal-btn portal-btn-navy" id="p-open-link" target="_blank">Abrir portal</a>
+              <a class="portal-btn portal-btn-wa" id="p-wa-link" target="_blank">Enviar no WhatsApp</a>
             </div>
           </div>
         </div>
 
         <!-- COLUNA DIREITA: PREVIEW -->
-        <div style="position:sticky;top:80px;">
-          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;">
-            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;">Pré-visualização</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Como o topo do portal vai ficar.</div>
-            <div style="border-radius:10px;overflow:hidden;border:1px solid var(--border);">
-              <div style="background:linear-gradient(135deg,var(--navy),#0a1a7a);padding:20px 16px;color:#fff;display:flex;align-items:center;gap:12px;">
-                <div id="pv-logo" style="width:52px;height:52px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:5px;font-size:22px;font-weight:800;color:var(--navy);">·</div>
-                <div><div id="pv-name" style="font-size:15px;font-weight:800;">Nome da empresa</div><span id="pv-badge" style="display:none;margin-top:4px;background:rgba(139,212,224,.18);border:1px solid rgba(139,212,224,.35);color:var(--teal);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;"></span></div>
+        <div class="portal-col-preview">
+          <div class="portal-card portal-preview-card">
+            <div class="portal-card-h">Pré-visualização</div>
+            <div class="portal-card-s">Como o topo do portal vai ficar.</div>
+            <div class="portal-pv-frame">
+              <div class="portal-pv-hero">
+                <div id="pv-logo" class="portal-pv-logo">·</div>
+                <div>
+                  <div id="pv-name" class="portal-pv-name">Nome da empresa</div>
+                  <span id="pv-badge" class="portal-pv-badge"></span>
+                </div>
               </div>
-              <div style="display:flex;gap:3px;padding:8px;flex-wrap:wrap;">
-                <span style="font-size:10px;font-weight:600;color:#fff;background:var(--navy);padding:4px 8px;border-radius:6px;">Agenda</span>
-                <span style="font-size:10px;font-weight:600;color:var(--muted);background:var(--off);padding:4px 8px;border-radius:6px;">Gravações</span>
-                <span style="font-size:10px;font-weight:600;color:var(--muted);background:var(--off);padding:4px 8px;border-radius:6px;">Trello</span>
-                <span style="font-size:10px;font-weight:600;color:var(--muted);background:var(--off);padding:4px 8px;border-radius:6px;">Drive</span>
+              <div class="portal-pv-tabs">
+                <span class="portal-pv-tab on">Agenda</span>
+                <span class="portal-pv-tab">Gravações</span>
+                <span class="portal-pv-tab">Trello</span>
+                <span class="portal-pv-tab">Drive</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- TAB: LISTA DE PORTAIS -->
-    <div id="portal-tab-list" style="display:none;">
-      <div id="portal-client-list" style="font-size:13px;color:var(--muted);">Carregando portais...</div>
-    </div>
+      <!-- TAB: LISTA DE PORTAIS -->
+      <div id="portal-tab-list" class="portal-list-wrap" style="display:none;">
+        <div class="portal-card">
+          <div class="portal-card-h">Portais já criados</div>
+          <div class="portal-card-s">Clientes com portal ativo no GitHub Pages.</div>
+          <div id="portal-client-list" class="portal-list">Carregando portais...</div>
+        </div>
+      </div>
 
+    </div>
   </div>
 
   <!-- REPORTS -->
@@ -3325,7 +3411,7 @@ function portalGhHeaders(t) { return { Authorization: 'token ' + (t || portalGhT
 function switchPortalTab(tab, el) {
   document.getElementById('portal-tab-form').style.display = tab === 'form' ? '' : 'none';
   document.getElementById('portal-tab-list').style.display = tab === 'list' ? '' : 'none';
-  document.querySelectorAll('#page-portal .rpt-type-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('#page-portal .portal-tab').forEach(function(b){ b.classList.remove('active'); });
   if (el) el.classList.add('active');
   if (tab === 'list') portalListClients();
 }
@@ -3347,9 +3433,9 @@ function portalUpdatePreview() {
   var pvBadge = document.getElementById('pv-badge');
   if (!pvName) return;
   pvName.textContent = nome;
-  if (_portalLogoData) pvLogo.innerHTML = '<img src="' + _portalLogoData + '" style="max-width:100%;max-height:100%;object-fit:contain;">';
+  if (_portalLogoData) pvLogo.innerHTML = '<img src="' + _portalLogoData + '">';
   else pvLogo.textContent = (nome.charAt(0) || '·').toUpperCase();
-  if (serv) { pvBadge.style.display = 'inline-block'; pvBadge.textContent = serv; }
+  if (serv) { pvBadge.style.display = 'inline-block'; pvBadge.textContent = '★ ' + serv; }
   else pvBadge.style.display = 'none';
 }
 
@@ -3365,7 +3451,8 @@ function portalReadLogo(file) {
       cv.width = img.width * scale; cv.height = img.height * scale;
       cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
       _portalLogoData = cv.toDataURL('image/png');
-      document.getElementById('p-logo-prev').style.display = 'flex';
+      var prev = document.getElementById('p-logo-prev');
+      prev.style.display = 'flex';
       document.getElementById('p-logo-prev-img').src = _portalLogoData;
       portalUpdatePreview();
     };
@@ -3403,6 +3490,17 @@ function portalShowMsg(txt, type) {
   el.style.color = type === 'err' ? 'var(--red)' : '#0050b3';
   el.style.border = '1px solid ' + (type === 'err' ? '#f3c9c2' : '#b9d2f7');
   el.textContent = txt;
+}
+
+function portalShowResult2(link, empresa, editando) {
+  var r = document.getElementById('p-result');
+  r.style.display = 'block';
+  document.getElementById('p-result-title').textContent = editando ? 'Portal atualizado com sucesso!' : 'Portal criado com sucesso!';
+  document.getElementById('p-result-link').textContent = link;
+  document.getElementById('p-open-link').href = link;
+  var txt = 'Olá! Este é o seu portal exclusivo de mentoria da Organize Empresas. Aqui você acessa agenda, gravações, Trello e Drive em um só lugar:\n' + link;
+  document.getElementById('p-wa-link').href = 'https://wa.me/?text=' + encodeURIComponent(txt);
+  r.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function portalCreate() {
@@ -3466,7 +3564,7 @@ async function portalCreate() {
 function portalShowEditBanner() {
   var b = document.getElementById('p-edit-banner');
   b.style.display = 'flex';
-  document.getElementById('p-edit-banner-txt').innerHTML = 'Editando portal: <strong>' + _portalEditId + '</strong> — o link permanece o mesmo.';
+  document.getElementById('p-edit-banner-txt').innerHTML = '✎ Editando portal: <strong>' + _portalEditId + '</strong> — o link permanece o mesmo.';
 }
 
 function portalResetForm() {
@@ -3567,13 +3665,17 @@ async function portalListClients() {
     ids.sort();
     box.innerHTML = ids.map(function(id) {
       var link = PORTAL_PAGES + '/' + id;
-      return '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--r2);margin-bottom:8px;background:var(--white);">' +
-        '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16" style="flex-shrink:0;color:var(--navy);"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197v-1"/></svg>' +
-        '<strong style="flex:1;font-size:13px;color:var(--navy);">' + id + '</strong>' +
-        '<button class="f-clr" style="font-size:11px;" onclick="portalEditClient(\'' + id + '\')">Editar</button>' +
-        '<button class="f-clr" style="font-size:11px;color:var(--red);border-color:#f3c9c2;" onclick="portalDeleteClient(\'' + id + '\')">Excluir</button>' +
-        '<a href="' + link + '" target="_blank" style="font-size:11px;color:var(--teal-dark);font-weight:700;text-decoration:none;">abrir</a>' +
-        '</div>';
+      return '<div class="portal-list-item">' +
+        '<div class="portal-list-item-name">' +
+          '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197v-1"/></svg>' +
+          id +
+        '</div>' +
+        '<div class="portal-list-item-actions">' +
+          '<button class="portal-list-btn" onclick="portalEditClient(\'' + id + '\')">Editar</button>' +
+          '<button class="portal-list-btn danger" onclick="portalDeleteClient(\'' + id + '\')">Excluir</button>' +
+          '<a href="' + link + '" target="_blank" class="portal-list-link">abrir ↗</a>' +
+        '</div>' +
+      '</div>';
     }).join('');
   } catch (e) { box.innerHTML = '<div style="color:var(--red);font-size:13px;">Erro: ' + e.message + '</div>'; }
 }
@@ -3873,6 +3975,8 @@ function showPage(name, el) {
   document.getElementById('page-title').textContent = pageTitles[name]||name;
   var fb = document.querySelector('.filter-bar');
   if (fb) fb.style.display = (name === 'portal' || name === 'reports') ? 'none' : '';
+  var tbr = document.querySelector('.topbar-right');
+  if (tbr) tbr.style.display = (name === 'portal') ? 'none' : '';
   if (name === 'reports') renderReports();
   if (name === 'portal') renderPortalPage();
 }
