@@ -2779,6 +2779,7 @@ async function callClaude(apiKey, userPrompt, maxTokens, systemPrompt, forceJSON
   var body = {
     model: 'claude-haiku-4-5-20251001',
     max_tokens: maxTokens || 2000,
+    temperature: 0,
     messages: messages
   };
   if (systemPrompt) body.system = systemPrompt;
@@ -2842,11 +2843,23 @@ async function generateAnalysisWithAI() {
     apiKey = apiKey.trim();
   }
 
-  // Tenta carregar dados de planilhas/Drive automaticamente antes de chamar a IA
+  // ── 1) LÊ FILTROS FRESCOS DO DOM (não confia em _rmf que pode estar desatualizado) ──
+  var elCli = document.getElementById('rmf-cliente');
+  var elProg = document.getElementById('rmf-programa');
+  var elMes = document.getElementById('rmf-mes');
+  var elAno = document.getElementById('rmf-ano');
+  if (elCli) _rmf.cliente = elCli.value;
+  if (elProg) _rmf.programa = elProg.value;
+  if (elMes) _rmf.mes = parseInt(elMes.value);
+  if (elAno) _rmf.ano = elAno.value;
+
+  if (!_rmf.cliente) { alert('Selecione um cliente antes de gerar o relatório.'); return; }
+
+  // ── 2) Carrega planilhas vinculadas / cache de indicadores ──
   try { if (typeof autoLoadDriveData === 'function') await autoLoadDriveData(_rmf.cliente, 'mensal'); } catch(e) {}
   try { await loadIndicadoresData(); } catch(e) {}
 
-  var cliente = _rmf.cliente || 'Cliente';
+  var cliente = _rmf.cliente;
   var mesNome = mesNomeStr(_rmf.mes);
   var ano = _rmf.ano;
   var programa = _rmf.programa || 'mentoring';
@@ -2863,33 +2876,43 @@ async function generateAnalysisWithAI() {
     'fat=Faturamento Bruto (R$, número), cmv=CMV (R$, número), dfixas=Despesas Fixas (R$), dvar=Despesas Variáveis (R$), impost=Impostos (R$), ll=Lucro Líquido (R$), cgiro=Capital de Giro (R$), inadim=Inadimplência (% sem o símbolo)' :
     'fat=Faturamento do Mês (R$, número), meta=Meta do Mês (R$, número), cresc=Crescimento vs. ano anterior (% sem símbolo), cativos=Clientes Ativos (número inteiro), conv=Taxa de Conversão (% sem símbolo), ticket=Ticket Médio (R$, número)';
 
-  var sysPrompt = 'Você é um gerador JSON. Você SEMPRE responde APENAS com JSON válido — nada antes, nada depois, sem markdown, sem texto explicativo, sem desculpas, sem avisos. Mesmo que dados estejam faltando, você ESTIMA valores plausíveis com base no contexto e no que é típico para empresas brasileiras desse porte/segmento. Nunca recusa nem diz "não posso". Sua única saída é JSON.';
+  var sysPrompt = 'Você é um extrator determinístico de dados que responde APENAS com JSON válido. Suas regras absolutas:\n' +
+    '1. NUNCA invente, estime ou chute números. Use APENAS valores que aparecem literalmente nas FONTES DE DADOS fornecidas.\n' +
+    '2. Se um valor numérico não existir nas fontes para o período/filtro exato, retorne 0 (zero) — NUNCA invente.\n' +
+    '3. Para os mesmos dados de entrada, sua resposta DEVE ser sempre idêntica (determinística).\n' +
+    '4. Responda apenas com JSON, sem markdown, sem texto antes ou depois, sem comentários.\n' +
+    '5. Os filtros do usuário (cliente, programa, mês, ano) são a chave exata para buscar os dados — use SOMENTE registros que correspondam a esses filtros.';
 
-  var prompt2 = 'Gere um relatório mensal a partir destes dados.\n\n' +
-    'CLIENTE: ' + cliente + '\n' +
-    'PROGRAMA: ' + programaLabel + '\n' +
-    'PERÍODO: ' + mesNome + '/' + ano + '\n\n' +
-    '═══ LINKS CADASTRADOS ═══\n' + JSON.stringify(ctx.links, null, 2) + '\n\n' +
-    '═══ INDICADORES DA PLANILHA ═══\n' + (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(planilha não carregada)') + '\n\n' +
-    '═══ TAREFAS FLOWUP ═══\n' +
+  var prompt2 = '═══════════════════ FILTROS DO USUÁRIO ═══════════════════\n' +
+    'CLIENTE: "' + cliente + '"\n' +
+    'PROGRAMA: "' + programaLabel + '" (chave: ' + programa + ')\n' +
+    'MÊS: "' + mesNome + '" (' + _rmf.mes + ')\n' +
+    'ANO: "' + ano + '"\n' +
+    'Use APENAS dados que correspondam EXATAMENTE a estes filtros.\n\n' +
+    '═══════════════════ FONTES DE DADOS ═══════════════════\n\n' +
+    '── LINKS CADASTRADOS PARA "' + cliente + '" ──\n' +
+    JSON.stringify(ctx.links, null, 2) + '\n\n' +
+    '── DADOS DA PLANILHA DO CLIENTE ──\n' +
+    (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(NENHUM DADO DE PLANILHA DISPONÍVEL)') + '\n\n' +
+    '── TAREFAS FLOWUP DESTE CLIENTE ──\n' +
     'Total: ' + ctx.flowup.total + ' | Concluídas: ' + ctx.flowup.concluidas + ' | Em andamento: ' + ctx.flowup.andamento + ' | Atrasadas: ' + ctx.flowup.atrasadas + '\n' +
     'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
     'Em andamento: ' + ctx.flowup.andamentoNomes.join('; ') + '\n' +
     'Atrasadas: ' + ctx.flowup.atrasadasNomes.join('; ') + '\n\n' +
-    '═══ PLANEJAMENTO TRELLO ═══\n' +
+    '── PLANEJAMENTO TRELLO DESTE CLIENTE ──\n' +
     'Boards: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
     'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n' +
     'Cards vencidos: ' + ctx.trello.vencidosNomes.join('; ') + '\n\n' +
-    'REGRAS:\n' +
-    '- Use os dados da planilha quando existirem (campos como "fat2025", "fat2026", "meta", "cresc"). Procure os valores para ' + mesNome + '/' + ano + '.\n' +
-    '- Se algum indicador não estiver na planilha, ESTIME com base nas tendências disponíveis e em valores típicos para o segmento. NUNCA deixe vazio. NUNCA recuse.\n' +
-    '- Campos do programa "' + programa + '": ' + camposExplicacao + '\n' +
-    '- Valores numéricos sem R$, sem %, sem separador de milhar, ponto como decimal (ex.: "98500.00", "23.7").\n' +
-    '- "analise": 3-5 frases interpretando resultados.\n' +
-    '- "proximos": 3-5 ações concretas.\n\n' +
-    'RESPONDA APENAS COM ESTE JSON (preencha TODOS os campos):\n' +
+    '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
+    '1. Procure nos DADOS DA PLANILHA o registro/linha que corresponda a mês="' + mesNome + '" e ano="' + ano + '". Use chaves como "fat' + ano + '", "meta' + ano + '", "mes' + _rmf.mes + '", "' + mesNome.toLowerCase() + '", "historico", "mensal", etc.\n' +
+    '2. Extraia os valores LITERAIS desses registros. Se o valor não existir, retorne 0 (zero) — JAMAIS invente.\n' +
+    '3. Para os campos do programa "' + programa + '": ' + camposExplicacao + '\n' +
+    '4. Formato numérico: sem R$, sem %, sem separador de milhar, ponto como decimal. Ex.: "98500.00", "23.7".\n' +
+    '5. Em "analise" e "proximos": use APENAS fatos das fontes acima. Cite os números que VOCÊ ENCONTROU, não invente outros. Tom factual, sem floreios.\n' +
+    '6. Se a planilha estiver vazia ou ausente, em "analise" diga claramente: "Dados da planilha indisponíveis para ' + mesNome + '/' + ano + '. Análise baseada apenas em FlowUp e Trello." e preencha os campos numéricos com "0".\n\n' +
+    'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
     '{' +
-    camposEsperados.map(function(k){return '"'+k+'":"NUMERO"';}).join(',') + ',"analise":"TEXTO","proximos":"TEXTO"}';
+    camposEsperados.map(function(k){return '"'+k+'":"NUMERO"';}).join(',') + ',"analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
 
   var btn = document.getElementById('btn-gerar-ia');
   if (btn) { btn.textContent = 'Gerando análise...'; btn.disabled = true; }
@@ -2933,6 +2956,13 @@ async function generateAnalysisEncerramento() {
     try { localStorage.setItem('organize_anthropic_key', apiKey); } catch(e) {}
   }
 
+  // ── Lê filtros frescos do DOM ──
+  ['cliente','programa','modnum','modnom','dtini','dtfim','proxmod','nment'].forEach(function(k){
+    var el = document.getElementById('ref-'+k);
+    if (el) _ref[k] = el.value;
+  });
+  if (!_ref.cliente) { alert('Selecione um cliente antes de gerar o relatório.'); return; }
+
   try { if (typeof autoLoadDriveData === 'function') await autoLoadDriveData(_ref.cliente, 'encerramento'); } catch(e) {}
   try { await loadIndicadoresData(); } catch(e) {}
 
@@ -2953,35 +2983,46 @@ async function generateAnalysisEncerramento() {
     var kpiKeys = ['k1','k2','k3','k4','k5','k6'];
     var kpisExp = kpiKeys.map(function(k,i){return k+'='+kpiLabels[i];}).join('; ');
 
-    var sysPromptEnc = 'Você é um gerador JSON. Você SEMPRE responde APENAS com JSON válido — nada antes, nada depois, sem markdown, sem texto explicativo, sem desculpas, sem avisos. Mesmo que dados estejam faltando, você ESTIMA valores plausíveis com base no contexto e no que é típico para empresas brasileiras desse porte/segmento. Nunca recusa nem diz "não posso". Sua única saída é JSON.';
+    var sysPromptEnc = 'Você é um extrator determinístico de dados que responde APENAS com JSON válido. Suas regras absolutas:\n' +
+      '1. NUNCA invente, estime ou chute números. Use APENAS valores que aparecem literalmente nas FONTES DE DADOS fornecidas.\n' +
+      '2. Se um valor numérico não existir nas fontes, retorne 0 (zero) — NUNCA invente.\n' +
+      '3. Para os mesmos dados de entrada, sua resposta DEVE ser sempre idêntica (determinística).\n' +
+      '4. Responda apenas com JSON, sem markdown, sem texto antes ou depois.\n' +
+      '5. Os filtros do usuário (cliente, programa, módulo, período) são a chave exata para buscar os dados — use SOMENTE registros que correspondam a esses filtros.';
 
-    var prompt_text = 'Gere um relatório de encerramento de módulo a partir destes dados.\n\n' +
-      'CLIENTE: ' + (_ref.cliente || 'N/A') + '\n' +
-      'PROGRAMA: ' + programaLabel + '\n' +
-      'MÓDULO Nº: ' + (_ref.modnum || '(inferir)') + '\n' +
-      'NOME DO MÓDULO: ' + (_ref.modnom || '(inferir)') + '\n' +
-      'PERÍODO: ' + (_ref.dtini || '?') + ' a ' + (_ref.dtfim || '?') + '\n' +
-      'PRÓXIMO MÓDULO: ' + (_ref.proxmod || '(inferir)') + '\n' +
-      'MENTORIAS REALIZADAS: ' + (_ref.nment || '(inferir)') + '\n\n' +
-      '═══ LINKS CADASTRADOS ═══\n' + JSON.stringify(ctx.links, null, 2) + '\n\n' +
-      '═══ INDICADORES DA PLANILHA ═══\n' + (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(planilha não carregada)') + '\n\n' +
-      '═══ TAREFAS FLOWUP DO CLIENTE ═══\n' +
+    var prompt_text = '═══════════════════ FILTROS DO USUÁRIO ═══════════════════\n' +
+      'CLIENTE: "' + (_ref.cliente || 'N/A') + '"\n' +
+      'PROGRAMA: "' + programaLabel + '" (chave: ' + programa + ')\n' +
+      'MÓDULO Nº: "' + (_ref.modnum || '(vazio)') + '"\n' +
+      'NOME DO MÓDULO: "' + (_ref.modnom || '(vazio)') + '"\n' +
+      'DATA INÍCIO: "' + (_ref.dtini || '(vazio)') + '"\n' +
+      'DATA FIM: "' + (_ref.dtfim || '(vazio)') + '"\n' +
+      'PRÓXIMO MÓDULO: "' + (_ref.proxmod || '(vazio)') + '"\n' +
+      'MENTORIAS REALIZADAS: "' + (_ref.nment || '(vazio)') + '"\n' +
+      'Use APENAS dados que correspondam EXATAMENTE a estes filtros.\n\n' +
+      '═══════════════════ FONTES DE DADOS ═══════════════════\n\n' +
+      '── LINKS CADASTRADOS PARA "' + _ref.cliente + '" ──\n' +
+      JSON.stringify(ctx.links, null, 2) + '\n\n' +
+      '── DADOS DA PLANILHA DO CLIENTE ──\n' +
+      (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(NENHUM DADO DE PLANILHA DISPONÍVEL)') + '\n\n' +
+      '── TAREFAS FLOWUP DESTE CLIENTE ──\n' +
       'Total: ' + ctx.flowup.total + ' | Concluídas: ' + ctx.flowup.concluidas + ' | Em andamento: ' + ctx.flowup.andamento + ' | Atrasadas: ' + ctx.flowup.atrasadas + '\n' +
       'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
       'Em andamento: ' + ctx.flowup.andamentoNomes.join('; ') + '\n' +
       'Atrasadas: ' + ctx.flowup.atrasadasNomes.join('; ') + '\n\n' +
-      '═══ PLANEJAMENTO TRELLO ═══\n' +
+      '── PLANEJAMENTO TRELLO DESTE CLIENTE ──\n' +
       'Boards: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
       'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n\n' +
-      'REGRAS:\n' +
-      '- KPIs deste programa: ' + kpisExp + '\n' +
-      '- Extraia valores das planilhas quando existirem. Se ausentes, ESTIME com base nas tendências e em valores típicos do segmento. NUNCA recuse.\n' +
-      '- Se modnum/modnom/dtini/dtfim/proxmod/nment estiverem como "(inferir)", deduza valores plausíveis (ex.: nment = nº mentorias concluídas no FlowUp; modnom típico: "Diagnóstico Estratégico", "Estrutura Financeira", "Marketing e Vendas").\n' +
-      '- Valores numéricos sem R$, sem %, sem milhar, ponto como decimal.\n' +
-      '- "analise": 3-5 parágrafos com resultados, pontos fortes, oportunidades.\n' +
-      '- "proximos": 4-6 ações concretas para o próximo módulo.\n\n' +
-      'RESPONDA APENAS COM ESTE JSON (preencha TODOS os campos):\n' +
-      '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"NUM","modnom":"TEXTO","dtini":"AAAA-MM-DD","dtfim":"AAAA-MM-DD","proxmod":"TEXTO","nment":"NUM","analise":"TEXTO","proximos":"TEXTO"}';
+      '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
+      '1. KPIs do programa "' + programa + '": ' + kpisExp + '\n' +
+      '2. Procure NOS DADOS DA PLANILHA os valores que correspondam ao período do módulo (' + (_ref.dtini||'?') + ' a ' + (_ref.dtfim||'?') + '). Use chaves como "modulo' + (_ref.modnum||'') + '", "fat", "meta", "historico", etc.\n' +
+      '3. Extraia valores LITERAIS. Se o valor não existir nas fontes, retorne 0 (zero) — JAMAIS invente.\n' +
+      '4. Para campos NÃO numéricos vazios (modnum, modnom, dtini, dtfim, proxmod, nment): use o valor "(vazio)" indicado nos filtros se realmente não houver dado; SOMENTE preencha "nment" com o número de mentorias concluídas no FlowUp se essa informação for clara.\n' +
+      '5. Valores numéricos sem R$, sem %, sem milhar, ponto como decimal.\n' +
+      '6. Em "analise" e "proximos": use APENAS fatos das fontes. Cite os números que VOCÊ ENCONTROU. Tom factual, sem floreios.\n' +
+      '7. Se a planilha estiver vazia, em "analise" diga claramente: "Dados da planilha indisponíveis. Análise baseada apenas em FlowUp e Trello." e preencha KPIs numéricos com "0".\n\n' +
+      'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
+      '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"TEXTO","modnom":"TEXTO","dtini":"AAAA-MM-DD","dtfim":"AAAA-MM-DD","proxmod":"TEXTO","nment":"NUM","analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
 
     var text = await callClaude(apiKey, prompt_text, 3000, sysPromptEnc, true);
     var parsed = extractJSON(text);
