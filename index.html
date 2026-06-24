@@ -222,17 +222,17 @@ tbody tr:hover{background:var(--off);}
 .btn-pdf{background:#c0392b;color:#fff;border:none;padding:9px 20px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;white-space:nowrap;}
 .btn-pdf:hover{background:#a93226;}
 .report-preview{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:36px;box-shadow:var(--sh);}
-.rpt-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:3px solid var(--navy);margin-bottom:28px;}
+.rpt-header{display:flex;justify-content:space-between;align-items:flex-start;padding:24px 32px;background:var(--navy);border-radius:var(--r) var(--r) 0 0;margin-bottom:0;}
 .rpt-meta{text-align:right;}
-.rpt-title{font-size:18px;font-weight:800;color:var(--navy);line-height:1.2;}
-.rpt-subtitle{font-size:11.5px;color:var(--muted);margin-top:3px;}
-.rpt-date{font-size:10.5px;color:var(--muted);margin-top:5px;}
+.rpt-title{font-size:18px;font-weight:800;color:#fff;line-height:1.2;}
+.rpt-subtitle{font-size:11.5px;color:rgba(255,255,255,.7);margin-top:3px;}
+.rpt-date{font-size:10.5px;color:rgba(255,255,255,.55);margin-top:5px;}
 .rpt-kpi-row{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap;}
 .rpt-kpi{flex:1;min-width:110px;background:var(--off);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;}
 .rpt-kpi-val{font-size:26px;font-weight:800;color:var(--navy);line-height:1;}
 .rpt-kpi-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;}
 .rpt-sec{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border);margin-top:24px;}
-.rpt-footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted);}
+.rpt-footer{margin-top:36px;padding:16px 32px;background:var(--navy);border-radius:0 0 var(--r) var(--r);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:rgba(255,255,255,.7);}
 
 /* ═══ REPORT FORM PANELS ═══ */
 .rpt-form-panel{background:var(--off);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:24px;}
@@ -352,6 +352,12 @@ tbody tr:hover{background:var(--off);}
   <div class="nav-item" onclick="showPage('reports',this)">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
     Emitir Relatórios
+  </div>
+
+  <div class="nav-label">Clientes</div>
+  <div class="nav-item" onclick="showPage('portal',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197v-1"/></svg>
+    Portal do Cliente
   </div>
   <div class="sidebar-footer">
     <button class="cfg-btn" onclick="openConfig('flowup')">
@@ -531,6 +537,17 @@ tbody tr:hover{background:var(--off);}
   </div>
 </div>
 
+
+  <!-- PORTAL DO CLIENTE -->
+  <div class="page" id="page-portal">
+    <div class="sec-hdr"><div class="sec-ttl">Portal do Cliente</div></div>
+    <div style="margin-bottom:16px;">
+      <select class="f-sel" id="portal-cliente" onchange="renderPortal()">
+        <option value="">Selecione o cliente</option>
+      </select>
+    </div>
+    <div id="portal-content" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+  </div>
 
   <!-- REPORTS -->
   <div class="page" id="page-reports">
@@ -2310,17 +2327,26 @@ function rptFlowUpSection(tasks, label) {
   return html;
 }
 
-function rptTrelloSection() {
-  var boards = S.trelloBoards;
-  if (!boards.length) return '<div class="rpt-sec">Planejamento Estratégico — Trello</div><div style="font-size:11.5px;color:var(--muted);font-style:italic;margin-bottom:20px">Nenhum board Trello carregado. Sincronize o painel para incluir esta seção.</div>';
+function rptTrelloSection(clienteName) {
+  var allBoards = S.trelloBoards;
+  var allCards = S.trelloCards;
+  if (clienteName) {
+    var cn = clienteName.toLowerCase();
+    allBoards = allBoards.filter(function(b){ return b.name.toLowerCase().indexOf(cn) >= 0; });
+    var boardIds = {};
+    allBoards.forEach(function(b){ boardIds[b.id] = true; });
+    allCards = allCards.filter(function(c){ return boardIds[c.boardId]; });
+  }
+  var boards = allBoards;
+  if (!boards.length) return '<div class="rpt-sec">Planejamento Estratégico — Trello</div><div style="font-size:11.5px;color:var(--muted);font-style:italic;margin-bottom:20px">Nenhum board Trello encontrado' + (clienteName ? ' para ' + clienteName : '') + '. Sincronize o painel para incluir esta seção.</div>';
 
-  var total = S.trelloCards.length;
-  var over = S.trelloCards.filter(function(c){return c.isOver;}).length;
-  var done = S.trelloCards.filter(function(c){return c.dueComplete;}).length;
+  var total = allCards.length;
+  var over = allCards.filter(function(c){return c.isOver;}).length;
+  var done = allCards.filter(function(c){return c.dueComplete;}).length;
 
   var boardRows = '';
   boards.forEach(function(b) {
-    var bc = S.trelloCards.filter(function(c){return c.boardId===b.id;});
+    var bc = allCards.filter(function(c){return c.boardId===b.id;});
     var bo = bc.filter(function(c){return c.isOver;}).length;
     var bd = bc.filter(function(c){return c.dueComplete;}).length;
     var pct = bc.length ? Math.round(bd/bc.length*100) : 0;
@@ -2647,7 +2673,7 @@ function rptGenerateMensal() {
   var html = '<div style="'+S_body+'" id="rpt-mensal-page">';
   html += '<div style="'+S_hdr+'">'+
     '<div style="display:flex;align-items:center;gap:16px;">'+
-    '<img src="'+(S.logoConfig.img||LOGO_ORGANIZE_B64)+'" alt="Organize Empresas" style="height:44px;width:auto;">'+
+    '<img src="'+(S.logoConfig.img||LOGO_ORGANIZE_B64)+'" alt="Organize Empresas" style="height:44px;width:auto;filter:brightness(0) invert(1);">'+
     '<div>'+
     '<p style="color:rgba(255,255,255,.55);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 2px;">Relatório Mensal de Resultados</p>'+
     '<h1 style="'+S_h1+';font-size:18px;margin:0;">'+(_rmf.cliente||'Cliente não selecionado')+'</h1>'+
@@ -2795,9 +2821,9 @@ function rptGenerateMensal() {
   html += '</div>'; // fim body
 
   // ── FOOTER ──
-  html += '<div style="background:#F5F7FA;border-top:1px solid #E0E5EE;padding:14px 40px;display:flex;justify-content:space-between;align-items:center;margin-top:28px;">';
-  html += '<div style="display:flex;align-items:center;gap:10px;"><img src="'+(S.logoConfig.img||LOGO_ORGANIZE_B64)+'" alt="Organize" style="height:24px;width:auto;"><span style="font-family:Montserrat,Arial,sans-serif;font-weight:800;font-size:13px;color:#1B2B6B;letter-spacing:.5px;">ORGANIZE <span style="color:#5CC8D4">EMPRESAS</span></span></div>';
-  html += '<div style="font-size:11px;color:#8A94A8;">Relatório gerado em '+new Date().toLocaleDateString('pt-BR')+' · Referência: '+mesNome+'/'+_rmf.ano+'</div>';
+  html += '<div style="background:#1B2B6B;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;margin-top:28px;border-radius:0 0 12px 12px;">';
+  html += '<div style="display:flex;align-items:center;gap:10px;"><img src="'+(S.logoConfig.img||LOGO_ORGANIZE_B64)+'" alt="Organize" style="height:24px;width:auto;filter:brightness(0) invert(1);"><span style="font-family:Montserrat,Arial,sans-serif;font-weight:800;font-size:13px;color:#fff;letter-spacing:.5px;">ORGANIZE <span style="color:#5CC8D4">EMPRESAS</span></span></div>';
+  html += '<div style="font-size:11px;color:rgba(255,255,255,.6);">Relatório gerado em '+new Date().toLocaleDateString('pt-BR')+' · Referência: '+mesNome+'/'+_rmf.ano+'</div>';
   html += '</div></div>'; // fim page
 
   var actionBar = '<div class="rpt-action-bar"><button class="rpt-pdf-btn" onclick="rptDownloadPDF(\'mensal\')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>Baixar PDF</button><button class="rpt-drive-btn secondary" onclick="window.print()">Imprimir</button></div>';
@@ -2826,17 +2852,20 @@ function rptMensal() {
       {key:'planilhaFinanceiro', label:'Planilha de Indicadores Financeiros'},
       {key:'planilhaFluxo', label:'Planilha de Fluxo de Caixa'},
       {key:'drive', label:'Pasta do Drive do Cliente'},
-      {key:'trello', label:'Board do Trello (Planejamento Estratégico)'}
+      {key:'trello', label:'Board do Trello (Planejamento Estratégico)'},
+      {key:'extra', label:'Link Adicional'}
     ],
     master: [
       {key:'planilhaControladoria', label:'Planilha de Controladoria Financeira'},
       {key:'drive', label:'Pasta do Drive do Cliente'},
-      {key:'trello', label:'Board do Trello (Planejamento Estratégico)'}
+      {key:'trello', label:'Board do Trello (Planejamento Estratégico)'},
+      {key:'extra', label:'Link Adicional'}
     ],
     marketing: [
       {key:'planilhaComercial', label:'Planilha de Indicadores Comerciais'},
       {key:'drive', label:'Pasta do Drive do Cliente'},
-      {key:'trello', label:'Board do Trello (Planejamento Estratégico)'}
+      {key:'trello', label:'Board do Trello (Planejamento Estratégico)'},
+      {key:'extra', label:'Link Adicional'}
     ]
   };
   var progLinkFields = (progLinks[_rmf.programa||'mentoring'] || progLinks.mentoring);
@@ -3001,9 +3030,32 @@ function rptEncerramento() {
     '</div>' +
     '<div class="rpt-form-section">Links e Cadastros</div>' +
     '<div class="rpt-form-grid">' +
-    encMkLink('Planilha de Indicadores', 'planilha') +
-    encMkLink('Pasta do Google Drive', 'drive') +
-    encMkLink('Board Trello', 'trello') +
+    (function(){
+      var encProgLinks = {
+        mentoring: [
+          {key:'planilhaComercial', label:'Planilha de Indicadores Comerciais'},
+          {key:'planilhaFinanceiro', label:'Planilha de Indicadores Financeiros'},
+          {key:'planilhaFluxo', label:'Planilha de Fluxo de Caixa'},
+          {key:'drive', label:'Pasta do Drive'},
+          {key:'trello', label:'Board do Trello'},
+          {key:'extra', label:'Link Adicional'}
+        ],
+        master: [
+          {key:'planilhaControladoria', label:'Planilha de Controladoria Financeira'},
+          {key:'drive', label:'Pasta do Drive'},
+          {key:'trello', label:'Board do Trello'},
+          {key:'extra', label:'Link Adicional'}
+        ],
+        marketing: [
+          {key:'planilhaComercial', label:'Planilha de Indicadores Comerciais'},
+          {key:'drive', label:'Pasta do Drive'},
+          {key:'trello', label:'Board do Trello'},
+          {key:'extra', label:'Link Adicional'}
+        ]
+      };
+      var fields = encProgLinks[prog] || encProgLinks.mentoring;
+      return fields.map(function(f){ return encMkLink(f.label, f.key); }).join('');
+    })() +
     '</div>' +
     '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">' +
     '<button class="rpt-gen-btn" onclick="rptGenerateEncerramento()">Gerar Pré-visualização</button>' +
@@ -3057,7 +3109,7 @@ function rptGenerateEncerramento() {
 
   var tasks = rptTasksForClient(_ref.cliente);
   var flowSec = rptFlowUpSection(tasks, 'Status Operacional — FlowUp');
-  var trelloSec = rptTrelloSection();
+  var trelloSec = rptTrelloSection(_ref.cliente);
 
   var nextModBlock = '';
   if (_ref.proxmod) {
@@ -3107,6 +3159,48 @@ function selectReportType(type, el) {
   renderReports();
 }
 
+function renderPortalPage() {
+  var sel = document.getElementById('portal-cliente');
+  if (!sel) return;
+  var clients = getUniqueClients();
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">Selecione o cliente</option>' + clients.map(function(c){ return '<option value="'+c+'"'+(c===cur?' selected':'')+'>'+c+'</option>'; }).join('');
+  renderPortal();
+}
+
+function renderPortal() {
+  var sel = document.getElementById('portal-cliente');
+  var container = document.getElementById('portal-content');
+  if (!sel || !container) return;
+  var cliente = sel.value;
+  if (!cliente) {
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--muted);font-size:13px;">Selecione um cliente para ver seus links e recursos.</div>';
+    return;
+  }
+  var links = getClientLinks(cliente);
+  var linkDefs = [
+    {key:'planilhaComercial', label:'Planilha Comercial', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'},
+    {key:'planilhaFinanceiro', label:'Planilha Financeiro', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'},
+    {key:'planilhaFluxo', label:'Fluxo de Caixa', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>'},
+    {key:'planilhaControladoria', label:'Controladoria', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 7h6m0 10v-3m-3 3v-6m-3 6v-1M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>'},
+    {key:'drive', label:'Pasta do Google Drive', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>'},
+    {key:'trello', label:'Board do Trello', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>'},
+    {key:'extra', label:'Link Adicional', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>'}
+  ];
+  var cards = linkDefs.map(function(d) {
+    var url = links[d.key] || '';
+    var hasUrl = !!url;
+    return '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:all .2s;'+(hasUrl?'':'opacity:.5;')+'">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;color:var(--navy);">' + d.icon + '<strong style="font-size:13px;">' + d.label + '</strong></div>' +
+      (hasUrl ?
+        '<a href="'+url+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;padding:7px 14px;border-radius:var(--r2);font-size:12px;font-weight:600;text-decoration:none;">Abrir <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>' :
+        '<span style="font-size:11.5px;color:var(--muted);font-style:italic;">Nenhum link cadastrado</span>') +
+      '<div style="margin-top:10px;"><input value="'+url+'" placeholder="Cole a URL aqui" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;" oninput="setClientLink(\''+cliente+'\',\''+d.key+'\',this.value);renderPortal()"></div>' +
+      '</div>';
+  }).join('');
+  container.innerHTML = cards;
+}
+
 function renderReports() {
   if (_rptType === 'summary') rptSummary();
   else if (_rptType === 'flowup-projects') rptFlowUpProjects();
@@ -3120,7 +3214,7 @@ function printReport() { window.print(); }
 
 function rptLogoHTML() {
   var src = S.logoConfig.img || LOGO_ORGANIZE_B64;
-  return '<img src="' + src + '" alt="Organize Empresas" style="max-height:52px;max-width:220px;object-fit:contain;">';
+  return '<img src="' + src + '" alt="Organize Empresas" style="max-height:52px;max-width:220px;object-fit:contain;filter:brightness(0) invert(1);">';
 }
 
 function rptDateStr() {
@@ -3132,7 +3226,7 @@ function rptHeader(title, subtitle) {
 }
 
 function rptFooter() {
-  return '<div class="rpt-footer"><span style="display:flex;align-items:center;gap:8px;"><img src="'+(S.logoConfig.img||LOGO_ORGANIZE_B64)+'" style="height:20px;width:auto;"> Organize Empresas — Painel Gerencial</span><span>Gerado em ' + rptDateStr() + '</span></div>';
+  return '<div class="rpt-footer"><span style="display:flex;align-items:center;gap:8px;"><img src="'+(S.logoConfig.img||LOGO_ORGANIZE_B64)+'" style="height:20px;width:auto;filter:brightness(0) invert(1);"> Organize Empresas</span><span>Gerado em ' + rptDateStr() + '</span></div>';
 }
 
 function statusLabel(s) {
@@ -3393,7 +3487,7 @@ function rptTrello() {
     boardsHtml +
     rptFooter();
 }
-const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Planejamento Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
+const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Planejamento Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', portal:'Portal do Cliente', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
 function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -3401,6 +3495,7 @@ function showPage(name, el) {
   if (el) el.classList.add('active');
   document.getElementById('page-title').textContent = pageTitles[name]||name;
   if (name === 'reports') renderReports();
+  if (name === 'portal') renderPortalPage();
 }
 
 // ═══════════════ HELPERS ═══════════════
