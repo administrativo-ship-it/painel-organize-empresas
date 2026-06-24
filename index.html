@@ -2306,6 +2306,141 @@ async function oeReadPlanilha(fileEntry) {
   }
 }
 
+// Varre recursivamente uma pasta Drive procurando planilhas (xlsx/sheets)
+async function oeFindPlanilhasInFolder(folderId, depth, maxDepth) {
+  if (depth > (maxDepth || 3)) return [];
+  if (!_gToken) return [];
+  var children;
+  try { children = await oeListChildren(folderId); }
+  catch(e) { console.warn('[FindPlanilhas] Falha pasta', folderId, e.message); return []; }
+
+  var SPREAD_MIMES = [
+    'application/vnd.google-apps.spreadsheet',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel'
+  ];
+  var planilhas = children.filter(function(f){
+    if (SPREAD_MIMES.indexOf(f.mimeType) >= 0) return true;
+    var nm = (f.name||'').toLowerCase();
+    return nm.endsWith('.xlsx') || nm.endsWith('.xls');
+  });
+  var subfolders = children.filter(function(f){ return f.mimeType === 'application/vnd.google-apps.folder'; });
+  // Recursão em sub-pastas
+  for (var i = 0; i < subfolders.length; i++) {
+    var nested = await oeFindPlanilhasInFolder(subfolders[i].id, depth + 1, maxDepth);
+    planilhas = planilhas.concat(nested);
+  }
+  return planilhas;
+}
+
+// Lê todas as planilhas da pasta Drive vinculada ao cliente no Portal
+async function oeReadPlanilhasFromClientPortalDrive(clienteName) {
+  if (!_gToken) return null;
+  var links = (typeof getClientLinks === 'function') ? getClientLinks(clienteName) : (_clientLinks[clienteName] || {});
+  var driveUrl = links.drive || links.driveCliente;
+  var folderId = oeExtractFolderId(driveUrl);
+  if (!folderId) return null;
+
+  console.log('[Portal Drive] Buscando planilhas em', folderId, 'do cliente', clienteName);
+  var arquivos = await oeFindPlanilhasInFolder(folderId, 0, 3);
+  console.log('[Portal Drive] Encontradas', arquivos.length, 'planilhas:', arquivos.map(function(f){return f.name;}));
+
+  if (!arquivos.length) return null;
+
+  var out = {};
+  for (var i = 0; i < arquivos.length; i++) {
+    var f = arquivos[i];
+    var cat = oeClassificarArquivo(f.name) || 'outras';
+    try {
+      var tabs = await oeReadPlanilha({ id: f.id, name: f.name, mime: f.mimeType });
+      if (!tabs || !Object.keys(tabs).length) continue;
+      var maxChars = 9000, total = 0, parts = [];
+      Object.keys(tabs).forEach(function(t){
+        var block = '--- ABA: ' + t + ' ---\n' + tabs[t];
+        if (total + block.length > maxChars) {
+          var rest = maxChars - total - 80;
+          if (rest > 200) { parts.push(block.substring(0, rest) + '\n…(truncado)'); total = maxChars; }
+          return;
+        }
+        parts.push(block);
+        total += block.length;
+      });
+      var key = cat + ' :: ' + f.name;
+      out[key] = parts.join('\n\n');
+    } catch(e) {
+      console.warn('[Portal Drive] Erro lendo', f.name, e.message);
+      out[cat + ' :: ' + f.name] = '(erro ao ler: ' + e.message + ')';
+    }
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+// ── UPLOAD MANUAL DE PLANILHAS (fallback) ──
+var _oeUploadedSheets = { mensal: null, encerramento: null };
+
+function oeAbrirUploadModal(tipo) {
+  var existing = document.getElementById('oe-upload-modal');
+  if (existing) existing.remove();
+  var bg = document.createElement('div');
+  bg.id = 'oe-upload-modal';
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(13,21,38,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  bg.innerHTML = '<div style="background:#fff;border-radius:12px;padding:26px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);">' +
+    '<h3 style="color:#1B2B6B;font-size:17px;margin-bottom:8px;">Upload Manual de Planilhas</h3>' +
+    '<p style="font-size:12.5px;color:#41546A;line-height:1.5;margin-bottom:14px;">Use este modo quando a pasta Drive do cliente estiver vazia ou inacessível. Faça upload de uma ou mais planilhas (.xlsx/.xls) — a IA irá lê-las localmente.</p>' +
+    '<input type="file" id="oe-upload-files" accept=".xlsx,.xls" multiple style="width:100%;padding:14px;border:2px dashed #1B2B6B;border-radius:8px;background:#F5F7FA;cursor:pointer;font-size:13px;margin-bottom:12px;">' +
+    '<div id="oe-upload-result" style="font-size:12px;color:#41546A;margin-bottom:14px;max-height:200px;overflow-y:auto;"></div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+      '<button onclick="document.getElementById(\'oe-upload-modal\').remove()" style="background:#fff;border:1px solid #E0E5EE;color:#41546A;border-radius:8px;padding:9px 16px;font-weight:600;font-size:12.5px;cursor:pointer;">Cancelar</button>' +
+      '<button id="oe-upload-confirm" onclick="oeUploadConfirmar(\'' + tipo + '\')" disabled style="background:#9ca3af;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:12.5px;cursor:pointer;">Usar estas planilhas</button>' +
+    '</div>' +
+    '</div>';
+  document.body.appendChild(bg);
+  bg.addEventListener('click', function(e){ if (e.target === bg) bg.remove(); });
+  document.getElementById('oe-upload-files').addEventListener('change', oeUploadProcessar);
+}
+
+async function oeUploadProcessar(ev) {
+  var files = Array.from(ev.target.files || []);
+  var resultEl = document.getElementById('oe-upload-result');
+  var confirmBtn = document.getElementById('oe-upload-confirm');
+  if (!files.length) { if (resultEl) resultEl.innerHTML = ''; return; }
+  if (!window.XLSX) { if (resultEl) resultEl.innerHTML = '<div style="color:#ef4444;">SheetJS ainda carregando. Aguarde 2s.</div>'; return; }
+
+  if (resultEl) resultEl.innerHTML = '⏳ Processando arquivos...';
+  var processed = {};
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    try {
+      var ab = await f.arrayBuffer();
+      var tabs = oeParseXLSX(ab);
+      var cat = oeClassificarArquivo(f.name) || 'outras';
+      var maxChars = 9000, total = 0, parts = [];
+      Object.keys(tabs).forEach(function(t){
+        var block = '--- ABA: ' + t + ' ---\n' + tabs[t];
+        if (total + block.length > maxChars) return;
+        parts.push(block); total += block.length;
+      });
+      processed[cat + ' :: ' + f.name] = parts.join('\n\n');
+    } catch(e) { processed['ERRO :: ' + f.name] = e.message; }
+  }
+  window._oeUploadPending = processed;
+  if (resultEl) {
+    var html = '<div style="font-size:11.5px;font-weight:700;color:#22c55e;margin-bottom:6px;">✓ ' + Object.keys(processed).length + ' arquivo(s) processado(s):</div>';
+    Object.keys(processed).forEach(function(k){
+      var info = processed[k].substring(0,80).replace(/\n/g,' ');
+      html += '<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #f0f0f0;"><strong>' + k + '</strong><br><span style="color:#8A94A8;">' + info + '…</span></div>';
+    });
+    resultEl.innerHTML = html;
+  }
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.style.background = '#1B2B6B'; confirmBtn.style.cursor = 'pointer'; }
+}
+
+function oeUploadConfirmar(tipo) {
+  _oeUploadedSheets[tipo] = window._oeUploadPending || {};
+  document.getElementById('oe-upload-modal').remove();
+  alert('Planilhas carregadas localmente. Clique novamente em "Gerar Relatório com IA" para usá-las.');
+}
+
 // Lê TODAS as planilhas de um cliente usando o índice automático
 async function oeReadAllPlanilhasCliente(clienteName) {
   var entry = oeBuscarClienteNoIndice(clienteName);
@@ -3479,18 +3614,28 @@ async function generateAnalysisWithAI() {
 
   var ctx = buildAIContextForClient(cliente);
 
-  // ── 3) Lê TODAS as planilhas — PRIORIDADE: índice automático do Drive Organize ──
+  // ── 3) Lê TODAS as planilhas — PRIORIDADE HÍBRIDA ──
   var btnEarly = document.getElementById('btn-gerar-ia');
-  if (btnEarly) { btnEarly.textContent = 'Lendo planilhas do Drive Organize...'; btnEarly.disabled = true; }
+  if (btnEarly) { btnEarly.textContent = 'Lendo planilhas do cliente...'; btnEarly.disabled = true; }
 
-  // 3.1) Tenta índice automático (descoberta na pasta-raiz)
-  try { ctx.sheetsCSV = await oeReadAllPlanilhasCliente(cliente); } catch(e) { console.error('[AI] erro index auto:', e); }
+  // 3.0) PRIMÁRIA: pasta Drive do cliente cadastrada no Portal do Cliente
+  try { ctx.sheetsCSV = await oeReadPlanilhasFromClientPortalDrive(cliente); } catch(e) { console.error('[AI] erro portal drive:', e); }
 
-  // 3.2) Fallback: se não houver índice ou cliente não encontrado, usa links manuais via Sheets API
+  // 3.1) Upload manual recente (se usuário fez upload)
+  if ((!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) && _oeUploadedSheets.mensal && Object.keys(_oeUploadedSheets.mensal).length) {
+    ctx.sheetsCSV = _oeUploadedSheets.mensal;
+    console.log('[AI] Usando planilhas do upload manual');
+  }
+
+  // 3.2) Índice global do Drive Organize
+  if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
+    try { ctx.sheetsCSV = await oeReadAllPlanilhasCliente(cliente); } catch(e) { console.error('[AI] erro index auto:', e); }
+  }
+  // 3.3) Fallback: links manuais via Sheets API
   if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
     try { ctx.sheetsCSV = await readAllLinkedSheetsViaOAuth(ctx.links); } catch(e) { console.error('[AI] erro OAuth sheets:', e); }
   }
-  // 3.3) Fallback final: gviz público
+  // 3.4) Fallback final: gviz público
   if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
     try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, mesNome, ano); } catch(e) {}
   }
@@ -3638,14 +3783,22 @@ async function generateAnalysisEncerramento() {
     var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[programa]||programa;
 
     var ctx = buildAIContextForClient(_ref.cliente);
-    if (btn) { btn.textContent = 'Lendo planilhas do Drive Organize...'; }
-    // 1) Índice automático
-    try { ctx.sheetsCSV = await oeReadAllPlanilhasCliente(_ref.cliente); } catch(e) { console.error('[AI enc] erro index auto:', e); }
-    // 2) Fallback: links manuais via Sheets API
+    if (btn) { btn.textContent = 'Lendo planilhas do cliente...'; }
+    // 1) PRIMÁRIA: pasta Drive do cliente (Portal)
+    try { ctx.sheetsCSV = await oeReadPlanilhasFromClientPortalDrive(_ref.cliente); } catch(e) { console.error('[AI enc] erro portal drive:', e); }
+    // 2) Upload manual
+    if ((!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) && _oeUploadedSheets.encerramento && Object.keys(_oeUploadedSheets.encerramento).length) {
+      ctx.sheetsCSV = _oeUploadedSheets.encerramento;
+    }
+    // 3) Índice global
+    if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
+      try { ctx.sheetsCSV = await oeReadAllPlanilhasCliente(_ref.cliente); } catch(e) { console.error('[AI enc] erro index auto:', e); }
+    }
+    // 4) Fallback: links manuais via Sheets API
     if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
       try { ctx.sheetsCSV = await readAllLinkedSheetsViaOAuth(ctx.links); } catch(e) { console.error('[AI enc] erro OAuth sheets:', e); }
     }
-    // 3) Fallback final: gviz público
+    // 5) Fallback final: gviz público
     if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
       try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, null, new Date().getFullYear()); } catch(e) {}
     }
@@ -4081,8 +4234,9 @@ function rptMensal() {
     '<button id="btn-gerar-ia" class="rpt-drive-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;border:none;" onclick="generateAnalysisWithAI()">Gerar Relatório com IA</button>'+
     '<button class="rpt-gen-btn" style="margin-top:0;background:transparent;color:#7C3AED;border:1px solid #7C3AED;" onclick="rptGenerateMensal()">Regenerar Pré-visualização</button>'+
     '<button id="btn-testar-fontes" style="background:transparent;color:#1B2B6B;border:1px solid #1B2B6B;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="testarFontesIA(\'mensal\')">🔍 Testar Fontes</button>'+
+    '<button style="background:transparent;color:#41546A;border:1px solid #E0E5EE;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="oeAbrirUploadModal(\'mensal\')">📎 Upload manual</button>'+
     '</div>' +
-    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA lê planilhas, Trello, FlowUp e preenche tudo automaticamente. Clique em "Testar Fontes" para ver o que está disponível ANTES de gerar.</div>' +
+    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA tenta na ordem: <strong>1)</strong> pasta Drive cadastrada no Portal do Cliente, <strong>2)</strong> upload manual, <strong>3)</strong> índice global. Use "Testar Fontes" para verificar o que está disponível.</div>' +
     '</div>';
 
   document.getElementById('rpt-filters').innerHTML = '';
@@ -4200,8 +4354,9 @@ function rptEncerramento() {
     '<button id="btn-gerar-ia-enc" class="rpt-gen-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;font-weight:700;" onclick="generateAnalysisEncerramento()">Gerar Relatório com IA</button>' +
     '<button class="rpt-gen-btn" style="background:transparent;color:#7C3AED;border:1px solid #7C3AED;" onclick="rptGenerateEncerramento()">Regenerar Pré-visualização</button>' +
     '<button style="background:transparent;color:#1B2B6B;border:1px solid #1B2B6B;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="testarFontesIA(\'encerramento\')">🔍 Testar Fontes</button>' +
+    '<button style="background:transparent;color:#41546A;border:1px solid #E0E5EE;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="oeAbrirUploadModal(\'encerramento\')">📎 Upload manual</button>' +
     '</div>' +
-    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA lê planilhas, Trello, FlowUp e preenche tudo automaticamente.</div>' +
+    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA tenta na ordem: <strong>1)</strong> pasta Drive cadastrada no Portal do Cliente, <strong>2)</strong> upload manual, <strong>3)</strong> índice global.</div>' +
     '</div>';
 
   document.getElementById('rpt-filters').innerHTML = '';
