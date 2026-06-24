@@ -2744,26 +2744,96 @@ function extractSheetId(url) {
   return m ? m[1] : null;
 }
 
-// Busca CSV público de uma planilha do Google Sheets (sem OAuth, requer "Qualquer pessoa com o link")
-async function fetchSheetAsCSV(sheetId, maxChars) {
+// Busca CSV público de uma aba específica via gviz (suporta nome de aba)
+async function fetchSheetTabCSV(sheetId, sheetName, maxChars) {
   if (!sheetId) return null;
-  var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/export?format=csv';
+  var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv';
+  if (sheetName) url += '&sheet=' + encodeURIComponent(sheetName);
   try {
     var resp = await fetch(url, { redirect: 'follow' });
     if (!resp.ok) return null;
     var text = await resp.text();
-    // Sanity check: se for HTML (página de login), o CSV não é público
     if (text.indexOf('<html') >= 0 || text.indexOf('<!DOCTYPE') >= 0) return null;
+    if (text.indexOf('Invalid query') >= 0 || text.indexOf('does not exist') >= 0) return null;
     if (maxChars && text.length > maxChars) text = text.substring(0, maxChars) + '\n…(truncado)';
     return text;
-  } catch(e) {
-    console.warn('[Sheets] Falha ao buscar CSV', sheetId, e.message);
-    return null;
-  }
+  } catch(e) { return null; }
 }
 
-// Busca todas as planilhas vinculadas do cliente em paralelo
-async function fetchAllClientSheets(links) {
+// Lista nomes de abas de uma planilha pública via gviz reqId trick
+async function listSheetTabs(sheetId) {
+  // Tenta extrair lista de abas via endpoint público
+  try {
+    var resp = await fetch('https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json');
+    if (!resp.ok) return [];
+    var text = await resp.text();
+    // Google retorna ")]}'\n" ou similar — extrai o JSON
+    var m = text.match(/google\.visualization\.Query\.setResponse\((.*)\)/);
+    if (!m) return [];
+    try {
+      var obj = JSON.parse(m[1]);
+      // gviz não retorna lista de abas, mas retorna um erro útil se a aba não existir
+      return [];
+    } catch(e) { return []; }
+  } catch(e) { return []; }
+}
+
+// Lista de nomes prováveis de abas — meses, KPIs, módulos
+var COMMON_TAB_NAMES = [
+  'Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
+  'Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez',
+  'Crescimento da Empresa','Crescimento','Meta','Metas','Meta de Venda','Meta de Vendas',
+  'DRE','Demonstrativo','Resultado','Fluxo de Caixa','Fluxo','Indicadores',
+  'Comercial','Financeiro','Resumo','Dashboard','Anual','Mensal','2025','2026',
+  'Módulo 1','Módulo 2','Módulo 3','Módulo 4','Módulo 5','Módulo 6'
+];
+
+// Busca CSV de TODAS as abas relevantes de uma planilha pública
+async function fetchAllSheetTabs(sheetId, mesNomeAtual, ano) {
+  if (!sheetId) return null;
+  // 1) Sempre tenta a aba padrão (primeira)
+  var defaultCSV = await fetchSheetTabCSV(sheetId, null, 4000);
+
+  // 2) Tenta abas pelo mês selecionado + abas comuns
+  var tabsToTry = [];
+  if (mesNomeAtual) {
+    tabsToTry.push(mesNomeAtual);
+    tabsToTry.push(mesNomeAtual + ' ' + ano);
+    tabsToTry.push(mesNomeAtual + '/' + ano);
+    tabsToTry.push(mesNomeAtual.substring(0,3));
+  }
+  tabsToTry = tabsToTry.concat(COMMON_TAB_NAMES);
+  // Dedup
+  var seen = {}; tabsToTry = tabsToTry.filter(function(t){ if(seen[t]) return false; seen[t]=true; return true; });
+
+  var found = {};
+  if (defaultCSV) found['(primeira aba)'] = defaultCSV;
+
+  // Paraleliza fetch de todas as abas candidatas
+  var results = await Promise.all(tabsToTry.map(async function(tab){
+    var csv = await fetchSheetTabCSV(sheetId, tab, 4000);
+    return { tab: tab, csv: csv };
+  }));
+  results.forEach(function(r){
+    if (r.csv && r.csv.trim() && r.csv.split('\n').length > 1) found[r.tab] = r.csv;
+  });
+
+  if (!Object.keys(found).length) return null;
+  // Concatena, com limite total de chars para não estourar o prompt
+  var maxTotal = 25000;
+  var parts = [];
+  var total = 0;
+  Object.keys(found).forEach(function(tab){
+    var block = '--- ABA: ' + tab + ' ---\n' + found[tab];
+    if (total + block.length > maxTotal) return;
+    parts.push(block);
+    total += block.length;
+  });
+  return parts.join('\n\n');
+}
+
+// Busca todas as planilhas vinculadas do cliente em paralelo, com todas as abas
+async function fetchAllClientSheets(links, mesNomeAtual, ano) {
   var sheetKeys = ['planilhaComercial','planilhaFinanceiro','planilhaFluxo','planilhaControladoria','planilha'];
   var jobs = [];
   sheetKeys.forEach(function(k){
@@ -2773,7 +2843,7 @@ async function fetchAllClientSheets(links) {
   });
   var out = {};
   await Promise.all(jobs.map(async function(j){
-    var csv = await fetchSheetAsCSV(j.id, 8000);
+    var csv = await fetchAllSheetTabs(j.id, mesNomeAtual, ano);
     if (csv) out[j.key] = csv;
   }));
   return out;
@@ -2903,6 +2973,13 @@ async function generateAnalysisWithAI() {
   // ── 2) Carrega planilhas vinculadas / cache de indicadores ──
   if (typeof _gToken !== 'undefined' && _gToken) {
     try { await new Promise(function(res){ autoLoadDriveData('mensal', res); setTimeout(res, 15000); }); } catch(e) { console.warn('[AI] autoLoadDriveData falhou:', e); }
+  } else {
+    var ok = confirm('Google Drive não está conectado.\n\nSem Drive, a IA só conseguirá ler a 1ª aba das planilhas públicas — pode não encontrar os dados mensais.\n\nDeseja conectar agora? (recomendado)\n\n[OK] = Conectar Drive\n[Cancelar] = Continuar sem Drive');
+    if (ok) {
+      gDriveSignIn(function(){});
+      alert('Após conectar o Drive, clique novamente em "Gerar Relatório com IA".');
+      return;
+    }
   }
   try { await loadIndicadoresData(); } catch(e) {}
 
@@ -2914,10 +2991,11 @@ async function generateAnalysisWithAI() {
 
   var ctx = buildAIContextForClient(cliente);
 
-  // ── 3) Busca CSVs públicos das planilhas vinculadas ──
+  // ── 3) Busca CSVs públicos das planilhas vinculadas (TODAS AS ABAS via gviz) ──
   var btnEarly = document.getElementById('btn-gerar-ia');
   if (btnEarly) { btnEarly.textContent = 'Lendo planilhas...'; btnEarly.disabled = true; }
-  try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links); } catch(e) { console.warn('[AI] erro fetch sheets:', e); }
+  try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, mesNome, ano); } catch(e) { console.warn('[AI] erro fetch sheets:', e); }
+  console.log('[AI] Diagnóstico:', { driveConectado: !!(typeof _gToken !== 'undefined' && _gToken), driveExtraidos: Object.keys(_rmf).filter(function(k){return ['fat','meta','cresc','cativos','conv','ticket'].indexOf(k)>=0 && _rmf[k];}), planilhasLidas: ctx.sheetsCSV ? Object.keys(ctx.sheetsCSV) : [], totalCharsCSV: ctx.sheetsCSV ? Object.values(ctx.sheetsCSV).reduce(function(a,b){return a+b.length;},0) : 0 });
 
   // ── 4) Valores já extraídos pelo Drive via OAuth (autoLoadDriveData populou _rmf) ──
   var driveExtraidos = {};
@@ -3037,6 +3115,14 @@ async function generateAnalysisEncerramento() {
 
   if (typeof _gToken !== 'undefined' && _gToken) {
     try { await new Promise(function(res){ autoLoadDriveData('encerramento', res); setTimeout(res, 15000); }); } catch(e) { console.warn('[AI enc] autoLoadDriveData falhou:', e); }
+  } else {
+    var okEnc = confirm('Google Drive não está conectado.\n\nSem Drive, a IA só conseguirá ler a 1ª aba das planilhas públicas — pode não encontrar os dados do módulo.\n\nDeseja conectar agora? (recomendado)\n\n[OK] = Conectar Drive\n[Cancelar] = Continuar sem Drive');
+    if (okEnc) {
+      gDriveSignIn(function(){});
+      alert('Após conectar o Drive, clique novamente em "Gerar Relatório com IA".');
+      if (btn) { btn.disabled = false; btn.textContent = 'Gerar Relatório com IA'; }
+      return;
+    }
   }
   try { await loadIndicadoresData(); } catch(e) {}
 
@@ -3047,8 +3133,10 @@ async function generateAnalysisEncerramento() {
     var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[programa]||programa;
 
     var ctx = buildAIContextForClient(_ref.cliente);
-    try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links); } catch(e) { console.warn('[AI enc] erro fetch sheets:', e); }
+    // Para encerramento, busca todas as abas (sem mês específico)
+    try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, null, new Date().getFullYear()); } catch(e) { console.warn('[AI enc] erro fetch sheets:', e); }
     if (btn) { btn.textContent = 'Gerando análise...'; }
+    console.log('[AI enc] Diagnóstico:', { driveConectado: !!(typeof _gToken !== 'undefined' && _gToken), planilhasLidas: ctx.sheetsCSV ? Object.keys(ctx.sheetsCSV) : [] });
 
     var driveExtraidosEnc = {};
     ['k1','k2','k3','k4','k5','k6','fat','meta','cresc','cativos','conv','ticket','cmv','dfixas','dvar','impost','ll'].forEach(function(k){
