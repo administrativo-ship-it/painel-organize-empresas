@@ -2102,6 +2102,51 @@ async function gSheetsRead(spreadsheetId, sheetName) {
   return data.values || [];
 }
 
+// ── Lê TODAS as abas de TODAS as planilhas vinculadas via OAuth, formata como texto ──
+async function readAllLinkedSheetsViaOAuth(links) {
+  if (!_gToken) return null;
+  var sheetKeys = ['planilhaComercial','planilhaFinanceiro','planilhaFluxo','planilhaControladoria','planilha'];
+  var sheetIds = [];
+  sheetKeys.forEach(function(k){
+    var id = extractSheetId(links[k]);
+    if (id) sheetIds.push({ key: k, id: id });
+  });
+  if (!sheetIds.length) return null;
+
+  var out = {};
+  for (var i = 0; i < sheetIds.length; i++) {
+    var s = sheetIds[i];
+    try {
+      var tabs = await gSheetsGetAllSheets(s.id);
+      var blocks = [];
+      // Limita a 30 abas por planilha para não estourar tokens
+      var tabsToRead = tabs.slice(0, 30);
+      for (var j = 0; j < tabsToRead.length; j++) {
+        var tabName = tabsToRead[j];
+        try {
+          var rows = await gSheetsRead(s.id, tabName);
+          if (!rows || !rows.length) continue;
+          // Converte para CSV-like (truncado por aba)
+          var maxRows = 60, maxCols = 20;
+          var csvLike = rows.slice(0, maxRows).map(function(row){
+            return (row || []).slice(0, maxCols).map(function(cell){
+              var v = String(cell == null ? '' : cell);
+              if (v.indexOf(',') >= 0 || v.indexOf('"') >= 0 || v.indexOf('\n') >= 0)
+                v = '"' + v.replace(/"/g, '""') + '"';
+              return v;
+            }).join(',');
+          }).join('\n');
+          if (csvLike.trim()) blocks.push('--- ABA: ' + tabName + ' ---\n' + csvLike);
+        } catch(e) { /* aba sem permissão ou erro, pula */ }
+      }
+      if (blocks.length) out[s.key] = blocks.join('\n\n');
+    } catch(e) {
+      console.warn('[OAuth Sheets] Falha em', s.key, e.message);
+    }
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 async function gDriveSearchSheet(clienteName, keyword) {
   var q = "name contains '" + keyword + "' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false";
   var url = 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&access_token=' + _gToken;
@@ -2970,17 +3015,17 @@ async function generateAnalysisWithAI() {
 
   if (!_rmf.cliente) { alert('Selecione um cliente antes de gerar o relatório.'); return; }
 
-  // ── 2) Carrega planilhas vinculadas / cache de indicadores ──
-  if (typeof _gToken !== 'undefined' && _gToken) {
-    try { await new Promise(function(res){ autoLoadDriveData('mensal', res); setTimeout(res, 15000); }); } catch(e) { console.warn('[AI] autoLoadDriveData falhou:', e); }
-  } else {
-    var ok = confirm('Google Drive não está conectado.\n\nSem Drive, a IA só conseguirá ler a 1ª aba das planilhas públicas — pode não encontrar os dados mensais.\n\nDeseja conectar agora? (recomendado)\n\n[OK] = Conectar Drive\n[Cancelar] = Continuar sem Drive');
-    if (ok) {
-      gDriveSignIn(function(){});
-      alert('Após conectar o Drive, clique novamente em "Gerar Relatório com IA".');
-      return;
-    }
+  // ── 2) FORÇA conexão Google Drive (essencial para ler dados das planilhas) ──
+  if (typeof _gToken === 'undefined' || !_gToken) {
+    alert('Para ler os dados reais das planilhas, é necessário conectar o Google Drive.\n\nAo clicar OK, abrirá o popup do Google. Após autorizar, clique novamente em "Gerar Relatório com IA".');
+    gDriveSignIn(function(){
+      // Callback após OAuth — reinicia o fluxo
+      setTimeout(function(){ generateAnalysisWithAI(); }, 500);
+    });
+    return;
   }
+  // Drive conectado — carrega dados via OAuth
+  try { await new Promise(function(res){ autoLoadDriveData('mensal', res); setTimeout(res, 20000); }); } catch(e) { console.warn('[AI] autoLoadDriveData falhou:', e); }
   try { await loadIndicadoresData(); } catch(e) {}
 
   var cliente = _rmf.cliente;
@@ -2991,11 +3036,23 @@ async function generateAnalysisWithAI() {
 
   var ctx = buildAIContextForClient(cliente);
 
-  // ── 3) Busca CSVs públicos das planilhas vinculadas (TODAS AS ABAS via gviz) ──
+  // ── 3) Lê TODAS as abas das planilhas via Sheets API OAuth ──
   var btnEarly = document.getElementById('btn-gerar-ia');
-  if (btnEarly) { btnEarly.textContent = 'Lendo planilhas...'; btnEarly.disabled = true; }
-  try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, mesNome, ano); } catch(e) { console.warn('[AI] erro fetch sheets:', e); }
-  console.log('[AI] Diagnóstico:', { driveConectado: !!(typeof _gToken !== 'undefined' && _gToken), driveExtraidos: Object.keys(_rmf).filter(function(k){return ['fat','meta','cresc','cativos','conv','ticket'].indexOf(k)>=0 && _rmf[k];}), planilhasLidas: ctx.sheetsCSV ? Object.keys(ctx.sheetsCSV) : [], totalCharsCSV: ctx.sheetsCSV ? Object.values(ctx.sheetsCSV).reduce(function(a,b){return a+b.length;},0) : 0 });
+  if (btnEarly) { btnEarly.textContent = 'Lendo todas as abas das planilhas...'; btnEarly.disabled = true; }
+  try { ctx.sheetsCSV = await readAllLinkedSheetsViaOAuth(ctx.links); } catch(e) { console.error('[AI] erro OAuth sheets:', e); }
+  // Fallback: tenta gviz público se OAuth falhou
+  if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
+    try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, mesNome, ano); } catch(e) {}
+  }
+  console.log('[AI Mensal] Diagnóstico:', {
+    cliente: cliente, mes: mesNome, ano: ano, programa: programa,
+    driveConectado: !!(typeof _gToken !== 'undefined' && _gToken),
+    driveExtraidos: Object.keys(_rmf).filter(function(k){return ['fat','meta','cresc','cativos','conv','ticket','cmv','dfixas','dvar','impost','ll'].indexOf(k)>=0 && _rmf[k];}).map(function(k){return k+'='+_rmf[k];}),
+    planilhasLidas: ctx.sheetsCSV ? Object.keys(ctx.sheetsCSV) : [],
+    totalCharsCSV: ctx.sheetsCSV ? Object.values(ctx.sheetsCSV).reduce(function(a,b){return a+b.length;},0) : 0,
+    historico: _rmf._historico,
+    dreData: _rmf._dreData
+  });
 
   // ── 4) Valores já extraídos pelo Drive via OAuth (autoLoadDriveData populou _rmf) ──
   var driveExtraidos = {};
@@ -3068,7 +3125,7 @@ async function generateAnalysisWithAI() {
   if (btn) { btn.textContent = 'Gerando análise...'; btn.disabled = true; }
 
   try {
-    var text = await callClaude(apiKey, prompt2, 2500, sysPrompt, true);
+    var text = await callClaude(apiKey, prompt2, 4000, sysPrompt, true);
     var parsed = extractJSON(text);
 
     // Preenche todos os campos esperados em _rmf e nos inputs
@@ -3113,17 +3170,15 @@ async function generateAnalysisEncerramento() {
   });
   if (!_ref.cliente) { alert('Selecione um cliente antes de gerar o relatório.'); return; }
 
-  if (typeof _gToken !== 'undefined' && _gToken) {
-    try { await new Promise(function(res){ autoLoadDriveData('encerramento', res); setTimeout(res, 15000); }); } catch(e) { console.warn('[AI enc] autoLoadDriveData falhou:', e); }
-  } else {
-    var okEnc = confirm('Google Drive não está conectado.\n\nSem Drive, a IA só conseguirá ler a 1ª aba das planilhas públicas — pode não encontrar os dados do módulo.\n\nDeseja conectar agora? (recomendado)\n\n[OK] = Conectar Drive\n[Cancelar] = Continuar sem Drive');
-    if (okEnc) {
-      gDriveSignIn(function(){});
-      alert('Após conectar o Drive, clique novamente em "Gerar Relatório com IA".');
-      if (btn) { btn.disabled = false; btn.textContent = 'Gerar Relatório com IA'; }
-      return;
-    }
+  // ── FORÇA conexão Google Drive ──
+  if (typeof _gToken === 'undefined' || !_gToken) {
+    alert('Para ler os dados reais das planilhas, é necessário conectar o Google Drive.\n\nAo clicar OK, abrirá o popup do Google. Após autorizar, clique novamente em "Gerar Relatório com IA".');
+    gDriveSignIn(function(){
+      setTimeout(function(){ generateAnalysisEncerramento(); }, 500);
+    });
+    return;
   }
+  try { await new Promise(function(res){ autoLoadDriveData('encerramento', res); setTimeout(res, 20000); }); } catch(e) { console.warn('[AI enc] autoLoadDriveData falhou:', e); }
   try { await loadIndicadoresData(); } catch(e) {}
 
   var btn = document.getElementById('btn-gerar-ia-enc');
@@ -3133,10 +3188,19 @@ async function generateAnalysisEncerramento() {
     var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[programa]||programa;
 
     var ctx = buildAIContextForClient(_ref.cliente);
-    // Para encerramento, busca todas as abas (sem mês específico)
-    try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, null, new Date().getFullYear()); } catch(e) { console.warn('[AI enc] erro fetch sheets:', e); }
+    if (btn) { btn.textContent = 'Lendo todas as abas das planilhas...'; }
+    // OAuth primeiro (essencial)
+    try { ctx.sheetsCSV = await readAllLinkedSheetsViaOAuth(ctx.links); } catch(e) { console.error('[AI enc] erro OAuth sheets:', e); }
+    if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
+      try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, null, new Date().getFullYear()); } catch(e) {}
+    }
     if (btn) { btn.textContent = 'Gerando análise...'; }
-    console.log('[AI enc] Diagnóstico:', { driveConectado: !!(typeof _gToken !== 'undefined' && _gToken), planilhasLidas: ctx.sheetsCSV ? Object.keys(ctx.sheetsCSV) : [] });
+    console.log('[AI Encerramento] Diagnóstico:', {
+      cliente: _ref.cliente, programa: programa,
+      driveConectado: !!(typeof _gToken !== 'undefined' && _gToken),
+      planilhasLidas: ctx.sheetsCSV ? Object.keys(ctx.sheetsCSV) : [],
+      totalCharsCSV: ctx.sheetsCSV ? Object.values(ctx.sheetsCSV).reduce(function(a,b){return a+b.length;},0) : 0
+    });
 
     var driveExtraidosEnc = {};
     ['k1','k2','k3','k4','k5','k6','fat','meta','cresc','cativos','conv','ticket','cmv','dfixas','dvar','impost','ll'].forEach(function(k){
@@ -3204,7 +3268,7 @@ async function generateAnalysisEncerramento() {
       'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
       '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"TEXTO_OU_VAZIO","modnom":"TEXTO_OU_VAZIO","dtini":"AAAA-MM-DD_OU_VAZIO","dtfim":"AAAA-MM-DD_OU_VAZIO","proxmod":"TEXTO_OU_VAZIO","nment":"NUM","analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
 
-    var text = await callClaude(apiKey, prompt_text, 3000, sysPromptEnc, true);
+    var text = await callClaude(apiKey, prompt_text, 4000, sysPromptEnc, true);
     var parsed = extractJSON(text);
 
     // KPIs
