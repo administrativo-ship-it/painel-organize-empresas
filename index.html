@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 :root{--navy:#1B2B6B;--navy-light:#2A3F8F;--teal:#5CC8D4;--teal-dark:#3DBBCC;--slate:#41546A;--white:#fff;--off:#f4f6fb;--border:#e2e8f4;--txt:#0d1526;--txt2:#41546A;--muted:#8a9bb5;--green:#1a7a4a;--green-bg:#e8f5ee;--yellow:#b45309;--yellow-bg:#fef3cd;--red:#c0392b;--red-bg:#fdf0ee;--orange:#d35400;--orange-bg:#fef0e6;--trello:#0052CC;--trello-bg:#e8f0ff;--sh:0 4px 16px rgba(27,43,107,.08);--r:12px;--r2:8px;}
@@ -2113,6 +2114,311 @@ async function gSheetsRead(spreadsheetId, sheetName) {
   return data.values || [];
 }
 
+// ═══════════════ ÍNDICE AUTOMÁTICO DO DRIVE ORGANIZE ═══════════════
+// Descobre planilhas automaticamente em pasta raiz, sem precisar de links manuais
+
+var OE_DRIVE_ROOT_DEFAULT = '1ud-2sisrXvYJfKkQwqVFKaKIA0a7ihiJ';
+var OE_DRIVE_INDEX_KEY = 'oe_drive_auto_index_v1';
+
+function oeGetDriveRoot() {
+  return localStorage.getItem('oe_drive_root_folder') || OE_DRIVE_ROOT_DEFAULT;
+}
+function oeSetDriveRoot(id) {
+  if (id) localStorage.setItem('oe_drive_root_folder', id);
+}
+function oeExtractFolderId(urlOrId) {
+  if (!urlOrId) return null;
+  var m = String(urlOrId).match(/folders\/([a-zA-Z0-9_-]{20,})/);
+  if (m) return m[1];
+  m = String(urlOrId).match(/^([a-zA-Z0-9_-]{20,})$/);
+  return m ? m[1] : null;
+}
+function oeGetDriveIndex() {
+  try { return JSON.parse(localStorage.getItem(OE_DRIVE_INDEX_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function oeSetDriveIndex(idx) {
+  localStorage.setItem(OE_DRIVE_INDEX_KEY, JSON.stringify(idx));
+}
+
+// Lista filhos de uma pasta no Drive (pastas + arquivos)
+async function oeListChildren(folderId) {
+  if (!_gToken) throw new Error('Drive não conectado');
+  var all = [];
+  var pageToken = null;
+  do {
+    var q = "'" + folderId + "' in parents and trashed=false";
+    var url = 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) +
+      '&fields=files(id,name,mimeType),nextPageToken&pageSize=200' +
+      (pageToken ? '&pageToken=' + pageToken : '');
+    var res = await fetch(url, { headers: gAuthHeaders() });
+    if (!res.ok) {
+      var t = await res.text().catch(function(){return '';});
+      throw new Error('Drive list ' + res.status + ': ' + t.substring(0,150));
+    }
+    var data = await res.json();
+    all = all.concat(data.files || []);
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  return all;
+}
+
+// Classifica um arquivo pelo nome → categoria de planilha
+function oeClassificarArquivo(filename) {
+  var n = (filename||'').toUpperCase();
+  if (n.indexOf('INDICADORES COMERCIAIS') >= 0 || n.indexOf('INDICADOR COMERCIAL') >= 0) return 'comercial';
+  if (n.indexOf('INDICADORES FINANCEIROS') >= 0 || n.indexOf('INDICADOR FINANCEIRO') >= 0) return 'financeiro';
+  if (n.indexOf('FLUXO DE CAIXA') >= 0 || n.indexOf('CONTROLADORIA') >= 0 || n.indexOf('PROJEÇÃO') >= 0 || n.indexOf('PROJECAO') >= 0) return 'fluxo';
+  if (n.indexOf('DRE') >= 0) return 'dre';
+  if (n.indexOf('META') >= 0) return 'meta';
+  return null;
+}
+
+// Indexa TODA a pasta raiz: descobre subpastas (clientes) e suas planilhas
+async function oeIndexarDriveCompleto(rootIdOpt, onProgress) {
+  var rootId = rootIdOpt || oeGetDriveRoot();
+  if (!_gToken) { gDriveSignIn(function(){ oeIndexarDriveCompleto(rootIdOpt, onProgress); }); return null; }
+  if (onProgress) onProgress({ stage: 'listando-pasta-raiz', rootId: rootId });
+
+  var children = await oeListChildren(rootId);
+  var subfolders = children.filter(function(f){ return f.mimeType === 'application/vnd.google-apps.folder'; });
+  var directFiles = children.filter(function(f){ return f.mimeType !== 'application/vnd.google-apps.folder'; });
+
+  var index = { root: rootId, indexedAt: new Date().toISOString(), clientes: {} };
+
+  // Caso 1: arquivos direto na raiz — todos são para "Organize" geral (sem subpastas)
+  if (directFiles.length && !subfolders.length) {
+    var entry = { folderId: rootId, folderName: '(raiz)', files: {} };
+    directFiles.forEach(function(f){
+      var cat = oeClassificarArquivo(f.name);
+      if (cat) entry.files[cat] = { id: f.id, name: f.name, mime: f.mimeType };
+    });
+    index.clientes['(raiz)'] = entry;
+  }
+
+  // Caso 2: subpastas = clientes
+  for (var i = 0; i < subfolders.length; i++) {
+    var sf = subfolders[i];
+    if (onProgress) onProgress({ stage: 'indexando-cliente', cliente: sf.name, atual: i+1, total: subfolders.length });
+    try {
+      var files = await oeListChildren(sf.id);
+      var entry = { folderId: sf.id, folderName: sf.name, files: {} };
+      files.forEach(function(f){
+        if (f.mimeType === 'application/vnd.google-apps.folder') return;
+        var cat = oeClassificarArquivo(f.name);
+        if (cat) entry.files[cat] = { id: f.id, name: f.name, mime: f.mimeType };
+      });
+      index.clientes[sf.name] = entry;
+    } catch(e) { console.warn('[Index] Falha em', sf.name, e.message); }
+  }
+
+  oeSetDriveIndex(index);
+  if (onProgress) onProgress({ stage: 'concluido', total: Object.keys(index.clientes).length });
+  return index;
+}
+
+// Busca entrada de cliente no índice (fuzzy match)
+function oeBuscarClienteNoIndice(clienteName) {
+  var idx = oeGetDriveIndex();
+  if (!idx.clientes) return null;
+  var cn = (clienteName||'').toUpperCase().trim();
+  if (!cn) return null;
+  // 1) Match exato (case-insensitive)
+  var keys = Object.keys(idx.clientes);
+  var k = keys.find(function(k){ return k.toUpperCase() === cn; });
+  if (k) return idx.clientes[k];
+  // 2) Fuzzy: contém
+  k = keys.find(function(k){ var ku = k.toUpperCase(); return ku.indexOf(cn) >= 0 || cn.indexOf(ku) >= 0; });
+  if (k) return idx.clientes[k];
+  // 3) Match por palavras
+  var clienteWords = cn.split(/\s+/).filter(function(w){ return w.length > 2; });
+  if (clienteWords.length) {
+    k = keys.find(function(k){
+      var ku = k.toUpperCase();
+      return clienteWords.every(function(w){ return ku.indexOf(w) >= 0; });
+    });
+    if (k) return idx.clientes[k];
+  }
+  return null;
+}
+
+// Baixa arquivo binário do Drive (para XLSX)
+async function oeDownloadFileBinary(fileId) {
+  if (!_gToken) throw new Error('Drive não conectado');
+  var url = 'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media';
+  var res = await fetch(url, { headers: gAuthHeaders() });
+  if (!res.ok) {
+    var t = await res.text().catch(function(){return '';});
+    throw new Error('Drive download ' + res.status + ': ' + t.substring(0,150));
+  }
+  return await res.arrayBuffer();
+}
+
+// Parseia XLSX (arrayBuffer) em { nomeAba: csvText } via SheetJS
+function oeParseXLSX(arrayBuffer) {
+  if (!window.XLSX) throw new Error('SheetJS (xlsx.js) ainda não carregou. Aguarde e tente novamente.');
+  var wb = XLSX.read(arrayBuffer, { type: 'array', cellDates: true, cellNF: false, cellText: true });
+  var out = {};
+  (wb.SheetNames || []).forEach(function(name){
+    try {
+      var csv = XLSX.utils.sheet_to_csv(wb.Sheets[name], { strip: true, blankrows: false });
+      if (csv && csv.trim()) out[name] = csv;
+    } catch(e) { /* aba problemática, pula */ }
+  });
+  return out;
+}
+
+// Lê UMA planilha (Google nativo OU .xlsx) → { aba: csvText }
+async function oeReadPlanilha(fileEntry) {
+  if (!fileEntry || !fileEntry.id) return null;
+  if (fileEntry.mime === 'application/vnd.google-apps.spreadsheet') {
+    // Nativo: Sheets API
+    var tabs = await gSheetsGetAllSheets(fileEntry.id);
+    var out = {};
+    for (var i = 0; i < Math.min(tabs.length, 40); i++) {
+      try {
+        var rows = await gSheetsRead(fileEntry.id, tabs[i]);
+        if (!rows || !rows.length) continue;
+        out[tabs[i]] = rows.slice(0,100).map(function(r){
+          return (r||[]).slice(0,30).map(function(c){
+            var v = String(c==null?'':c);
+            if (v.indexOf(',')>=0 || v.indexOf('"')>=0 || v.indexOf('\n')>=0)
+              v = '"' + v.replace(/"/g,'""') + '"';
+            return v;
+          }).join(',');
+        }).join('\n');
+      } catch(e) {}
+    }
+    return out;
+  } else {
+    // .xlsx (ou .xls): baixa e parseia com SheetJS
+    var ab = await oeDownloadFileBinary(fileEntry.id);
+    return oeParseXLSX(ab);
+  }
+}
+
+// Lê TODAS as planilhas de um cliente usando o índice automático
+async function oeReadAllPlanilhasCliente(clienteName) {
+  var entry = oeBuscarClienteNoIndice(clienteName);
+  if (!entry) return null;
+  var out = {};
+  var catKeys = ['comercial','financeiro','fluxo','dre','meta'];
+  for (var i = 0; i < catKeys.length; i++) {
+    var cat = catKeys[i];
+    var fileEntry = entry.files[cat];
+    if (!fileEntry) continue;
+    try {
+      var tabs = await oeReadPlanilha(fileEntry);
+      if (!tabs || !Object.keys(tabs).length) continue;
+      // Concatena abas com limite de chars por planilha
+      var maxChars = 9000;
+      var parts = []; var total = 0;
+      Object.keys(tabs).forEach(function(t){
+        var block = '--- ABA: ' + t + ' ---\n' + tabs[t];
+        if (total + block.length > maxChars) {
+          // trunca a aba pra caber
+          var rest = maxChars - total - 80;
+          if (rest > 200) { parts.push(block.substring(0, rest) + '\n…(truncado)'); total = maxChars; }
+          return;
+        }
+        parts.push(block);
+        total += block.length;
+      });
+      out['planilha_' + cat + ' (' + fileEntry.name + ')'] = parts.join('\n\n');
+    } catch(e) {
+      console.warn('[Read Planilha]', cat, fileEntry.name, e.message);
+      out['planilha_' + cat + ' (' + fileEntry.name + ')'] = '(ERRO ao ler: ' + e.message + ')';
+    }
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+// Modal: Configuração do Drive Organize (pasta raiz + indexação)
+function abrirModalIndexarDrive() {
+  var existing = document.getElementById('oe-index-modal');
+  if (existing) existing.remove();
+  var rootAtual = oeGetDriveRoot();
+  var idx = oeGetDriveIndex();
+  var nClientes = idx.clientes ? Object.keys(idx.clientes).length : 0;
+  var lastIdx = idx.indexedAt ? new Date(idx.indexedAt).toLocaleString('pt-BR') : 'nunca';
+
+  var bg = document.createElement('div');
+  bg.id = 'oe-index-modal';
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(13,21,38,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  bg.innerHTML = '<div style="background:#fff;border-radius:12px;padding:26px;max-width:580px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">' +
+    '<h3 style="color:#1B2B6B;font-size:18px;margin-bottom:8px;">Drive Organize — Indexação Automática</h3>' +
+    '<p style="font-size:12.5px;color:#41546A;line-height:1.5;margin-bottom:16px;">O painel busca automaticamente as planilhas de cada cliente dentro da pasta raiz do Drive da Organize, sem precisar de links manuais.</p>' +
+    '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;">' +
+      '<div><strong>Status do Drive:</strong> <span style="color:' + (_gToken?'#22c55e':'#ef4444') + ';font-weight:600;">' + (_gToken?'✓ Conectado':'✗ Desconectado') + '</span></div>' +
+      '<div><strong>Última indexação:</strong> ' + lastIdx + '</div>' +
+      '<div><strong>Clientes indexados:</strong> ' + nClientes + '</div>' +
+    '</div>' +
+    '<label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#41546A;">ID ou link da pasta raiz no Drive</label>' +
+    '<input id="oe-root-input" value="' + rootAtual + '" style="width:100%;padding:9px 11px;border:1px solid #E0E5EE;border-radius:8px;font-family:DM Mono,monospace;font-size:12px;margin-top:6px;margin-bottom:6px;">' +
+    '<div style="font-size:10.5px;color:#8A94A8;margin-bottom:14px;">Pasta com subpastas dos clientes. Cada subpasta deve conter as planilhas com nomes: INDICADORES COMERCIAIS, INDICADORES FINANCEIROS, PROJEÇÃO DE FLUXO DE CAIXA, CONTROLADORIA FINANCEIRA, DRE.</div>' +
+    '<div id="oe-index-progress" style="font-size:12px;color:#41546A;margin-bottom:10px;display:none;"></div>' +
+    '<div id="oe-index-result" style="font-size:12px;color:#41546A;margin-bottom:10px;max-height:200px;overflow-y:auto;"></div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">' +
+      '<button onclick="document.getElementById(\'oe-index-modal\').remove()" style="background:#fff;border:1px solid #E0E5EE;color:#41546A;border-radius:8px;padding:9px 16px;font-weight:600;font-size:12.5px;cursor:pointer;">Fechar</button>' +
+      '<button id="oe-btn-ver-index" onclick="oeMostrarIndexAtual()" style="background:#fff;border:1px solid #1B2B6B;color:#1B2B6B;border-radius:8px;padding:9px 16px;font-weight:600;font-size:12.5px;cursor:pointer;">Ver índice atual</button>' +
+      '<button id="oe-btn-indexar" onclick="oeExecutarIndexacao()" style="background:#1B2B6B;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:12.5px;cursor:pointer;">🔄 Indexar agora</button>' +
+    '</div>' +
+    '</div>';
+  document.body.appendChild(bg);
+  bg.addEventListener('click', function(e){ if (e.target === bg) bg.remove(); });
+}
+
+async function oeExecutarIndexacao() {
+  var input = document.getElementById('oe-root-input');
+  var rootId = oeExtractFolderId(input ? input.value : '');
+  if (!rootId) { alert('Cole um link ou ID válido da pasta raiz.'); return; }
+  oeSetDriveRoot(rootId);
+  if (!_gToken) {
+    alert('Conecte o Google Drive primeiro (botão "Conectar Drive" na tela de relatórios).');
+    gDriveSignIn(function(){ oeExecutarIndexacao(); });
+    return;
+  }
+  var btn = document.getElementById('oe-btn-indexar');
+  var prog = document.getElementById('oe-index-progress');
+  var resultEl = document.getElementById('oe-index-result');
+  if (btn) { btn.disabled = true; btn.textContent = 'Indexando…'; }
+  if (prog) prog.style.display = 'block';
+  if (resultEl) resultEl.innerHTML = '';
+  try {
+    var idx = await oeIndexarDriveCompleto(rootId, function(p){
+      if (!prog) return;
+      if (p.stage === 'listando-pasta-raiz') prog.textContent = '⏳ Lendo pasta raiz…';
+      else if (p.stage === 'indexando-cliente') prog.textContent = '⏳ Indexando ' + p.atual + '/' + p.total + ': ' + p.cliente;
+      else if (p.stage === 'concluido') prog.textContent = '✅ Indexação concluída: ' + p.total + ' clientes.';
+    });
+    oeMostrarIndexAtual();
+  } catch(e) {
+    if (resultEl) resultEl.innerHTML = '<div style="color:#ef4444;">Erro: ' + e.message + '</div>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Re-indexar'; }
+  }
+}
+
+function oeMostrarIndexAtual() {
+  var resultEl = document.getElementById('oe-index-result');
+  if (!resultEl) return;
+  var idx = oeGetDriveIndex();
+  if (!idx.clientes || !Object.keys(idx.clientes).length) {
+    resultEl.innerHTML = '<div style="color:#8A94A8;font-style:italic;">Nenhum cliente indexado ainda. Clique em "Indexar agora".</div>';
+    return;
+  }
+  var html = '<div style="font-size:11px;font-weight:700;color:#41546A;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Clientes indexados (' + Object.keys(idx.clientes).length + ')</div>';
+  Object.keys(idx.clientes).sort().forEach(function(name){
+    var entry = idx.clientes[name];
+    var cats = Object.keys(entry.files || {});
+    var color = cats.length >= 3 ? '#22c55e' : (cats.length >= 1 ? '#eab308' : '#ef4444');
+    html += '<div style="padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:11.5px;">' +
+      '<span style="color:' + color + ';">●</span> <strong>' + name + '</strong> ' +
+      '<span style="color:#8A94A8;">— ' + cats.length + ' planilha(s): ' + cats.join(', ') + '</span></div>';
+  });
+  resultEl.innerHTML = html;
+}
+
 // ── Lê TODAS as abas de TODAS as planilhas vinculadas via OAuth, formata como texto ──
 async function readAllLinkedSheetsViaOAuth(links) {
   if (!_gToken) return null;
@@ -3147,11 +3453,18 @@ async function generateAnalysisWithAI() {
 
   var ctx = buildAIContextForClient(cliente);
 
-  // ── 3) Lê TODAS as abas das planilhas via Sheets API OAuth ──
+  // ── 3) Lê TODAS as planilhas — PRIORIDADE: índice automático do Drive Organize ──
   var btnEarly = document.getElementById('btn-gerar-ia');
-  if (btnEarly) { btnEarly.textContent = 'Lendo todas as abas das planilhas...'; btnEarly.disabled = true; }
-  try { ctx.sheetsCSV = await readAllLinkedSheetsViaOAuth(ctx.links); } catch(e) { console.error('[AI] erro OAuth sheets:', e); }
-  // Fallback: tenta gviz público se OAuth falhou
+  if (btnEarly) { btnEarly.textContent = 'Lendo planilhas do Drive Organize...'; btnEarly.disabled = true; }
+
+  // 3.1) Tenta índice automático (descoberta na pasta-raiz)
+  try { ctx.sheetsCSV = await oeReadAllPlanilhasCliente(cliente); } catch(e) { console.error('[AI] erro index auto:', e); }
+
+  // 3.2) Fallback: se não houver índice ou cliente não encontrado, usa links manuais via Sheets API
+  if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
+    try { ctx.sheetsCSV = await readAllLinkedSheetsViaOAuth(ctx.links); } catch(e) { console.error('[AI] erro OAuth sheets:', e); }
+  }
+  // 3.3) Fallback final: gviz público
   if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
     try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, mesNome, ano); } catch(e) {}
   }
@@ -3299,9 +3612,14 @@ async function generateAnalysisEncerramento() {
     var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[programa]||programa;
 
     var ctx = buildAIContextForClient(_ref.cliente);
-    if (btn) { btn.textContent = 'Lendo todas as abas das planilhas...'; }
-    // OAuth primeiro (essencial)
-    try { ctx.sheetsCSV = await readAllLinkedSheetsViaOAuth(ctx.links); } catch(e) { console.error('[AI enc] erro OAuth sheets:', e); }
+    if (btn) { btn.textContent = 'Lendo planilhas do Drive Organize...'; }
+    // 1) Índice automático
+    try { ctx.sheetsCSV = await oeReadAllPlanilhasCliente(_ref.cliente); } catch(e) { console.error('[AI enc] erro index auto:', e); }
+    // 2) Fallback: links manuais via Sheets API
+    if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
+      try { ctx.sheetsCSV = await readAllLinkedSheetsViaOAuth(ctx.links); } catch(e) { console.error('[AI enc] erro OAuth sheets:', e); }
+    }
+    // 3) Fallback final: gviz público
     if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
       try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, null, new Date().getFullYear()); } catch(e) {}
     }
@@ -3686,6 +4004,7 @@ function rptMensal() {
     ((_rmf.cliente && (links.planilhaComercialId || links.planilhaId))?'<button class="rpt-drive-btn" style="background:var(--teal-dark)" onclick="triggerDriveLoad(\'mensal\')">↺ Atualizar via Google Drive</button>':'')+
     (_gToken?'<span style="font-size:11px;color:#22c55e;font-weight:600;">● Google Drive conectado</span>':
       '<span style="font-size:11px;color:var(--muted);">Dados carregados automaticamente. <span style="cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Drive</span> para atualização ao vivo.</span>')+
+    '<button class="rpt-drive-btn" style="margin-left:auto;background:#1B2B6B;font-size:11px;" onclick="abrirModalIndexarDrive()">📁 Drive Organize (' + ((function(){ try { var i = oeGetDriveIndex(); return i.clientes ? Object.keys(i.clientes).length : 0; } catch(e) { return 0; } })()) + ' clientes)</button>'+
     '</div>'+
     '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">Carregando dados da planilha...</div>';
 
@@ -3788,6 +4107,7 @@ function rptEncerramento() {
   var kpiFields = labels.map(function(l,i){ return '<div class="rpt-cfg-field"><label>'+l+'</label><input id="ref-'+kpiKeys[i]+'" value="'+(_ref[kpiKeys[i]]||'')+'" oninput="_ref[\''+kpiKeys[i]+'\']=this.value" placeholder="—"></div>'; }).join('');
 
   var driveBar = '';
+  var nIdxClientes = (function(){ try { var i = oeGetDriveIndex(); return i.clientes ? Object.keys(i.clientes).length : 0; } catch(e) { return 0; } })();
   var driveBarEnc = '<div class="rpt-drive-bar">' +
     (_gToken ?
       '<span style="font-size:11px;color:#22c55e;font-weight:600;">● Google Drive conectado</span>' +
@@ -3798,6 +4118,7 @@ function rptEncerramento() {
       '<span style="font-size:11px;cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Google Drive</span>' +
       '<span style="font-size:11px;color:var(--muted);"> para atualização ao vivo.</span>'
     ) +
+    '<button class="rpt-drive-btn" style="margin-left:auto;background:#1B2B6B;font-size:11px;" onclick="abrirModalIndexarDrive()">📁 Drive Organize (' + nIdxClientes + ' clientes)</button>' +
     '</div>' +
     '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">Carregando dados das planilhas do Drive...</div>';
   var formHtml = driveBarEnc + '<div class="rpt-form-panel">' +
