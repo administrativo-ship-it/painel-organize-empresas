@@ -1869,36 +1869,74 @@ var CLIENT_SHEETS = {
   // Additional clients: configure via Drive Settings button or add here
 };
 
+var _GDRIVE_WEB_CLIENT_ID = '317582081175-hq9fhp12dnv67odbp1lamnb34e3ngvrn.apps.googleusercontent.com';
+var _GDRIVE_OLD_DESKTOP_ID = '317582081175-tk5f2d86tbcqlp507m3jecrmf3utgkmq.apps.googleusercontent.com';
+
 function gClientId() {
-  return localStorage.getItem('oe_gdrive_clientid') || '317582081175-hq9fhp12dnv67odbp1lamnb34e3ngvrn.apps.googleusercontent.com';
+  var stored = localStorage.getItem('oe_gdrive_clientid');
+  if (stored === _GDRIVE_OLD_DESKTOP_ID) {
+    localStorage.removeItem('oe_gdrive_clientid');
+    stored = null;
+  }
+  return stored || _GDRIVE_WEB_CLIENT_ID;
 }
 
 function gDriveInitClient() {
-  if (!window.google || !window.google.accounts) return false;
+  if (!window.google || !window.google.accounts) {
+    console.warn('[GDrive] GIS library not loaded yet');
+    return false;
+  }
   var cid = gClientId();
   if (!cid) return false;
+  console.log('[GDrive] Initializing with client:', cid);
   try {
     _gTokenClient = google.accounts.oauth2.initTokenClient({
       client_id: cid,
       scope: 'https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/drive.readonly',
       callback: function(resp) {
-        if (resp.error) { console.error('Google OAuth error', resp.error); return; }
+        if (resp.error) {
+          console.error('[GDrive] OAuth error:', resp.error, resp.error_description || '');
+          var msg = 'Erro Google OAuth: ' + resp.error;
+          if (resp.error === 'invalid_client') msg += '\n\nVerifique:\n1. Tela de consentimento OAuth configurada (APIs e Serviços > Tela de consentimento OAuth)\n2. Seu e-mail adicionado como usuário de teste\n3. Aguarde 5 min após criar o Client ID';
+          alert(msg);
+          return;
+        }
         _gToken = resp.access_token;
+        console.log('[GDrive] Connected successfully');
         updateDriveBar();
         if (_gDrivePendingCb) { var cb = _gDrivePendingCb; _gDrivePendingCb = null; cb(); }
+      },
+      error_callback: function(err) {
+        console.error('[GDrive] Token error:', err);
+        var tipo = err.type || err.message || JSON.stringify(err);
+        if (tipo === 'popup_closed' || tipo === 'popup_failed_to_open') {
+          console.log('[GDrive] User closed popup or popup blocked');
+        } else {
+          alert('Erro ao conectar Google Drive: ' + tipo + '\n\nVerifique a Tela de Consentimento OAuth no Google Cloud Console.');
+        }
       }
     });
     return true;
-  } catch(e) { return false; }
+  } catch(e) {
+    console.error('[GDrive] initTokenClient error:', e);
+    return false;
+  }
 }
 
 function gDriveSignIn(callback) {
   _gDrivePendingCb = callback || null;
   if (_gToken) { if (callback) callback(); return; }
   if (!_gTokenClient) {
-    if (!gDriveInitClient()) { showGDriveConfigModal(callback); return; }
+    if (!gDriveInitClient()) {
+      if (!window.google || !window.google.accounts) {
+        alert('A biblioteca Google Identity Services ainda não carregou.\n\nRecarregue a página e tente novamente.');
+        return;
+      }
+      showGDriveConfigModal(callback);
+      return;
+    }
   }
-  _gTokenClient.requestAccessToken({ prompt: 'consent' });
+  _gTokenClient.requestAccessToken({ prompt: '' });
 }
 
 function gDriveSignOut() {
