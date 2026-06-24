@@ -2993,6 +2993,106 @@ function extractJSON(text) {
   }
 }
 
+// ═══════════════ DIAGNÓSTICO DE FONTES DE DADOS ═══════════════
+function updateDiagPanel(tipo, statusObj) {
+  var elId = tipo === 'mensal' ? 'ai-diag-panel' : 'ai-diag-panel-enc';
+  var el = document.getElementById(elId);
+  if (!el) return;
+  var drive = statusObj.driveConectado;
+  var driveColor = drive ? '#22c55e' : '#ef4444';
+  var driveTxt = drive ? '✓ Google Drive conectado' : '✗ Google Drive NÃO conectado (essencial para ler planilhas)';
+  var connectBtn = drive ? '' : '<button onclick="conectarDriveExplicito()" style="background:#1B2B6B;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;margin-left:8px;">Conectar agora</button>';
+
+  var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + driveColor + ';"></span><strong style="color:' + driveColor + ';font-size:13px;">' + driveTxt + '</strong>' + connectBtn + '</div>';
+
+  if (statusObj.planilhas && statusObj.planilhas.length) {
+    html += '<div style="font-size:11.5px;color:#41546A;margin-top:6px;"><strong>Planilhas vinculadas (' + statusObj.planilhas.length + '):</strong></div>';
+    statusObj.planilhas.forEach(function(p){
+      var pColor = p.ok ? '#22c55e' : '#ef4444';
+      html += '<div style="font-size:11px;color:#41546A;margin-left:14px;margin-top:4px;">' +
+        '<span style="color:' + pColor + ';">●</span> <strong>' + p.key + '</strong>: ' +
+        (p.ok ? p.tabsCount + ' aba(s) lida(s)' + (p.tabs ? ' [' + p.tabs.slice(0,8).join(', ') + (p.tabs.length>8?', +'+(p.tabs.length-8):'') + ']' : '') : 'falha na leitura') +
+        '</div>';
+    });
+  } else {
+    html += '<div style="font-size:11.5px;color:#41546A;margin-top:6px;">Nenhuma planilha vinculada para este cliente.</div>';
+  }
+
+  if (statusObj.extraidos && Object.keys(statusObj.extraidos).length) {
+    html += '<div style="font-size:11.5px;color:#22c55e;margin-top:6px;"><strong>✓ Valores extraídos:</strong> ' + Object.keys(statusObj.extraidos).map(function(k){return k+'='+statusObj.extraidos[k];}).join(', ') + '</div>';
+  }
+  if (statusObj.aviso) {
+    html += '<div style="font-size:11.5px;color:#b45309;margin-top:6px;">⚠ ' + statusObj.aviso + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function conectarDriveExplicito() {
+  if (typeof _gToken !== 'undefined' && _gToken) { alert('Drive já está conectado.'); return; }
+  gDriveSignIn(function(){
+    alert('Google Drive conectado! Clique em "Testar Fontes" para ver os dados disponíveis.');
+  });
+}
+
+async function testarFontesIA(tipo) {
+  var cache = tipo === 'mensal' ? _rmf : _ref;
+  var elCli = document.getElementById((tipo === 'mensal' ? 'rmf' : 'ref') + '-cliente');
+  if (elCli) cache.cliente = elCli.value;
+  if (!cache.cliente) { alert('Selecione um cliente primeiro.'); return; }
+
+  var elPanel = document.getElementById(tipo === 'mensal' ? 'ai-diag-panel' : 'ai-diag-panel-enc');
+  if (elPanel) elPanel.innerHTML = '<div style="font-size:12px;color:#41546A;">⏳ Testando fontes de dados...</div>';
+
+  var driveOk = typeof _gToken !== 'undefined' && _gToken;
+  var links = getClientLinks(cache.cliente);
+  var sheetKeys = ['planilhaComercial','planilhaFinanceiro','planilhaFluxo','planilhaControladoria','planilha'];
+  var planilhasStatus = [];
+
+  for (var i = 0; i < sheetKeys.length; i++) {
+    var k = sheetKeys[i];
+    var url = links[k];
+    var id = extractSheetId(url);
+    if (!id) continue;
+
+    var status = { key: k, id: id, ok: false, tabsCount: 0, tabs: [] };
+    if (driveOk) {
+      try {
+        var tabs = await gSheetsGetAllSheets(id);
+        status.ok = true;
+        status.tabsCount = tabs.length;
+        status.tabs = tabs;
+      } catch(e) { status.error = e.message; }
+    } else {
+      // Fallback: tenta a 1ª aba pública
+      var csv = await fetchSheetTabCSV(id, null, 500);
+      if (csv) { status.ok = true; status.tabsCount = 1; status.tabs = ['(primeira aba pública)']; }
+    }
+    planilhasStatus.push(status);
+  }
+
+  // Tenta carregar dados via OAuth se conectado
+  var extraidos = {};
+  if (driveOk) {
+    try {
+      await new Promise(function(res){ autoLoadDriveData(tipo, res); setTimeout(res, 20000); });
+      ['fat','meta','cresc','cativos','conv','ticket','cmv','dfixas','dvar','impost','ll'].forEach(function(k){
+        if (cache[k] && cache[k] !== '' && cache[k] !== '0') extraidos[k] = cache[k];
+      });
+    } catch(e) {}
+  }
+
+  var aviso = '';
+  if (!driveOk) aviso = 'Conecte o Drive para ler todas as abas das planilhas via API autenticada.';
+  else if (!Object.keys(extraidos).length) aviso = 'Drive conectado mas os indicadores não foram encontrados nas planilhas. Verifique se as abas têm dados preenchidos para o mês/ano selecionado.';
+
+  updateDiagPanel(tipo, {
+    driveConectado: driveOk,
+    planilhas: planilhasStatus,
+    extraidos: extraidos,
+    aviso: aviso
+  });
+}
+
 // ═══════════════ MENSAL — IA preenche TUDO ═══════════════
 async function generateAnalysisWithAI() {
   var apiKey = _anthropicKey;
@@ -3620,11 +3720,13 @@ function rptMensal() {
     '<div class="rpt-cfg-field"><label>Resumo Executivo do Mês</label><textarea id="rmf-analise" rows="4" oninput="_rmf.analise=this.value" placeholder="Descreva os principais resultados e destaques do mês...">'+(_rmf.analise||'')+'</textarea></div>' +
     '<div class="rpt-cfg-field"><label>Próximos Passos e Recomendações</label><textarea id="rmf-proximos" rows="4" oninput="_rmf.proximos=this.value" placeholder="Ações planejadas e foco para o próximo período...">'+(_rmf.proximos||'')+'</textarea></div>' +
     '</div>' +
-    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;">'+
+    '<div id="ai-diag-panel" style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12.5px;"></div>' +
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">'+
     '<button id="btn-gerar-ia" class="rpt-drive-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;border:none;" onclick="generateAnalysisWithAI()">Gerar Relatório com IA</button>'+
     '<button class="rpt-gen-btn" style="margin-top:0;background:transparent;color:#7C3AED;border:1px solid #7C3AED;" onclick="rptGenerateMensal()">Regenerar Pré-visualização</button>'+
-    '<span style="font-size:11px;color:#8A94A8;">A IA lê planilhas, Trello, FlowUp e preenche tudo automaticamente</span>'+
+    '<button id="btn-testar-fontes" style="background:transparent;color:#1B2B6B;border:1px solid #1B2B6B;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="testarFontesIA(\'mensal\')">🔍 Testar Fontes</button>'+
     '</div>' +
+    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA lê planilhas, Trello, FlowUp e preenche tudo automaticamente. Clique em "Testar Fontes" para ver o que está disponível ANTES de gerar.</div>' +
     '</div>';
 
   document.getElementById('rpt-filters').innerHTML = '';
@@ -3735,11 +3837,13 @@ function rptEncerramento() {
       return fields.map(function(f){ return encMkLink(f.label, f.key); }).join('');
     })() +
     '</div>' +
-    '<div style="display:flex;gap:12px;margin-top:16px;align-items:center;flex-wrap:wrap;">' +
+    '<div id="ai-diag-panel-enc" style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12.5px;"></div>' +
+    '<div style="display:flex;gap:12px;margin-top:10px;align-items:center;flex-wrap:wrap;">' +
     '<button id="btn-gerar-ia-enc" class="rpt-gen-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;font-weight:700;" onclick="generateAnalysisEncerramento()">Gerar Relatório com IA</button>' +
     '<button class="rpt-gen-btn" style="background:transparent;color:#7C3AED;border:1px solid #7C3AED;" onclick="rptGenerateEncerramento()">Regenerar Pré-visualização</button>' +
-    '<span style="font-size:11px;color:#8A94A8;">A IA lê planilhas, Trello, FlowUp e preenche tudo automaticamente</span>' +
+    '<button style="background:transparent;color:#1B2B6B;border:1px solid #1B2B6B;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="testarFontesIA(\'encerramento\')">🔍 Testar Fontes</button>' +
     '</div>' +
+    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA lê planilhas, Trello, FlowUp e preenche tudo automaticamente.</div>' +
     '</div>';
 
   document.getElementById('rpt-filters').innerHTML = '';
