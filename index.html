@@ -281,6 +281,7 @@ tbody tr:hover{background:var(--off);}
 .rpt-action-bar{display:flex;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap;}
 @media print{.rpt-action-bar,.rpt-drive-bar{display:none!important;}}
 .rpt-chart-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px;}
+.rpt-chart-wrap canvas{max-height:240px!important;width:100%!important;}
 .rpt-chart-title{font-size:11.5px;font-weight:700;color:var(--navy);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
 .rpt-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
 @media(max-width:600px){.rpt-charts-grid{grid-template-columns:1fr;}}
@@ -2336,7 +2337,7 @@ function rptBarChart(canvasId, labels, datasets, opts) {
     type: 'bar',
     data: { labels: labels, datasets: datasets },
     options: Object.assign({
-      responsive: true, maintainAspectRatio: true,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } } },
       scales: { y: { beginAtZero: true, ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
     }, opts||{})
@@ -2354,7 +2355,7 @@ function rptDoughnutChart(canvasId, labels, data, colors) {
       datasets: [{ data: data, backgroundColor: colors||['#22c55e','#1B2B6B','#ef4444'], borderWidth: 2 }]
     },
     options: {
-      responsive: true, maintainAspectRatio: true, cutout: '65%',
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
       plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10, padding: 8 } } }
     }
   });
@@ -2395,7 +2396,7 @@ function renderReportCharts(cache, tasks, tipo) {
           type: 'bar',
           data: { labels: dreLabels, datasets: [{ label: 'R$', data: dreVals, backgroundColor: dreColors, borderRadius: 4 }] },
           options: {
-            responsive: true, maintainAspectRatio: true,
+            responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: { y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: function(v){ return 'R$'+(v/1000).toFixed(0)+'k'; } } }, x: { ticks: { font: { size: 9 } } } }
           }
@@ -2421,7 +2422,7 @@ function renderReportCharts(cache, tasks, tipo) {
               ]
             },
             options: {
-              responsive: true, maintainAspectRatio: true,
+              responsive: true, maintainAspectRatio: false,
               plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 12 } } },
               scales: { y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: function(v){ return 'R$'+(v>=1000?((v/1000).toFixed(0)+'k'):v); } } }, x: { ticks: { font: { size: 10 } } } }
             }
@@ -2735,6 +2736,49 @@ function setAnthropicKey(key) {
 // ═══════════════ AI CONTEXT BUILDER ═══════════════
 // Coleta TODOS os dados disponíveis sobre um cliente: links cadastrados,
 // dados de planilha já carregados, tarefas FlowUp filtradas e cards Trello.
+
+// Extrai ID de URL do Google Sheets
+function extractSheetId(url) {
+  if (!url) return null;
+  var m = String(url).match(/\/d\/([a-zA-Z0-9_-]{25,})/);
+  return m ? m[1] : null;
+}
+
+// Busca CSV público de uma planilha do Google Sheets (sem OAuth, requer "Qualquer pessoa com o link")
+async function fetchSheetAsCSV(sheetId, maxChars) {
+  if (!sheetId) return null;
+  var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/export?format=csv';
+  try {
+    var resp = await fetch(url, { redirect: 'follow' });
+    if (!resp.ok) return null;
+    var text = await resp.text();
+    // Sanity check: se for HTML (página de login), o CSV não é público
+    if (text.indexOf('<html') >= 0 || text.indexOf('<!DOCTYPE') >= 0) return null;
+    if (maxChars && text.length > maxChars) text = text.substring(0, maxChars) + '\n…(truncado)';
+    return text;
+  } catch(e) {
+    console.warn('[Sheets] Falha ao buscar CSV', sheetId, e.message);
+    return null;
+  }
+}
+
+// Busca todas as planilhas vinculadas do cliente em paralelo
+async function fetchAllClientSheets(links) {
+  var sheetKeys = ['planilhaComercial','planilhaFinanceiro','planilhaFluxo','planilhaControladoria','planilha'];
+  var jobs = [];
+  sheetKeys.forEach(function(k){
+    var url = links[k];
+    var id = extractSheetId(url);
+    if (id) jobs.push({ key: k, id: id });
+  });
+  var out = {};
+  await Promise.all(jobs.map(async function(j){
+    var csv = await fetchSheetAsCSV(j.id, 8000);
+    if (csv) out[j.key] = csv;
+  }));
+  return out;
+}
+
 function buildAIContextForClient(cliente) {
   var links = (typeof getClientLinks === 'function') ? getClientLinks(cliente) : (_clientLinks[cliente] || {});
   var indicadores = (typeof getClientIndicadores === 'function') ? getClientIndicadores(cliente) : null;
@@ -2756,6 +2800,7 @@ function buildAIContextForClient(cliente) {
     cliente: cliente,
     links: links,
     indicadores: indicadores,
+    sheetsCSV: null, // preenchido async via fetchAllClientSheets
     flowup: {
       total: tasks.length, concluidas: tasksDone.length,
       atrasadas: tasksOver.length, andamento: tasksPend.length,
@@ -2856,7 +2901,9 @@ async function generateAnalysisWithAI() {
   if (!_rmf.cliente) { alert('Selecione um cliente antes de gerar o relatório.'); return; }
 
   // ── 2) Carrega planilhas vinculadas / cache de indicadores ──
-  try { if (typeof autoLoadDriveData === 'function') await autoLoadDriveData(_rmf.cliente, 'mensal'); } catch(e) {}
+  if (typeof _gToken !== 'undefined' && _gToken) {
+    try { await new Promise(function(res){ autoLoadDriveData('mensal', res); setTimeout(res, 15000); }); } catch(e) { console.warn('[AI] autoLoadDriveData falhou:', e); }
+  }
   try { await loadIndicadoresData(); } catch(e) {}
 
   var cliente = _rmf.cliente;
@@ -2866,6 +2913,19 @@ async function generateAnalysisWithAI() {
   var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[programa]||programa;
 
   var ctx = buildAIContextForClient(cliente);
+
+  // ── 3) Busca CSVs públicos das planilhas vinculadas ──
+  var btnEarly = document.getElementById('btn-gerar-ia');
+  if (btnEarly) { btnEarly.textContent = 'Lendo planilhas...'; btnEarly.disabled = true; }
+  try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links); } catch(e) { console.warn('[AI] erro fetch sheets:', e); }
+
+  // ── 4) Valores já extraídos pelo Drive via OAuth (autoLoadDriveData populou _rmf) ──
+  var driveExtraidos = {};
+  ['fat','meta','cresc','cativos','conv','ticket','cmv','dfixas','dvar','impost','ll','cgiro','inadim'].forEach(function(k){
+    if (_rmf[k] && _rmf[k] !== '' && _rmf[k] !== '0' && _rmf[k] !== '0.00') driveExtraidos[k] = _rmf[k];
+  });
+  if (_rmf._historico) driveExtraidos._historico = _rmf._historico;
+  if (_rmf._dreData) driveExtraidos._dreData = _rmf._dreData;
 
   // Define quais campos a IA deve preencher conforme o programa
   var camposEsperados = (programa === 'master') ?
@@ -2892,8 +2952,17 @@ async function generateAnalysisWithAI() {
     '═══════════════════ FONTES DE DADOS ═══════════════════\n\n' +
     '── LINKS CADASTRADOS PARA "' + cliente + '" ──\n' +
     JSON.stringify(ctx.links, null, 2) + '\n\n' +
-    '── DADOS DA PLANILHA DO CLIENTE ──\n' +
-    (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(NENHUM DADO DE PLANILHA DISPONÍVEL)') + '\n\n' +
+    '── VALORES JÁ EXTRAÍDOS PELO DRIVE (PRIORIDADE MÁXIMA — USE ESTES) ──\n' +
+    (Object.keys(driveExtraidos).length ? JSON.stringify(driveExtraidos, null, 2) : '(Drive não retornou valores diretos — use o CSV abaixo)') + '\n\n' +
+    '── CONTEÚDO BRUTO DAS PLANILHAS (CSV) ──\n' +
+    (function(){
+      if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) return '(NENHUMA PLANILHA PÚBLICA ACESSÍVEL — verifique se as planilhas vinculadas estão compartilhadas como "Qualquer pessoa com o link")';
+      return Object.keys(ctx.sheetsCSV).map(function(k){
+        return '### ' + k + ' ###\n' + ctx.sheetsCSV[k];
+      }).join('\n\n');
+    })() + '\n\n' +
+    '── INDICADORES PRÉ-PROCESSADOS (cache do painel) ──\n' +
+    (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(sem cache pré-processado)') + '\n\n' +
     '── TAREFAS FLOWUP DESTE CLIENTE ──\n' +
     'Total: ' + ctx.flowup.total + ' | Concluídas: ' + ctx.flowup.concluidas + ' | Em andamento: ' + ctx.flowup.andamento + ' | Atrasadas: ' + ctx.flowup.atrasadas + '\n' +
     'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
@@ -2904,12 +2973,15 @@ async function generateAnalysisWithAI() {
     'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n' +
     'Cards vencidos: ' + ctx.trello.vencidosNomes.join('; ') + '\n\n' +
     '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
-    '1. Procure nos DADOS DA PLANILHA o registro/linha que corresponda a mês="' + mesNome + '" e ano="' + ano + '". Use chaves como "fat' + ano + '", "meta' + ano + '", "mes' + _rmf.mes + '", "' + mesNome.toLowerCase() + '", "historico", "mensal", etc.\n' +
-    '2. Extraia os valores LITERAIS desses registros. Se o valor não existir, retorne 0 (zero) — JAMAIS invente.\n' +
-    '3. Para os campos do programa "' + programa + '": ' + camposExplicacao + '\n' +
-    '4. Formato numérico: sem R$, sem %, sem separador de milhar, ponto como decimal. Ex.: "98500.00", "23.7".\n' +
-    '5. Em "analise" e "proximos": use APENAS fatos das fontes acima. Cite os números que VOCÊ ENCONTROU, não invente outros. Tom factual, sem floreios.\n' +
-    '6. Se a planilha estiver vazia ou ausente, em "analise" diga claramente: "Dados da planilha indisponíveis para ' + mesNome + '/' + ano + '. Análise baseada apenas em FlowUp e Trello." e preencha os campos numéricos com "0".\n\n' +
+    '1. PRIORIDADE 1 — Se "VALORES JÁ EXTRAÍDOS PELO DRIVE" contém algum valor, USE-O DIRETAMENTE sem reinterpretar. Esses valores foram extraídos via Google Sheets API e são autoritativos.\n' +
+    '2. PRIORIDADE 2 — Para valores ausentes nos VALORES EXTRAÍDOS, ANALISE o CONTEÚDO BRUTO DAS PLANILHAS (CSV). Cada CSV pode ter cabeçalhos como "Mês", "Faturamento", "Meta", "Crescimento", "Ticket Médio", "Conversão", "Clientes", etc.\n' +
+    '3. ENCONTRE no CSV a linha que corresponde a "' + mesNome + '" (ou "' + _rmf.mes + '", "' + String(_rmf.mes).padStart(2,'0') + '/' + ano + '", "' + mesNome.toLowerCase() + '/' + String(ano).slice(-2) + '") e ano="' + ano + '".\n' +
+    '4. Extraia os valores LITERAIS. Converta moeda BR para número (ex.: "R$ 145.800,00" → "145800.00"; "23,7%" → "23.7").\n' +
+    '5. Para os campos do programa "' + programa + '": ' + camposExplicacao + '\n' +
+    '6. Formato numérico: sem R$, sem %, sem separador de milhar, ponto como decimal. Ex.: "98500.00", "23.7".\n' +
+    '7. APENAS se o valor REALMENTE não existir nem nos VALORES EXTRAÍDOS nem no CSV, retorne 0. NUNCA invente.\n' +
+    '8. Em "analise" e "proximos": cite os números reais que você usou. Tom factual, sem floreios.\n' +
+    '9. Se TODAS as fontes estiverem vazias, em "analise" escreva: "Conecte o Google Drive ou compartilhe a planilha como pública para leitura automática dos indicadores." e use 0 nos numéricos.\n\n' +
     'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
     '{' +
     camposEsperados.map(function(k){return '"'+k+'":"NUMERO"';}).join(',') + ',"analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
@@ -2963,16 +3035,27 @@ async function generateAnalysisEncerramento() {
   });
   if (!_ref.cliente) { alert('Selecione um cliente antes de gerar o relatório.'); return; }
 
-  try { if (typeof autoLoadDriveData === 'function') await autoLoadDriveData(_ref.cliente, 'encerramento'); } catch(e) {}
+  if (typeof _gToken !== 'undefined' && _gToken) {
+    try { await new Promise(function(res){ autoLoadDriveData('encerramento', res); setTimeout(res, 15000); }); } catch(e) { console.warn('[AI enc] autoLoadDriveData falhou:', e); }
+  }
   try { await loadIndicadoresData(); } catch(e) {}
 
   var btn = document.getElementById('btn-gerar-ia-enc');
-  if (btn) { btn.disabled = true; btn.textContent = 'Gerando análise...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Lendo planilhas...'; }
   try {
     var programa = _ref.programa || 'mentoring';
     var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[programa]||programa;
 
     var ctx = buildAIContextForClient(_ref.cliente);
+    try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links); } catch(e) { console.warn('[AI enc] erro fetch sheets:', e); }
+    if (btn) { btn.textContent = 'Gerando análise...'; }
+
+    var driveExtraidosEnc = {};
+    ['k1','k2','k3','k4','k5','k6','fat','meta','cresc','cativos','conv','ticket','cmv','dfixas','dvar','impost','ll'].forEach(function(k){
+      if (_ref[k] && _ref[k] !== '' && _ref[k] !== '0' && _ref[k] !== '0.00') driveExtraidosEnc[k] = _ref[k];
+    });
+    if (_ref._historico) driveExtraidosEnc._historico = _ref._historico;
+    if (_ref._dreData) driveExtraidosEnc._dreData = _ref._dreData;
 
     var kpiLabelsMap = {
       mentoring: ['Faturamento do Módulo (R$)','Meta do Módulo (R$)','Crescimento vs. Anterior (%)','Clientes Ativos','Taxa de Conversão (%)','Ticket Médio (R$)'],
@@ -3003,8 +3086,15 @@ async function generateAnalysisEncerramento() {
       '═══════════════════ FONTES DE DADOS ═══════════════════\n\n' +
       '── LINKS CADASTRADOS PARA "' + _ref.cliente + '" ──\n' +
       JSON.stringify(ctx.links, null, 2) + '\n\n' +
-      '── DADOS DA PLANILHA DO CLIENTE ──\n' +
-      (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(NENHUM DADO DE PLANILHA DISPONÍVEL)') + '\n\n' +
+      '── VALORES JÁ EXTRAÍDOS PELO DRIVE (PRIORIDADE MÁXIMA) ──\n' +
+      (Object.keys(driveExtraidosEnc).length ? JSON.stringify(driveExtraidosEnc, null, 2) : '(Drive não retornou valores diretos — use o CSV abaixo)') + '\n\n' +
+      '── CONTEÚDO BRUTO DAS PLANILHAS (CSV) ──\n' +
+      (function(){
+        if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) return '(NENHUMA PLANILHA PÚBLICA ACESSÍVEL)';
+        return Object.keys(ctx.sheetsCSV).map(function(k){ return '### ' + k + ' ###\n' + ctx.sheetsCSV[k]; }).join('\n\n');
+      })() + '\n\n' +
+      '── INDICADORES PRÉ-PROCESSADOS (cache) ──\n' +
+      (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(sem cache)') + '\n\n' +
       '── TAREFAS FLOWUP DESTE CLIENTE ──\n' +
       'Total: ' + ctx.flowup.total + ' | Concluídas: ' + ctx.flowup.concluidas + ' | Em andamento: ' + ctx.flowup.andamento + ' | Atrasadas: ' + ctx.flowup.atrasadas + '\n' +
       'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
@@ -3014,15 +3104,17 @@ async function generateAnalysisEncerramento() {
       'Boards: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
       'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n\n' +
       '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
-      '1. KPIs do programa "' + programa + '": ' + kpisExp + '\n' +
-      '2. Procure NOS DADOS DA PLANILHA os valores que correspondam ao período do módulo (' + (_ref.dtini||'?') + ' a ' + (_ref.dtfim||'?') + '). Use chaves como "modulo' + (_ref.modnum||'') + '", "fat", "meta", "historico", etc.\n' +
-      '3. Extraia valores LITERAIS. Se o valor não existir nas fontes, retorne 0 (zero) — JAMAIS invente.\n' +
-      '4. Para campos NÃO numéricos vazios (modnum, modnom, dtini, dtfim, proxmod, nment): use o valor "(vazio)" indicado nos filtros se realmente não houver dado; SOMENTE preencha "nment" com o número de mentorias concluídas no FlowUp se essa informação for clara.\n' +
-      '5. Valores numéricos sem R$, sem %, sem milhar, ponto como decimal.\n' +
-      '6. Em "analise" e "proximos": use APENAS fatos das fontes. Cite os números que VOCÊ ENCONTROU. Tom factual, sem floreios.\n' +
-      '7. Se a planilha estiver vazia, em "analise" diga claramente: "Dados da planilha indisponíveis. Análise baseada apenas em FlowUp e Trello." e preencha KPIs numéricos com "0".\n\n' +
+      '1. PRIORIDADE 1 — Se "VALORES JÁ EXTRAÍDOS PELO DRIVE" contém algum valor, USE-O DIRETAMENTE. Mapeie para k1..k6 conforme os KPIs do programa.\n' +
+      '2. KPIs do programa "' + programa + '": ' + kpisExp + '\n' +
+      '3. PRIORIDADE 2 — Para valores ausentes, ANALISE o CSV das planilhas. Procure cabeçalhos como "Mês", "Faturamento", "Meta", "Módulo", etc.\n' +
+      '4. Extraia valores LITERAIS. Se REALMENTE não existir nas fontes, retorne 0 — JAMAIS invente.\n' +
+      '5. Campos de TEXTO (modnum, modnom, dtini, dtfim, proxmod): se já preenchidos pelo usuário (nos FILTROS), MANTENHA o valor exato. Se vazios, deixe STRING VAZIA "" — NÃO escreva "(vazio)" literal.\n' +
+      '6. "nment" = nº de mentorias realizadas no período. Se vazio, conte mentorias concluídas no FlowUp (tarefas com "mentoria" no nome) ou retorne "0".\n' +
+      '7. Valores numéricos sem R$, sem %, sem milhar, ponto como decimal.\n' +
+      '8. Em "analise" e "proximos": cite os números reais. Tom factual, sem floreios.\n' +
+      '9. Se TODAS as fontes estiverem vazias: em "analise" escreva "Conecte o Google Drive ou compartilhe a planilha publicamente para leitura automática." e use 0 nos numéricos.\n\n' +
       'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
-      '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"TEXTO","modnom":"TEXTO","dtini":"AAAA-MM-DD","dtfim":"AAAA-MM-DD","proxmod":"TEXTO","nment":"NUM","analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
+      '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"TEXTO_OU_VAZIO","modnom":"TEXTO_OU_VAZIO","dtini":"AAAA-MM-DD_OU_VAZIO","dtfim":"AAAA-MM-DD_OU_VAZIO","proxmod":"TEXTO_OU_VAZIO","nment":"NUM","analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
 
     var text = await callClaude(apiKey, prompt_text, 3000, sysPromptEnc, true);
     var parsed = extractJSON(text);
