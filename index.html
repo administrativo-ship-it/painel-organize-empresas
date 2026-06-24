@@ -538,15 +538,128 @@ tbody tr:hover{background:var(--off);}
 </div>
 
 
-  <!-- PORTAL DO CLIENTE -->
+  <!-- PORTAL DO CLIENTE (Gerador de Portais integrado) -->
   <div class="page" id="page-portal">
-    <div class="sec-hdr"><div class="sec-ttl">Portal do Cliente</div></div>
-    <div style="margin-bottom:16px;">
-      <select class="f-sel" id="portal-cliente" onchange="renderPortal()">
-        <option value="">Selecione o cliente</option>
-      </select>
+
+    <!-- Tabs: Criar/Editar | Portais Existentes -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <button class="rpt-type-btn active" id="ptab-form" onclick="switchPortalTab('form',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M12 4v16m8-8H4"/></svg>
+        Criar / Editar Portal
+      </button>
+      <button class="rpt-type-btn" id="ptab-list" onclick="switchPortalTab('list',this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        Portais Existentes
+      </button>
     </div>
-    <div id="portal-content" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;"></div>
+
+    <!-- TAB: FORMULÁRIO -->
+    <div id="portal-tab-form">
+      <div style="display:grid;grid-template-columns:1.3fr .9fr;gap:20px;align-items:start;">
+        <!-- COLUNA ESQUERDA: FORM -->
+        <div>
+          <!-- Dados do cliente -->
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:16px;">
+            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;">Dados do cliente</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Informações que aparecem no topo do portal.</div>
+            <div class="rpt-form-grid">
+              <div class="rpt-cfg-field"><label>Nome da empresa *</label><input id="p-empresa" placeholder="Ex.: Padaria Pão Quente" oninput="portalUpdatePreview()"></div>
+              <div class="rpt-cfg-field"><label>Serviço contratado</label>
+                <select id="p-servico" onchange="portalUpdatePreview()">
+                  <option value="">— selecione —</option>
+                  <option>Organize Mentoring</option>
+                  <option>Organize Master</option>
+                  <option>Organize Marketing e Vendas</option>
+                  <option>Organize Estratégico</option>
+                  <option>Organize Finance</option>
+                </select>
+              </div>
+              <div class="rpt-cfg-field"><label>Responsável / Mentor(a)</label><input id="p-responsavel" placeholder="Ex.: Wmadson Madson"></div>
+              <div class="rpt-cfg-field"><label>Logo do cliente</label>
+                <div id="p-logo-drop" style="border:2px dashed var(--border);border-radius:8px;padding:16px;text-align:center;cursor:pointer;background:var(--off);transition:border-color .15s;" onclick="document.getElementById('p-logo-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--navy)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="portalDropLogo(event)">
+                  <div style="font-size:12px;font-weight:700;color:var(--navy);">Clique ou arraste a logo</div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:2px;">PNG ou JPG</div>
+                </div>
+                <input type="file" id="p-logo-file" accept="image/*" style="display:none" onchange="portalPickLogo(event)">
+                <div id="p-logo-prev" style="display:none;align-items:center;gap:12px;background:var(--navy);border-radius:8px;padding:10px 14px;margin-top:8px;">
+                  <img id="p-logo-prev-img" style="max-height:48px;max-width:100px;object-fit:contain;background:#fff;border-radius:6px;padding:4px;">
+                  <div style="flex:1"><div style="color:#fff;font-weight:700;font-size:12px;">Logo carregada</div>
+                    <button class="f-clr" style="margin-top:4px;font-size:11px;color:#fff;border-color:rgba(255,255,255,.3);" onclick="portalRemoveLogo()">Remover</button></div>
+                </div>
+              </div>
+              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>Mensagem de boas-vindas (opcional)</label><textarea id="p-boasVindas" rows="2" placeholder="Bem-vindo(a) ao seu portal de mentoria..." oninput="portalUpdatePreview()"></textarea></div>
+            </div>
+          </div>
+
+          <!-- Acessos do cliente -->
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:16px;">
+            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;">Acessos do cliente</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Links das ferramentas. Deixe em branco o que não existir.</div>
+            <div class="rpt-form-grid">
+              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>E-mail(s) do cliente no Google *</label><input id="p-clienteEmail" class="mono" placeholder="email1@gmail.com email2@gmail.com" style="font-family:'DM Mono',monospace;font-size:12px;"><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">E-mail(s) separados por espaço. Usado para mostrar eventos da agenda.</div></div>
+              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>Nome na agenda (filtro) *</label><input id="p-filtro" class="mono" placeholder="Ex.: Movimento Kids" style="font-family:'DM Mono',monospace;font-size:12px;"><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Nome exatamente como aparece no título dos eventos do Google Agenda.</div></div>
+              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>Link de busca da agenda (opcional)</label><input id="p-agendaBusca" class="mono" placeholder="https://calendar.google.com/calendar/u/0/r/search?q=..." style="font-family:'DM Mono',monospace;font-size:12px;"></div>
+              <div class="rpt-cfg-field" style="grid-column:span 2;"><label>Pasta das apostilas (Drive)</label><input id="p-apostilas" class="mono" placeholder="https://drive.google.com/drive/folders/..." style="font-family:'DM Mono',monospace;font-size:12px;"><div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Pasta com apostilas. O portal lista os arquivos automaticamente.</div></div>
+              <div class="rpt-cfg-field"><label>Link do Trello</label><input id="p-trello" class="mono" placeholder="https://trello.com/b/..." style="font-family:'DM Mono',monospace;font-size:12px;"></div>
+              <div class="rpt-cfg-field"><label>Link do Drive</label><input id="p-drive" class="mono" placeholder="https://drive.google.com/drive/folders/..." style="font-family:'DM Mono',monospace;font-size:12px;"></div>
+              <div class="rpt-cfg-field"><label>Link adicional (opcional)</label><input id="p-linkAdicional" class="mono" placeholder="https://..." style="font-family:'DM Mono',monospace;font-size:12px;"></div>
+              <div class="rpt-cfg-field"><label>Nome do link adicional</label><input id="p-linkAdicionalLabel" placeholder="Ex.: Formulário, Pagamentos"></div>
+            </div>
+          </div>
+
+          <!-- Banner de edição -->
+          <div id="p-edit-banner" style="display:none;background:#e8f0ff;border:1px solid #b9d2f7;border-radius:8px;padding:11px 14px;margin-bottom:12px;font-size:13px;color:#0050b3;align-items:center;justify-content:space-between;gap:10px;">
+            <span id="p-edit-banner-txt"></span>
+            <button class="f-clr" onclick="portalResetForm()" style="white-space:nowrap;font-size:11px;">Novo portal</button>
+          </div>
+
+          <!-- Botões -->
+          <button class="sync-btn" style="width:100%;justify-content:center;padding:13px;font-size:14px;" id="p-create-btn" onclick="portalCreate()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg>
+            Criar portal do cliente
+          </button>
+          <div id="p-form-msg" style="display:none;font-size:13px;padding:11px 14px;border-radius:8px;margin-top:12px;"></div>
+
+          <!-- Resultado -->
+          <div id="p-result" style="display:none;background:var(--green-bg);border:1.5px solid #b9e3cc;border-radius:var(--r);padding:22px;margin-top:12px;">
+            <div style="font-size:16px;font-weight:800;color:var(--green);margin-bottom:4px;" id="p-result-title">Portal criado com sucesso!</div>
+            <p style="font-size:12.5px;color:var(--txt2);margin-bottom:10px;">Link exclusivo do cliente — envie no WhatsApp:</p>
+            <div id="p-result-link" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--navy);word-break:break-all;margin-bottom:12px;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="sync-btn" style="font-size:12px;padding:8px 14px;" onclick="portalCopyLink()">Copiar link</button>
+              <a class="sync-btn" id="p-open-link" target="_blank" style="font-size:12px;padding:8px 14px;text-decoration:none;background:var(--teal-dark);">Abrir portal</a>
+              <a class="sync-btn" id="p-wa-link" target="_blank" style="font-size:12px;padding:8px 14px;text-decoration:none;background:#25D366;">Enviar no WhatsApp</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA: PREVIEW -->
+        <div style="position:sticky;top:80px;">
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;">
+            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;">Pré-visualização</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Como o topo do portal vai ficar.</div>
+            <div style="border-radius:10px;overflow:hidden;border:1px solid var(--border);">
+              <div style="background:linear-gradient(135deg,var(--navy),#0a1a7a);padding:20px 16px;color:#fff;display:flex;align-items:center;gap:12px;">
+                <div id="pv-logo" style="width:52px;height:52px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:5px;font-size:22px;font-weight:800;color:var(--navy);">·</div>
+                <div><div id="pv-name" style="font-size:15px;font-weight:800;">Nome da empresa</div><span id="pv-badge" style="display:none;margin-top:4px;background:rgba(139,212,224,.18);border:1px solid rgba(139,212,224,.35);color:var(--teal);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;"></span></div>
+              </div>
+              <div style="display:flex;gap:3px;padding:8px;flex-wrap:wrap;">
+                <span style="font-size:10px;font-weight:600;color:#fff;background:var(--navy);padding:4px 8px;border-radius:6px;">Agenda</span>
+                <span style="font-size:10px;font-weight:600;color:var(--muted);background:var(--off);padding:4px 8px;border-radius:6px;">Gravações</span>
+                <span style="font-size:10px;font-weight:600;color:var(--muted);background:var(--off);padding:4px 8px;border-radius:6px;">Trello</span>
+                <span style="font-size:10px;font-weight:600;color:var(--muted);background:var(--off);padding:4px 8px;border-radius:6px;">Drive</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: LISTA DE PORTAIS -->
+    <div id="portal-tab-list" style="display:none;">
+      <div id="portal-client-list" style="font-size:13px;color:var(--muted);">Carregando portais...</div>
+    </div>
+
   </div>
 
   <!-- REPORTS -->
@@ -3159,46 +3272,272 @@ function selectReportType(type, el) {
   renderReports();
 }
 
-function renderPortalPage() {
-  var sel = document.getElementById('portal-cliente');
-  if (!sel) return;
-  var clients = getUniqueClients();
-  var cur = sel.value;
-  sel.innerHTML = '<option value="">Selecione o cliente</option>' + clients.map(function(c){ return '<option value="'+c+'"'+(c===cur?' selected':'')+'>'+c+'</option>'; }).join('');
-  renderPortal();
+// ═══════════════ PORTAL DO CLIENTE — Gerador de Portais Integrado ═══════════════
+
+var _portalLogoData = '';
+var _portalEditId = null;
+var PORTAL_REPO = 'administrativo-ship-it/painel-organize-empresas';
+var PORTAL_BRANCH = 'main';
+var PORTAL_PAGES = 'https://administrativo-ship-it.github.io/painel-organize-empresas';
+var PORTAL_TOKEN_KEY = 'organize_gh_token';
+
+function portalGhToken() { return localStorage.getItem(PORTAL_TOKEN_KEY) || ''; }
+function portalGhHeaders(t) { return { Authorization: 'token ' + (t || portalGhToken()), Accept: 'application/vnd.github+json' }; }
+
+function switchPortalTab(tab, el) {
+  document.getElementById('portal-tab-form').style.display = tab === 'form' ? '' : 'none';
+  document.getElementById('portal-tab-list').style.display = tab === 'list' ? '' : 'none';
+  document.querySelectorAll('#page-portal .rpt-type-btn').forEach(function(b){ b.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  if (tab === 'list') portalListClients();
 }
 
-function renderPortal() {
-  var sel = document.getElementById('portal-cliente');
-  var container = document.getElementById('portal-content');
-  if (!sel || !container) return;
-  var cliente = sel.value;
-  if (!cliente) {
-    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--muted);font-size:13px;">Selecione um cliente para ver seus links e recursos.</div>';
-    return;
+function renderPortalPage() {
+  if (!portalGhToken()) {
+    var t = prompt('Cole o token GitHub para gerenciar portais:');
+    if (t) { localStorage.setItem(PORTAL_TOKEN_KEY, t); }
   }
-  var links = getClientLinks(cliente);
-  var linkDefs = [
-    {key:'planilhaComercial', label:'Planilha Comercial', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'},
-    {key:'planilhaFinanceiro', label:'Planilha Financeiro', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'},
-    {key:'planilhaFluxo', label:'Fluxo de Caixa', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>'},
-    {key:'planilhaControladoria', label:'Controladoria', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 7h6m0 10v-3m-3 3v-6m-3 6v-1M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>'},
-    {key:'drive', label:'Pasta do Google Drive', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>'},
-    {key:'trello', label:'Board do Trello', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>'},
-    {key:'extra', label:'Link Adicional', icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>'}
-  ];
-  var cards = linkDefs.map(function(d) {
-    var url = links[d.key] || '';
-    var hasUrl = !!url;
-    return '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:all .2s;'+(hasUrl?'':'opacity:.5;')+'">' +
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;color:var(--navy);">' + d.icon + '<strong style="font-size:13px;">' + d.label + '</strong></div>' +
-      (hasUrl ?
-        '<a href="'+url+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;padding:7px 14px;border-radius:var(--r2);font-size:12px;font-weight:600;text-decoration:none;">Abrir <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>' :
-        '<span style="font-size:11.5px;color:var(--muted);font-style:italic;">Nenhum link cadastrado</span>') +
-      '<div style="margin-top:10px;"><input value="'+url+'" placeholder="Cole a URL aqui" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;" oninput="setClientLink(\''+cliente+'\',\''+d.key+'\',this.value);renderPortal()"></div>' +
-      '</div>';
-  }).join('');
-  container.innerHTML = cards;
+  portalUpdatePreview();
+}
+
+function portalUpdatePreview() {
+  var nome = (document.getElementById('p-empresa') || {}).value || '';
+  nome = nome.trim() || 'Nome da empresa';
+  var serv = (document.getElementById('p-servico') || {}).value || '';
+  var pvName = document.getElementById('pv-name');
+  var pvLogo = document.getElementById('pv-logo');
+  var pvBadge = document.getElementById('pv-badge');
+  if (!pvName) return;
+  pvName.textContent = nome;
+  if (_portalLogoData) pvLogo.innerHTML = '<img src="' + _portalLogoData + '" style="max-width:100%;max-height:100%;object-fit:contain;">';
+  else pvLogo.textContent = (nome.charAt(0) || '·').toUpperCase();
+  if (serv) { pvBadge.style.display = 'inline-block'; pvBadge.textContent = serv; }
+  else pvBadge.style.display = 'none';
+}
+
+function portalPickLogo(e) { var f = e.target.files[0]; if (f) portalReadLogo(f); }
+function portalDropLogo(e) { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--border)'; var f = e.dataTransfer.files[0]; if (f) portalReadLogo(f); }
+function portalReadLogo(file) {
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = new Image();
+    img.onload = function() {
+      var max = 320, scale = Math.min(1, max / Math.max(img.width, img.height));
+      var cv = document.createElement('canvas');
+      cv.width = img.width * scale; cv.height = img.height * scale;
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      _portalLogoData = cv.toDataURL('image/png');
+      document.getElementById('p-logo-prev').style.display = 'flex';
+      document.getElementById('p-logo-prev-img').src = _portalLogoData;
+      portalUpdatePreview();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function portalRemoveLogo() {
+  _portalLogoData = '';
+  document.getElementById('p-logo-prev').style.display = 'none';
+  document.getElementById('p-logo-file').value = '';
+  portalUpdatePreview();
+}
+
+function portalSlugify(s) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+}
+var PORTAL_SERVICO_SLUG = {
+  'Organize Mentoring': 'organize-mentoring',
+  'Organize Master': 'organize-master',
+  'Organize Marketing e Vendas': 'organize-marketing-vendas',
+  'Organize Estratégico': 'organize-estrategico',
+  'Organize Finance': 'organize-finance'
+};
+function portalBuildId(servico, empresa) {
+  var pref = PORTAL_SERVICO_SLUG[servico] || 'organizeempresas';
+  return pref + '/' + portalSlugify(empresa);
+}
+
+function portalShowMsg(txt, type) {
+  var el = document.getElementById('p-form-msg');
+  el.style.display = 'block';
+  el.style.background = type === 'err' ? 'var(--red-bg)' : '#e8f0ff';
+  el.style.color = type === 'err' ? 'var(--red)' : '#0050b3';
+  el.style.border = '1px solid ' + (type === 'err' ? '#f3c9c2' : '#b9d2f7');
+  el.textContent = txt;
+}
+
+async function portalCreate() {
+  var empresa = (document.getElementById('p-empresa').value || '').trim();
+  if (!empresa) { portalShowMsg('Informe o nome da empresa.', 'err'); return; }
+  if (!portalGhToken()) { var t = prompt('Cole o token GitHub:'); if (t) localStorage.setItem(PORTAL_TOKEN_KEY, t); else return; }
+
+  var editando = !!_portalEditId;
+  var id = _portalEditId || portalBuildId(document.getElementById('p-servico').value, empresa);
+  var data = {
+    empresa: empresa,
+    servico: document.getElementById('p-servico').value,
+    responsavel: (document.getElementById('p-responsavel').value || '').trim(),
+    logo: _portalLogoData,
+    calendarId: 'primary',
+    clienteEmail: (document.getElementById('p-clienteEmail').value || '').trim(),
+    filtro: (document.getElementById('p-filtro').value || '').trim(),
+    agendaBusca: (document.getElementById('p-agendaBusca').value || '').trim(),
+    apostilas: (document.getElementById('p-apostilas').value || '').trim(),
+    trello: (document.getElementById('p-trello').value || '').trim(),
+    drive: (document.getElementById('p-drive').value || '').trim(),
+    linkAdicional: (document.getElementById('p-linkAdicional').value || '').trim(),
+    linkAdicionalLabel: (document.getElementById('p-linkAdicionalLabel').value || '').trim(),
+    boasVindas: (document.getElementById('p-boasVindas').value || '').trim(),
+    criadoEm: new Date().toISOString()
+  };
+
+  var btn = document.getElementById('p-create-btn');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  portalShowMsg(editando ? 'Salvando alterações...' : 'Salvando portal no servidor...', 'info');
+
+  try {
+    var path = 'clientes/' + id + '.json';
+    var g = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/' + path + '?ref=' + PORTAL_BRANCH, { headers: portalGhHeaders() });
+    var sha = g.ok ? (await g.json()).sha : null;
+    if (sha && !editando) {
+      portalShowMsg('Já existe um portal para "' + id + '". Use Editar na lista para alterá-lo.', 'err');
+      btn.disabled = false; btn.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg> Criar portal do cliente';
+      return;
+    }
+    var content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+    var body = { message: (editando ? 'edita' : 'cria') + ' portal: ' + empresa, content: content, branch: PORTAL_BRANCH };
+    if (sha) body.sha = sha;
+    var r = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/' + path, { method: 'PUT', headers: portalGhHeaders(), body: JSON.stringify(body) });
+    if (!r.ok) { var b = await r.json().catch(function() { return {}; }); throw new Error(b.message || ('HTTP ' + r.status)); }
+    _portalEditId = id;
+    portalShowEditBanner();
+    var link = PORTAL_PAGES + '/' + id;
+    portalShowResult(link, empresa, editando);
+    document.getElementById('p-form-msg').style.display = 'none';
+  } catch (e) {
+    portalShowMsg('Erro ao salvar: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = _portalEditId ?
+      '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 13l4 4L19 7"/></svg> Salvar alterações' :
+      '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg> Criar portal do cliente';
+  }
+}
+
+function portalShowEditBanner() {
+  var b = document.getElementById('p-edit-banner');
+  b.style.display = 'flex';
+  document.getElementById('p-edit-banner-txt').innerHTML = 'Editando portal: <strong>' + _portalEditId + '</strong> — o link permanece o mesmo.';
+}
+
+function portalResetForm() {
+  _portalEditId = null;
+  ['p-empresa','p-servico','p-responsavel','p-clienteEmail','p-filtro','p-agendaBusca','p-apostilas','p-trello','p-drive','p-linkAdicional','p-linkAdicionalLabel','p-boasVindas']
+    .forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  portalRemoveLogo();
+  document.getElementById('p-edit-banner').style.display = 'none';
+  document.getElementById('p-create-btn').innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg> Criar portal do cliente';
+  document.getElementById('p-result').style.display = 'none';
+  document.getElementById('p-form-msg').style.display = 'none';
+  portalUpdatePreview();
+}
+
+function portalShowResult(link, empresa, editando) {
+  var r = document.getElementById('p-result');
+  r.style.display = 'block';
+  document.getElementById('p-result-title').textContent = editando ? 'Portal atualizado com sucesso!' : 'Portal criado com sucesso!';
+  document.getElementById('p-result-link').textContent = link;
+  document.getElementById('p-open-link').href = link;
+  var txt = 'Olá! Este é o seu portal exclusivo de mentoria da Organize Empresas. Aqui você acessa agenda, gravações, Trello e Drive em um só lugar:\n' + link;
+  document.getElementById('p-wa-link').href = 'https://wa.me/?text=' + encodeURIComponent(txt);
+  r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function portalCopyLink() {
+  var link = document.getElementById('p-result-link').textContent;
+  navigator.clipboard.writeText(link).then(function() { portalShowMsg('Link copiado!', 'info'); });
+}
+
+async function portalEditClient(id) {
+  if (!portalGhToken()) { var t = prompt('Cole o token GitHub:'); if (t) localStorage.setItem(PORTAL_TOKEN_KEY, t); else return; }
+  portalShowMsg('Carregando portal para edição...', 'info');
+  switchPortalTab('form', document.getElementById('ptab-form'));
+  try {
+    var r = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/clientes/' + id + '.json?ref=' + PORTAL_BRANCH, { headers: portalGhHeaders() });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var info = await r.json();
+    var d = JSON.parse(decodeURIComponent(escape(atob((info.content || '').replace(/\n/g, '')))));
+    document.getElementById('p-empresa').value = d.empresa || '';
+    document.getElementById('p-servico').value = d.servico || '';
+    document.getElementById('p-responsavel').value = d.responsavel || '';
+    document.getElementById('p-clienteEmail').value = d.clienteEmail || '';
+    document.getElementById('p-filtro').value = d.filtro || '';
+    document.getElementById('p-agendaBusca').value = d.agendaBusca || '';
+    document.getElementById('p-apostilas').value = d.apostilas || '';
+    document.getElementById('p-trello').value = d.trello || '';
+    document.getElementById('p-drive').value = d.drive || '';
+    document.getElementById('p-linkAdicional').value = d.linkAdicional || '';
+    document.getElementById('p-linkAdicionalLabel').value = d.linkAdicionalLabel || '';
+    document.getElementById('p-boasVindas').value = d.boasVindas || '';
+    _portalLogoData = d.logo || '';
+    if (_portalLogoData) {
+      document.getElementById('p-logo-prev').style.display = 'flex';
+      document.getElementById('p-logo-prev-img').src = _portalLogoData;
+    } else { portalRemoveLogo(); }
+    _portalEditId = id;
+    portalShowEditBanner();
+    document.getElementById('p-create-btn').innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 13l4 4L19 7"/></svg> Salvar alterações';
+    document.getElementById('p-result').style.display = 'none';
+    portalUpdatePreview();
+    document.getElementById('p-form-msg').style.display = 'none';
+  } catch (e) { portalShowMsg('Erro ao carregar: ' + e.message, 'err'); }
+}
+
+async function portalDeleteClient(id) {
+  if (!portalGhToken()) return;
+  if (!confirm('Tem certeza que deseja EXCLUIR o portal "' + id + '"?\n\nO link deixará de funcionar.')) return;
+  portalShowMsg('Excluindo portal...', 'info');
+  try {
+    var path = 'clientes/' + id + '.json';
+    var g = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/' + path + '?ref=' + PORTAL_BRANCH, { headers: portalGhHeaders() });
+    if (!g.ok) throw new Error('Portal não encontrado (HTTP ' + g.status + ')');
+    var sha = (await g.json()).sha;
+    var r = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/' + path, {
+      method: 'DELETE', headers: portalGhHeaders(),
+      body: JSON.stringify({ message: 'exclui portal: ' + id, sha: sha, branch: PORTAL_BRANCH })
+    });
+    if (!r.ok) { var b = await r.json().catch(function() { return {}; }); throw new Error(b.message || ('HTTP ' + r.status)); }
+    if (_portalEditId === id) portalResetForm();
+    portalShowMsg('Portal "' + id + '" excluído.', 'info');
+    portalListClients();
+  } catch (e) { portalShowMsg('Erro ao excluir: ' + e.message, 'err'); }
+}
+
+async function portalListClients() {
+  var box = document.getElementById('portal-client-list');
+  if (!box) return;
+  if (!portalGhToken()) { box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Conecte o GitHub para listar os portais. <button class="f-clr" onclick="var t=prompt(\'Cole o token GitHub:\');if(t){localStorage.setItem(\'organize_gh_token\',t);portalListClients();}">Conectar</button></div>'; return; }
+  box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Carregando portais...</div>';
+  try {
+    var r = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/git/trees/' + PORTAL_BRANCH + '?recursive=1', { headers: portalGhHeaders() });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var tree = (await r.json()).tree || [];
+    var ids = tree.filter(function(t) { return t.type === 'blob' && t.path.indexOf('clientes/') === 0 && t.path.endsWith('.json'); })
+      .map(function(t) { return t.path.slice('clientes/'.length, -5); });
+    if (!ids.length) { box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Nenhum portal criado ainda.</div>'; return; }
+    ids.sort();
+    box.innerHTML = ids.map(function(id) {
+      var link = PORTAL_PAGES + '/' + id;
+      return '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--r2);margin-bottom:8px;background:var(--white);">' +
+        '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16" style="flex-shrink:0;color:var(--navy);"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197v-1"/></svg>' +
+        '<strong style="flex:1;font-size:13px;color:var(--navy);">' + id + '</strong>' +
+        '<button class="f-clr" style="font-size:11px;" onclick="portalEditClient(\'' + id + '\')">Editar</button>' +
+        '<button class="f-clr" style="font-size:11px;color:var(--red);border-color:#f3c9c2;" onclick="portalDeleteClient(\'' + id + '\')">Excluir</button>' +
+        '<a href="' + link + '" target="_blank" style="font-size:11px;color:var(--teal-dark);font-weight:700;text-decoration:none;">abrir</a>' +
+        '</div>';
+    }).join('');
+  } catch (e) { box.innerHTML = '<div style="color:var(--red);font-size:13px;">Erro: ' + e.message + '</div>'; }
 }
 
 function renderReports() {
