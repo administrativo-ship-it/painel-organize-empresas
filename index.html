@@ -574,7 +574,7 @@ tbody tr:hover{background:var(--off);}
                   <option>Organize Finance</option>
                 </select>
               </div>
-              <div class="rpt-cfg-field"><label>Responsável / Mentor(a)</label><input id="p-responsavel" placeholder="Ex.: Wmadson Madson"></div>
+              <div class="rpt-cfg-field"><label>Responsável / Mentor(a)</label><input id="p-responsavel" placeholder="Ex.: Wmadson"></div>
               <div class="rpt-cfg-field"><label>Logo do cliente</label>
                 <div id="p-logo-drop" style="border:2px dashed var(--border);border-radius:8px;padding:16px;text-align:center;cursor:pointer;background:var(--off);transition:border-color .15s;" onclick="document.getElementById('p-logo-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--navy)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="portalDropLogo(event)">
                   <div style="font-size:12px;font-weight:700;color:var(--navy);">Clique ou arraste a logo</div>
@@ -3871,6 +3871,8 @@ function showPage(name, el) {
   document.getElementById('page-'+name).classList.add('active');
   if (el) el.classList.add('active');
   document.getElementById('page-title').textContent = pageTitles[name]||name;
+  var fb = document.querySelector('.filter-bar');
+  if (fb) fb.style.display = (name === 'portal' || name === 'reports') ? 'none' : '';
   if (name === 'reports') renderReports();
   if (name === 'portal') renderPortalPage();
 }
