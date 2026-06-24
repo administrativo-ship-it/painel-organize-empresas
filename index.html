@@ -2728,95 +2728,176 @@ function setAnthropicKey(key) {
   localStorage.setItem('organize_anthropic_key', key);
 }
 
+// ═══════════════ AI CONTEXT BUILDER ═══════════════
+// Coleta TODOS os dados disponíveis sobre um cliente: links cadastrados,
+// dados de planilha já carregados, tarefas FlowUp filtradas e cards Trello.
+function buildAIContextForClient(cliente) {
+  var links = (typeof getClientLinks === 'function') ? getClientLinks(cliente) : (_clientLinks[cliente] || {});
+  var indicadores = (typeof getClientIndicadores === 'function') ? getClientIndicadores(cliente) : null;
+
+  var tasks = rptTasksForClient(cliente) || [];
+  var tasksDone = tasks.filter(function(t){return t.isDone;});
+  var tasksOver = tasks.filter(function(t){return t.isOver;});
+  var tasksPend = tasks.filter(function(t){return !t.isDone && !t.isOver;});
+
+  // Trello filtrado por cliente
+  var cn = (cliente||'').toLowerCase();
+  var tBoards = (S.trelloBoards||[]).filter(function(b){ return !cn || b.name.toLowerCase().indexOf(cn) >= 0; });
+  var boardIds = {}; tBoards.forEach(function(b){ boardIds[b.id]=true; });
+  var tCards = (S.trelloCards||[]).filter(function(c){ return boardIds[c.boardId]; });
+  var tCardsDone = tCards.filter(function(c){return c.dueComplete;});
+  var tCardsOver = tCards.filter(function(c){return c.isOver;});
+
+  return {
+    cliente: cliente,
+    links: links,
+    indicadores: indicadores,
+    flowup: {
+      total: tasks.length, concluidas: tasksDone.length,
+      atrasadas: tasksOver.length, andamento: tasksPend.length,
+      concluidasNomes: tasksDone.slice(0,8).map(function(t){return t.name;}),
+      atrasadasNomes: tasksOver.slice(0,8).map(function(t){return t.name+' ('+t.daysLate+'d atraso)';}),
+      andamentoNomes: tasksPend.slice(0,8).map(function(t){return t.name;})
+    },
+    trello: {
+      boards: tBoards.length, cards: tCards.length,
+      concluidos: tCardsDone.length, vencidos: tCardsOver.length,
+      boardsNomes: tBoards.map(function(b){return b.name;}),
+      vencidosNomes: tCardsOver.slice(0,5).map(function(c){return c.name;})
+    }
+  };
+}
+
+async function callClaude(apiKey, userPrompt, maxTokens) {
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: maxTokens || 2000,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+  if (!resp.ok) {
+    var err = await resp.json().catch(function(){return{};});
+    throw new Error((err.error && err.error.message) || 'Erro na API: ' + resp.status);
+  }
+  var data = await resp.json();
+  return (data.content[0].text || '').trim();
+}
+
+function extractJSON(text) {
+  // Remove markdown fences se houver
+  var t = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  // Procura o primeiro { até o último }
+  var first = t.indexOf('{');
+  var last = t.lastIndexOf('}');
+  if (first >= 0 && last > first) t = t.substring(first, last + 1);
+  return JSON.parse(t);
+}
+
+// ═══════════════ MENSAL — IA preenche TUDO ═══════════════
 async function generateAnalysisWithAI() {
   var apiKey = _anthropicKey;
   if (!apiKey) {
     apiKey = prompt('Cole aqui sua chave da API Anthropic (Claude):\n(será salva localmente para uso futuro)');
     if (!apiKey) return;
     setAnthropicKey(apiKey.trim());
+    apiKey = apiKey.trim();
   }
+
+  // Tenta carregar dados de planilhas/Drive automaticamente antes de chamar a IA
+  try { if (typeof autoLoadDriveData === 'function') await autoLoadDriveData(_rmf.cliente, 'mensal'); } catch(e) {}
+  try { await loadIndicadoresData(); } catch(e) {}
 
   var cliente = _rmf.cliente || 'Cliente';
   var mesNome = mesNomeStr(_rmf.mes);
   var ano = _rmf.ano;
-  var programa = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[_rmf.programa]||_rmf.programa;
+  var programa = _rmf.programa || 'mentoring';
+  var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[programa]||programa;
 
-  var fat = _rmf.fat ? 'R$ ' + parseFloat(_rmf.fat).toLocaleString('pt-BR',{minimumFractionDigits:2}) : 'não informado';
-  var meta = _rmf.meta ? 'R$ ' + parseFloat(_rmf.meta).toLocaleString('pt-BR',{minimumFractionDigits:2}) : 'não informada';
-  var cresc = _rmf.cresc ? _rmf.cresc + '%' : 'não informado';
-  var conv = _rmf.conv ? _rmf.conv + '%' : 'não informado';
-  var ticket = _rmf.ticket ? 'R$ ' + parseFloat(_rmf.ticket).toLocaleString('pt-BR',{minimumFractionDigits:2}) : 'não informado';
-  var pctMeta2 = (_rmf.fat && _rmf.meta) ? Math.round(parseFloat(_rmf.fat)/parseFloat(_rmf.meta)*100) + '%' : '—';
+  var ctx = buildAIContextForClient(cliente);
 
-  var tasks2 = rptTasksForClient(cliente);
-  var doneTasks = tasks2.filter(function(t){return t.isDone;});
-  var overTasks = tasks2.filter(function(t){return t.isOver;});
-  var pendingTasks = tasks2.filter(function(t){return !t.isDone&&!t.isOver;});
+  // Define quais campos a IA deve preencher conforme o programa
+  var camposEsperados = (programa === 'master') ?
+    ['fat','cmv','dfixas','dvar','impost','ll','cgiro','inadim'] :
+    ['fat','meta','cresc','cativos','conv','ticket'];
 
-  var tasksSummary = 'FlowUp — '+doneTasks.length+' concluídas, '+pendingTasks.length+' em andamento, '+overTasks.length+' atrasadas.';
-  if (doneTasks.length) tasksSummary += ' Concluídas: ' + doneTasks.slice(0,5).map(function(t){return t.name;}).join('; ') + (doneTasks.length>5?' e mais '+(doneTasks.length-5)+'…':'') + '.';
-  if (overTasks.length) tasksSummary += ' Atrasadas: ' + overTasks.slice(0,3).map(function(t){return t.name+' ('+t.daysLate+'d)';}).join('; ') + '.';
+  var camposExplicacao = (programa === 'master') ?
+    'fat=Faturamento Bruto (R$, número), cmv=CMV (R$, número), dfixas=Despesas Fixas (R$), dvar=Despesas Variáveis (R$), impost=Impostos (R$), ll=Lucro Líquido (R$), cgiro=Capital de Giro (R$), inadim=Inadimplência (% sem o símbolo)' :
+    'fat=Faturamento do Mês (R$, número), meta=Meta do Mês (R$, número), cresc=Crescimento vs. ano anterior (% sem símbolo), cativos=Clientes Ativos (número inteiro), conv=Taxa de Conversão (% sem símbolo), ticket=Ticket Médio (R$, número)';
 
-  var prompt2 = 'Você é um consultor de negócios da Organize Empresas, empresa de mentoria e consultoria empresarial.\n\n'+
-    'Gere o Resumo Executivo e os Próximos Passos para o Relatório Mensal do cliente '+cliente+' referente a '+mesNome+'/'+ano+' (programa: '+programa+').\n\n'+
-    'DADOS DO MÊS:\n'+
-    '- Faturamento: '+fat+'\n'+
-    '- Meta: '+meta+'\n'+
-    '- % da Meta atingida: '+pctMeta2+'\n'+
-    '- Crescimento vs. ano anterior: '+cresc+'\n'+
-    '- Taxa de Conversão: '+conv+'\n'+
-    '- Ticket Médio: '+ticket+'\n'+
-    '- '+tasksSummary+'\n\n'+
-    'INSTRUÇÕES:\n'+
-    'Responda EXATAMENTE neste formato JSON (sem markdown, sem backticks):\n'+
-    '{"resumo":"[3-4 frases de resumo executivo destacando os principais resultados do mês, mencionando os números, em tom consultivo e profissional]","proximos":"[3-4 frases com os próximos passos e recomendações concretas baseadas nos dados apresentados]"}\n\n'+
-    'Escreva em português brasileiro, tom profissional, linguagem direta.';
+  var prompt2 = 'Você é um consultor sênior de negócios da Organize Empresas, especialista em mentoria empresarial. Sua tarefa é GERAR AUTOMATICAMENTE um relatório mensal completo a partir dos dados disponíveis sobre o cliente.\n\n' +
+    'CLIENTE: ' + cliente + '\n' +
+    'PROGRAMA: ' + programaLabel + '\n' +
+    'PERÍODO: ' + mesNome + '/' + ano + '\n\n' +
+    'FONTES DE DADOS DISPONÍVEIS:\n' +
+    '═══ LINKS CADASTRADOS ═══\n' +
+    JSON.stringify(ctx.links, null, 2) + '\n\n' +
+    '═══ INDICADORES DA PLANILHA (carregados via Drive) ═══\n' +
+    (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(sem dados de planilha disponíveis)') + '\n\n' +
+    '═══ TAREFAS FLOWUP ═══\n' +
+    'Total: ' + ctx.flowup.total + ' | Concluídas: ' + ctx.flowup.concluidas + ' | Em andamento: ' + ctx.flowup.andamento + ' | Atrasadas: ' + ctx.flowup.atrasadas + '\n' +
+    'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
+    'Em andamento: ' + ctx.flowup.andamentoNomes.join('; ') + '\n' +
+    'Atrasadas: ' + ctx.flowup.atrasadasNomes.join('; ') + '\n\n' +
+    '═══ PLANEJAMENTO TRELLO ═══\n' +
+    'Boards: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
+    'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n' +
+    'Cards vencidos: ' + ctx.trello.vencidosNomes.join('; ') + '\n\n' +
+    'INSTRUÇÕES:\n' +
+    '1. Analise TODOS os dados acima (links, planilhas, Drive, Trello, FlowUp).\n' +
+    '2. EXTRAIA dos dados das planilhas (campo indicadores) os valores numéricos para os indicadores do mês de referência (' + mesNome + '/' + ano + '). Procure por dados que correspondam ao mês/ano específicos.\n' +
+    '3. Se a planilha tiver "fat2025", "fat2026", "meta2026", "cresc", etc., use esses valores.\n' +
+    '4. Se algum indicador não estiver disponível nas fontes, ESTIME com base nas tendências e nos demais dados (ex.: se há tarefas concluídas e meta atingida em meses anteriores, projete coerentemente). Nunca deixe vazio.\n' +
+    '5. Para o programa "' + programa + '", os campos a preencher são: ' + camposExplicacao + '\n' +
+    '6. Gere uma análise executiva (3-5 frases) interpretando os resultados, e próximos passos (3-5 ações concretas).\n\n' +
+    'RESPONDA APENAS COM ESTE JSON VÁLIDO (sem markdown, sem backticks, sem texto antes ou depois):\n' +
+    '{\n' +
+    camposEsperados.map(function(k){return '  "'+k+'": "valor_numérico_como_string"';}).join(',\n') + ',\n' +
+    '  "analise": "Resumo executivo de 3-5 frases interpretando os resultados do mês, mencionando números e contexto.",\n' +
+    '  "proximos": "3-5 próximos passos concretos e acionáveis baseados nos dados, com prioridades claras."\n' +
+    '}\n\n' +
+    'Use ponto como separador decimal. Não use R$, %, vírgula como decimal nem milhar nos valores numéricos. Apenas o número (ex.: "98500.00", "23.7").';
 
   var btn = document.getElementById('btn-gerar-ia');
   if (btn) { btn.textContent = 'Gerando análise...'; btn.disabled = true; }
 
   try {
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 600,
-        messages: [{ role: 'user', content: prompt2 }]
-      })
+    var text = await callClaude(apiKey, prompt2, 2500);
+    var parsed = extractJSON(text);
+
+    // Preenche todos os campos esperados em _rmf e nos inputs
+    camposEsperados.forEach(function(k){
+      if (parsed[k] !== undefined && parsed[k] !== null && parsed[k] !== '') {
+        _rmf[k] = String(parsed[k]);
+        var el = document.getElementById('rmf-'+k);
+        if (el) el.value = _rmf[k];
+      }
     });
 
-    if (!resp.ok) {
-      var err = await resp.json();
-      throw new Error(err.error?.message || 'Erro na API: ' + resp.status);
-    }
-
-    var data = await resp.json();
-    var text = data.content[0].text.trim();
-    var parsed = JSON.parse(text);
-
-    _rmf.analise = parsed.resumo || '';
+    _rmf.analise = parsed.analise || parsed.resumo || '';
     _rmf.proximos = parsed.proximos || '';
-
     var analiseEl = document.getElementById('rmf-analise');
     var proximosEl = document.getElementById('rmf-proximos');
     if (analiseEl) analiseEl.value = _rmf.analise;
     if (proximosEl) proximosEl.value = _rmf.proximos;
 
-    if (btn) { btn.textContent = '✔ Análise gerada'; btn.disabled = false; }
+    if (btn) { btn.textContent = '✔ Relatório gerado pela IA'; btn.disabled = false; }
     setTimeout(function(){ rptGenerateMensal(); }, 200);
   } catch(e) {
     if (btn) { btn.textContent = '✗ Erro — tente novamente'; btn.disabled = false; }
     console.error('Erro AI:', e);
-    alert('Erro ao gerar análise: ' + e.message + '\n\nVerifique sua chave de API Anthropic em: claude.ai → Settings → API Keys');
+    alert('Erro ao gerar relatório: ' + e.message + '\n\nVerifique sua chave de API Anthropic em: claude.ai → Settings → API Keys');
   }
 }
 
+// ═══════════════ ENCERRAMENTO — IA preenche TUDO ═══════════════
 async function generateAnalysisEncerramento() {
   var apiKey = _anthropicKey;
   if (!apiKey) {
@@ -2825,43 +2906,104 @@ async function generateAnalysisEncerramento() {
     _anthropicKey = apiKey;
     try { localStorage.setItem('organize_anthropic_key', apiKey); } catch(e) {}
   }
+
+  try { if (typeof autoLoadDriveData === 'function') await autoLoadDriveData(_ref.cliente, 'encerramento'); } catch(e) {}
+  try { await loadIndicadoresData(); } catch(e) {}
+
   var btn = document.getElementById('btn-gerar-ia-enc');
   if (btn) { btn.disabled = true; btn.textContent = 'Gerando análise...'; }
   try {
-    var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[_ref.programa]||_ref.programa;
-    var kpiInfo = ['k1','k2','k3','k4','k5','k6'].map(function(k,i){ return _ref[k] || ''; }).join(', ');
-    var tasks = rptTasksForClient(_ref.cliente);
-    var tasksDone = tasks.filter(function(t){ return t.isDone; }).length;
-    var tasksOver = tasks.filter(function(t){ return t.isOver; }).length;
-    var prompt_text = 'Você é consultor da Organize Empresas. Gere uma análise executiva de encerramento de módulo para o cliente '+(_ref.cliente||'N/A')+
-      ', programa '+programaLabel+', módulo nº '+(_ref.modnum||'N/A')+' ('+(_ref.modnom||'N/A')+').'+
-      ' Período: '+(_ref.dtini||'?')+' a '+(_ref.dtfim||'?')+'. KPIs: '+kpiInfo+'.'+
-      ' Tarefas FlowUp: '+tasks.length+' total, '+tasksDone+' concluídas, '+tasksOver+' atrasadas.'+
-      ' Mentorias realizadas: '+(_ref.nment||'N/A')+'. Próximo módulo: '+(_ref.proxmod||'N/A')+'.'+
-      ' Escreva em PT-BR, 2-3 parágrafos objetivos analisando resultados do módulo, pontos fortes, oportunidades de melhoria.'+
-      ' Depois escreva 3-5 próximos passos concretos para o próximo módulo. Use tom profissional e direto.';
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1500,messages:[{role:'user',content:prompt_text}]})
+    var programa = _ref.programa || 'mentoring';
+    var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[programa]||programa;
+
+    var ctx = buildAIContextForClient(_ref.cliente);
+
+    var kpiLabelsMap = {
+      mentoring: ['Faturamento do Módulo (R$)','Meta do Módulo (R$)','Crescimento vs. Anterior (%)','Clientes Ativos','Taxa de Conversão (%)','Ticket Médio (R$)'],
+      master: ['Faturamento Bruto (R$)','Lucro Líquido (R$)','Margem de Lucro (%)','Ponto de Equilíbrio (R$)','Capital de Giro (R$)','Inadimplência (%)'],
+      marketing: ['Faturamento do Módulo (R$)','Meta do Módulo (R$)','Leads Gerados','Taxa de Conversão (%)','Ticket Médio (R$)','ROI das Ações (%)']
+    };
+    var kpiLabels = kpiLabelsMap[programa] || kpiLabelsMap.mentoring;
+    var kpiKeys = ['k1','k2','k3','k4','k5','k6'];
+    var kpisExp = kpiKeys.map(function(k,i){return k+'='+kpiLabels[i];}).join('; ');
+
+    var prompt_text = 'Você é consultor sênior da Organize Empresas. Sua tarefa é GERAR AUTOMATICAMENTE um Relatório de Encerramento de Módulo completo a partir dos dados disponíveis sobre o cliente.\n\n' +
+      'CLIENTE: ' + (_ref.cliente || 'N/A') + '\n' +
+      'PROGRAMA: ' + programaLabel + '\n' +
+      'MÓDULO Nº: ' + (_ref.modnum || 'a inferir') + '\n' +
+      'NOME DO MÓDULO: ' + (_ref.modnom || 'a inferir') + '\n' +
+      'PERÍODO: ' + (_ref.dtini || '?') + ' a ' + (_ref.dtfim || '?') + '\n' +
+      'PRÓXIMO MÓDULO: ' + (_ref.proxmod || 'a inferir') + '\n' +
+      'MENTORIAS REALIZADAS: ' + (_ref.nment || 'a inferir') + '\n\n' +
+      'FONTES DE DADOS DISPONÍVEIS:\n' +
+      '═══ LINKS CADASTRADOS ═══\n' +
+      JSON.stringify(ctx.links, null, 2) + '\n\n' +
+      '═══ INDICADORES DA PLANILHA ═══\n' +
+      (ctx.indicadores ? JSON.stringify(ctx.indicadores, null, 2) : '(sem dados de planilha disponíveis)') + '\n\n' +
+      '═══ TAREFAS FLOWUP DO CLIENTE ═══\n' +
+      'Total: ' + ctx.flowup.total + ' | Concluídas: ' + ctx.flowup.concluidas + ' | Em andamento: ' + ctx.flowup.andamento + ' | Atrasadas: ' + ctx.flowup.atrasadas + '\n' +
+      'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
+      'Em andamento: ' + ctx.flowup.andamentoNomes.join('; ') + '\n' +
+      'Atrasadas: ' + ctx.flowup.atrasadasNomes.join('; ') + '\n\n' +
+      '═══ PLANEJAMENTO TRELLO ═══\n' +
+      'Boards: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
+      'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n\n' +
+      'INSTRUÇÕES:\n' +
+      '1. Analise TODOS os dados acima (links, planilhas, Drive, Trello, FlowUp).\n' +
+      '2. Extraia/calcule os valores dos KPIs do módulo a partir das planilhas e demais fontes. Se ausente, ESTIME com base nas tendências.\n' +
+      '3. KPIs deste programa: ' + kpisExp + '\n' +
+      '4. Se modnum, modnom, dtini, dtfim, proxmod ou nment não estiverem preenchidos, INFIRA valores plausíveis a partir do contexto (ex.: módulo 4 - Estrutura Financeira; nment = nº de mentorias concluídas no FlowUp).\n' +
+      '5. Gere uma análise executiva (3-5 parágrafos) com resultados, pontos fortes, oportunidades. Em seguida 4-6 próximos passos concretos.\n\n' +
+      'RESPONDA APENAS COM ESTE JSON VÁLIDO (sem markdown, sem backticks):\n' +
+      '{\n' +
+      '  "k1": "valor numérico", "k2": "valor numérico", "k3": "valor numérico",\n' +
+      '  "k4": "valor numérico", "k5": "valor numérico", "k6": "valor numérico",\n' +
+      '  "modnum": "número do módulo",\n' +
+      '  "modnom": "nome do módulo",\n' +
+      '  "dtini": "AAAA-MM-DD",\n' +
+      '  "dtfim": "AAAA-MM-DD",\n' +
+      '  "proxmod": "nome do próximo módulo",\n' +
+      '  "nment": "número inteiro de mentorias",\n' +
+      '  "analise": "Análise executiva de 3-5 parágrafos do módulo, com resultados, pontos fortes e oportunidades.",\n' +
+      '  "proximos": "4-6 próximos passos concretos para o próximo módulo, em formato de lista numerada ou bullets dentro da string."\n' +
+      '}\n\n' +
+      'Use ponto como separador decimal nos números, sem R$, sem %, sem milhar.';
+
+    var text = await callClaude(apiKey, prompt_text, 3000);
+    var parsed = extractJSON(text);
+
+    // KPIs
+    ['k1','k2','k3','k4','k5','k6'].forEach(function(k){
+      if (parsed[k] !== undefined && parsed[k] !== null && parsed[k] !== '') {
+        _ref[k] = String(parsed[k]);
+        var el = document.getElementById('ref-'+k);
+        if (el) el.value = _ref[k];
+      }
     });
-    var data = await resp.json();
-    if (data.error) throw new Error(data.error.message);
-    var text = data.content[0].text;
-    var parts = text.split(/próximos?\s*passos?/i);
-    var analise = parts[0].trim();
-    var proximos = parts.length > 1 ? parts[1].trim() : '';
-    _ref.analise = analise;
-    _ref.proximos = proximos || _ref.proximos;
+
+    // Demais campos
+    ['modnum','modnom','dtini','dtfim','proxmod','nment'].forEach(function(k){
+      if (parsed[k] !== undefined && parsed[k] !== null && parsed[k] !== '') {
+        _ref[k] = String(parsed[k]);
+        var el = document.getElementById('ref-'+k);
+        if (el) el.value = _ref[k];
+      }
+    });
+
+    _ref.analise = parsed.analise || '';
+    _ref.proximos = parsed.proximos || '';
     var ta1 = document.getElementById('ref-analise');
     var ta2 = document.getElementById('ref-proximos');
-    if (ta1) ta1.value = analise;
-    if (ta2 && proximos) ta2.value = proximos;
+    if (ta1) ta1.value = _ref.analise;
+    if (ta2) ta2.value = _ref.proximos;
+
     rptGenerateEncerramento();
+    if (btn) { btn.disabled = false; btn.textContent = '✔ Relatório gerado pela IA'; }
   } catch(e) {
-    alert('Erro ao gerar análise: ' + e.message);
+    console.error('Erro AI encerramento:', e);
+    alert('Erro ao gerar relatório: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Gerar Análise com IA'; }
   }
-  if (btn) { btn.disabled = false; btn.textContent = 'Gerar Análise com IA'; }
 }
 
 // ════════ NOVO GERADOR DE RELATÓRIO MENSAL (estilo limpo) ════════
