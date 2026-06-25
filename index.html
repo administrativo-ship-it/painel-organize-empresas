@@ -236,7 +236,7 @@ tbody tr:hover{background:var(--off);}
 .rpt-kpi{flex:1;min-width:110px;background:var(--off);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;}
 .rpt-kpi-val{font-size:26px;font-weight:800;color:var(--navy);line-height:1;}
 .rpt-kpi-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:5px;}
-.rpt-sec{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border);margin-top:24px;}
+.rpt-sec{font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid var(--border);margin-top:14px;}
 .rpt-footer{margin-top:36px;padding:16px 32px;background:var(--navy);border-radius:0 0 var(--r) var(--r);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:rgba(255,255,255,.7);}
 
 /* ═══ REPORT FORM PANELS ═══ */
@@ -251,14 +251,14 @@ tbody tr:hover{background:var(--off);}
 .rpt-cfg-field textarea{resize:vertical;min-height:70px;}
 .rpt-gen-btn{background:var(--navy);color:#fff;border:none;padding:10px 24px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;transition:background .2s;}
 .rpt-gen-btn:hover{background:var(--navy-light);}
-.rpt-kpi-highlight{background:linear-gradient(135deg,var(--navy) 0%,#2A3F8F 100%);color:#fff;border-radius:var(--r);padding:20px;margin-bottom:28px;}
+.rpt-kpi-highlight{background:linear-gradient(135deg,var(--navy) 0%,#2A3F8F 100%);color:#fff;border-radius:var(--r);padding:12px 16px;margin-bottom:14px;}
 .rpt-kpi-highlight-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;}
 .rpt-kpi-h{text-align:center;}
-.rpt-kpi-h-val{font-size:22px;font-weight:800;color:#fff;line-height:1;}
+.rpt-kpi-h-val{font-size:17px;font-weight:800;color:#fff;line-height:1;}
 .rpt-kpi-h-sub{font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.6px;margin-top:4px;font-weight:600;}
 .rpt-kpi-h-lbl{font-size:10.5px;color:rgba(255,255,255,.85);margin-top:2px;}
-.rpt-analysis-box{background:var(--off);border-left:4px solid var(--navy);border-radius:0 var(--r2) var(--r2) 0;padding:16px 20px;margin-bottom:20px;}
-.rpt-analysis-box p{font-size:13px;color:var(--txt);line-height:1.6;white-space:pre-wrap;}
+.rpt-analysis-box{background:var(--off);border-left:4px solid var(--navy);border-radius:0 var(--r2) var(--r2) 0;padding:10px 14px;margin-bottom:10px;}
+.rpt-analysis-box p{font-size:10.5px;color:var(--txt);line-height:1.5;white-space:pre-wrap;text-align:justify;}
 .rpt-analysis-title{font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;}
 .rpt-ops-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
 .rpt-ops-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;}
@@ -3592,12 +3592,60 @@ function rptFlowUpSection(tasks, label) {
   return html;
 }
 
-function rptTrelloSection(clienteName) {
+// MESES auxiliares para filtrar boards do Trello pelo nome
+var MESES_PT_FULL = ['JANEIRO','FEVEREIRO','MARÇO','MARCO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+function rptMesNomeUpper(m) { return ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][((m||1)-1)] || ''; }
+function boardMatchesMes(boardName, mesNum, ano) {
+  var n = (boardName||'').toUpperCase();
+  var mn = rptMesNomeUpper(mesNum);
+  if (!mn) return true;
+  var monthMatch = n.indexOf(mn) >= 0 || (mn === 'MARÇO' && n.indexOf('MARCO') >= 0);
+  var yearMatch = !ano || n.indexOf(String(ano)) >= 0;
+  return monthMatch && yearMatch;
+}
+function boardMatchesPeriodo(boardName, dtIni, dtFim) {
+  if (!dtIni && !dtFim) return true;
+  var n = (boardName||'').toUpperCase();
+  var start = dtIni ? new Date(dtIni+'T00:00:00') : null;
+  var end = dtFim ? new Date(dtFim+'T23:59:59') : null;
+  // Procura mês/ano no nome do board e checa se cai dentro do período
+  for (var m = 0; m < 12; m++) {
+    var mn = MESES_PT_FULL[m === 2 ? 2 : (m > 2 ? m+1 : m)]; // tratamento Março/Marco
+    // mais simples: usa array correto
+  }
+  // Implementação simples: para cada mês 1-12, verifica se o nome contém + ano correspondente
+  var monthNames = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  var yearMatch = n.match(/20\d{2}/);
+  if (!yearMatch) return true;
+  var anoBoard = parseInt(yearMatch[0]);
+  for (var i = 0; i < 12; i++) {
+    var mnUp = monthNames[i];
+    var found = n.indexOf(mnUp) >= 0 || (mnUp === 'MARÇO' && n.indexOf('MARCO') >= 0);
+    if (found) {
+      var boardDate = new Date(anoBoard, i, 15); // meio do mês como referência
+      if (start && boardDate < start) return false;
+      if (end && boardDate > end) return false;
+      return true;
+    }
+  }
+  return true; // sem mês detectado, deixa passar
+}
+
+function rptTrelloSection(clienteName, opts) {
+  opts = opts || {};
   var allBoards = S.trelloBoards;
   var allCards = S.trelloCards;
   if (clienteName) {
     var cn = clienteName.toLowerCase();
     allBoards = allBoards.filter(function(b){ return b.name.toLowerCase().indexOf(cn) >= 0; });
+  }
+  // Filtro adicional por mês (mensal) ou período (encerramento)
+  if (opts.mesNum) {
+    allBoards = allBoards.filter(function(b){ return boardMatchesMes(b.name, opts.mesNum, opts.ano); });
+  } else if (opts.dtIni || opts.dtFim) {
+    allBoards = allBoards.filter(function(b){ return boardMatchesPeriodo(b.name, opts.dtIni, opts.dtFim); });
+  }
+  if (clienteName || opts.mesNum || opts.dtIni) {
     var boardIds = {};
     allBoards.forEach(function(b){ boardIds[b.id] = true; });
     allCards = allCards.filter(function(c){ return boardIds[c.boardId]; });
@@ -3681,6 +3729,7 @@ function rptGenSvgChart(historico, mesSel) {
   var maxVal = 0;
   months.forEach(function(h) {
     if ((h.fat||0) > maxVal) maxVal = h.fat;
+    if ((h.fatAnterior||0) > maxVal) maxVal = h.fatAnterior;
     if ((h.meta||0) > maxVal) maxVal = h.meta;
   });
   if (!maxVal) return '';
@@ -3705,15 +3754,27 @@ function rptGenSvgChart(historico, mesSel) {
     grid += '<text x="'+(padL-6)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#8A94A8">'+lbl+'</text>';
   }
 
+  // Ano Anterior line (cinza pontilhado)
+  var hasAnterior = months.some(function(h){ return h.fatAnterior > 0; });
+  var anteriorSvg = '';
+  if (hasAnterior) {
+    var antPts = months.map(function(h,i){ return xp(i).toFixed(1)+','+sc(h.fatAnterior||0).toFixed(1); }).join(' ');
+    anteriorSvg = '<polyline points="'+antPts+'" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="3,3"/>';
+    months.forEach(function(h,i){
+      if (!h.fatAnterior) return;
+      var x=xp(i), y=sc(h.fatAnterior);
+      anteriorSvg += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3" fill="#9CA3AF"/>';
+    });
+  }
+
   // Meta line
   var metaPts = months.map(function(h,i){ return xp(i).toFixed(1)+','+sc(h.meta||0).toFixed(1); }).join(' ');
   var meta = '<polyline points="'+metaPts+'" fill="none" stroke="#3DBBCC" stroke-width="2.5" stroke-dasharray="6,4"/>';
   months.forEach(function(h,i){
     var x=xp(i), y=sc(h.meta||0);
-    var v=h.meta>=1000?'R$'+(h.meta/1000).toFixed(0)+'k':'R$'+(h.meta||0);
-    meta += '<rect x="'+(x-5).toFixed(1)+'" y="'+(y-5).toFixed(1)+'" width="10" height="10" rx="2" fill="#3DBBCC"/>';
-    meta += '<text x="'+x.toFixed(1)+'" y="'+(y-10).toFixed(1)+'" text-anchor="middle" font-size="9" fill="#1B7A85">'+v+'</text>';
+    meta += '<rect x="'+(x-4).toFixed(1)+'" y="'+(y-4).toFixed(1)+'" width="8" height="8" rx="2" fill="#3DBBCC"/>';
   });
+  meta = anteriorSvg + meta;
 
   // Realizado line
   var fatPts = [], fat = '';
@@ -3739,10 +3800,11 @@ function rptGenSvgChart(historico, mesSel) {
     return '<text x="'+x.toFixed(1)+'" y="'+(H-padB+18)+'" text-anchor="middle" font-size="11" fill="'+(isSel?'#1B2B6B':'#2C3E50')+'" font-weight="'+(isSel?'800':'600')+'">'+h.mes+(isSel?'●':'')+' </text>';
   }).join('');
 
-  // Legend
-  var lx = W-240;
-  var legend = '<line x1="'+lx+'" y1="'+(H-8)+'" x2="'+(lx+28)+'" y2="'+(H-8)+'" stroke="#1B2B6B" stroke-width="2.5"/><circle cx="'+(lx+14)+'" cy="'+(H-8)+'" r="4" fill="#1B2B6B"/><text x="'+(lx+33)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Realizado</text>'
-    +'<line x1="'+(lx+100)+'" y1="'+(H-8)+'" x2="'+(lx+128)+'" y2="'+(H-8)+'" stroke="#3DBBCC" stroke-width="2.5" stroke-dasharray="5,3"/><rect x="'+(lx+107)+'" y="'+(H-14)+'" width="10" height="10" rx="2" fill="#3DBBCC"/><text x="'+(lx+133)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Meta</text>';
+  // Legend (com 3 séries: Realizado / Ano Anterior / Meta)
+  var lx = W-340;
+  var legend = '<line x1="'+lx+'" y1="'+(H-8)+'" x2="'+(lx+24)+'" y2="'+(H-8)+'" stroke="#1B2B6B" stroke-width="2.5"/><circle cx="'+(lx+12)+'" cy="'+(H-8)+'" r="4" fill="#1B2B6B"/><text x="'+(lx+29)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Realizado</text>'
+    + (hasAnterior ? '<line x1="'+(lx+90)+'" y1="'+(H-8)+'" x2="'+(lx+114)+'" y2="'+(H-8)+'" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="3,3"/><circle cx="'+(lx+102)+'" cy="'+(H-8)+'" r="3" fill="#9CA3AF"/><text x="'+(lx+119)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Ano anterior</text>' : '')
+    +'<line x1="'+(lx+210)+'" y1="'+(H-8)+'" x2="'+(lx+234)+'" y2="'+(H-8)+'" stroke="#3DBBCC" stroke-width="2.5" stroke-dasharray="5,3"/><rect x="'+(lx+218)+'" y="'+(H-12)+'" width="8" height="8" rx="2" fill="#3DBBCC"/><text x="'+(lx+239)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Meta</text>';
 
   return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%">'+grid+meta+fat+xlbls+legend+'</svg>';
 }
@@ -4230,11 +4292,11 @@ async function generateAnalysisWithAI() {
     '8. ESCOPO ESTRITO DO MÊS: os campos numéricos (fat, meta, cresc, etc.) devem refletir EXCLUSIVAMENTE o mês "' + mesNome + '/' + ano + '". JAMAIS misture com outros meses. Em "analise" e "proximos", cite SOMENTE eventos/dados deste mês.\n' +
     '9. Em "analise": 3 parágrafos CURTOS (máx. 4 linhas cada): (a) INDICADORES do mês com números reais; (b) EXECUÇÃO — concluídas/atrasadas do FlowUp DO MÊS; (c) PLANEJAMENTO ESTRATÉGICO — % execução por QUADRO Trello + materiais do Drive do mês. Texto enxuto, factual, sem floreios.\n' +
     '10. Em "proximos": 3-4 ações concretas (frases curtas).\n' +
-    '11. "historico" = array com TODOS os meses do ano "' + ano + '" disponíveis na planilha (formato [{"mes":1,"fat":VALOR,"meta":VALOR},…,{"mes":12,"fat":VALOR,"meta":VALOR}]). Use 0 nos meses sem dado. Isso alimenta o gráfico de evolução. NÃO afeta os campos do mês selecionado.\n' +
+    '11. "historico" = array COMPARATIVO ano atual ("' + ano + '") vs ano anterior ("' + (parseInt(ano)-1) + '"). Para CADA mês 1..12, retorne {"mes":N,"fatAtual":VALOR_DO_ANO_ATUAL,"fatAnterior":VALOR_DO_ANO_ANTERIOR,"meta":VALOR_DA_META_ATUAL}. Use 0 onde faltar dado. Isso alimenta o gráfico Realizado vs. Ano Anterior. NÃO afeta os campos do mês selecionado.\n' +
     '12. Se TODAS as fontes financeiras estiverem vazias, em "analise" inclua: "Dados financeiros indisponíveis no mês. Análise baseada em FlowUp, Trello e Drive." e use 0 nos numéricos.\n\n' +
     'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
     '{' +
-    camposEsperados.map(function(k){return '"'+k+'":"NUMERO"';}).join(',') + ',"historico":[{"mes":NUMERO,"fat":NUMERO,"meta":NUMERO}],"analise":"TEXTO_CURTO","proximos":"ACOES_CONCRETAS"}';
+    camposEsperados.map(function(k){return '"'+k+'":"NUMERO"';}).join(',') + ',"historico":[{"mes":1,"fatAtual":NUMERO,"fatAnterior":NUMERO,"meta":NUMERO}],"analise":"TEXTO_CURTO","proximos":"ACOES_CONCRETAS"}';
 
   var btn = document.getElementById('btn-gerar-ia');
   if (btn) { btn.textContent = 'Gerando análise...'; btn.disabled = true; }
@@ -4254,10 +4316,17 @@ async function generateAnalysisWithAI() {
 
     _rmf.analise = parsed.analise || parsed.resumo || '';
     _rmf.proximos = parsed.proximos || '';
-    // Histórico para o gráfico de evolução do faturamento
+    // Histórico para o gráfico de evolução (comparativo ano atual vs anterior)
     if (parsed.historico && Array.isArray(parsed.historico) && parsed.historico.length) {
       _rmf._historico = parsed.historico.map(function(h){
-        return { mes: parseInt(h.mes)||0, fat: parseFloat(h.fat)||0, meta: parseFloat(h.meta)||0 };
+        var fatA = parseFloat(h.fatAtual);
+        if (isNaN(fatA)) fatA = parseFloat(h.fat) || 0; // compat. com formato antigo
+        return {
+          mes: parseInt(h.mes)||0,
+          fat: fatA,
+          fatAnterior: parseFloat(h.fatAnterior)||0,
+          meta: parseFloat(h.meta)||0
+        };
       }).filter(function(h){ return h.mes>=1 && h.mes<=12; }).sort(function(a,b){return a.mes-b.mes;});
     }
     var analiseEl = document.getElementById('rmf-analise');
@@ -4408,12 +4477,14 @@ async function generateAnalysisEncerramento() {
       '5. Campos de TEXTO (modnum, modnom, dtini, dtfim, proxmod): se já preenchidos pelo usuário (nos FILTROS), MANTENHA o valor exato. Se vazios, deixe STRING VAZIA "" — NÃO escreva "(vazio)" literal.\n' +
       '6. "nment" = nº de mentorias realizadas no período. Se vazio, conte mentorias concluídas no FlowUp (tarefas com "mentoria" no nome) ou retorne "0".\n' +
       '7. Valores numéricos sem R$, sem %, sem milhar, ponto como decimal.\n' +
-      '8. ESCOPO ESTRITO DO PERÍODO: TODOS os campos (KPIs, análise, próximos) devem refletir EXCLUSIVAMENTE dados entre "' + (_ref.dtini||'?') + '" e "' + (_ref.dtfim||'?') + '". JAMAIS misture com dados de antes/depois desse período.\n' +
-      '9. Em "analise": 3 parágrafos CURTOS (máx. 4 linhas cada): (a) INDICADORES DO MÓDULO com números reais do período; (b) EXECUÇÃO — concluídas/atrasadas do FlowUp NO PERÍODO; (c) PLANEJAMENTO + MATERIAIS — % execução por QUADRO Trello + documentos do Drive entregues NO PERÍODO. Texto enxuto, factual.\n' +
-      '10. Em "proximos": 4-5 ações concretas para o próximo módulo (frases curtas).\n' +
-      '11. Se TODAS as fontes financeiras estiverem vazias: em "analise" inclua "Dados financeiros indisponíveis no período do módulo." e use 0 nos numéricos.\n\n' +
+      '8. ESCOPO DO PERÍODO ("' + (_ref.dtini||'?') + '" a "' + (_ref.dtfim||'?') + '"): priorize dados deste período. Se a planilha NÃO tiver dados para esse período exato mas tiver para meses dentro do range, AGREGUE/SOME os valores dos meses encontrados nesse range. Se REALMENTE não existir dado, use o mês mais próximo anterior ao período e mencione isso na "analise". NUNCA invente.\n' +
+      '9. EXTRAÇÃO INTELIGENTE DOS KPIs: examine TODAS as abas/colunas das planilhas. Procure linhas de meses cujas datas caiam entre dtini e dtfim. Some o faturamento desses meses; calcule média de % e ticket. Se o módulo é mensal (período de ~30 dias), use o mês específico.\n' +
+      '10. HISTÓRICO COMPARATIVO ANO ATUAL vs ANO ANTERIOR: campo "historico" no JSON com array dos 12 meses contendo {mes, fatAtual (ano de dtfim), fatAnterior (ano - 1), meta}. Use 0 onde faltar dado.\n' +
+      '11. Em "analise": 3 parágrafos CURTOS (máx. 4 linhas cada): (a) INDICADORES DO MÓDULO com números reais; (b) EXECUÇÃO — concluídas/atrasadas do FlowUp NO PERÍODO; (c) PLANEJAMENTO + MATERIAIS — % execução por QUADRO Trello + documentos do Drive entregues NO PERÍODO.\n' +
+      '12. Em "proximos": 4-5 ações concretas para o próximo módulo (frases curtas).\n' +
+      '13. Se TODAS as fontes financeiras estiverem vazias: em "analise" inclua "Dados financeiros indisponíveis no módulo." e use 0 nos numéricos.\n\n' +
       'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
-      '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"TEXTO_OU_VAZIO","modnom":"TEXTO_OU_VAZIO","dtini":"AAAA-MM-DD_OU_VAZIO","dtfim":"AAAA-MM-DD_OU_VAZIO","proxmod":"TEXTO_OU_VAZIO","nment":"NUM","analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
+      '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"TEXTO_OU_VAZIO","modnom":"TEXTO_OU_VAZIO","dtini":"AAAA-MM-DD_OU_VAZIO","dtfim":"AAAA-MM-DD_OU_VAZIO","proxmod":"TEXTO_OU_VAZIO","nment":"NUM","historico":[{"mes":1,"fatAtual":NUMERO,"fatAnterior":NUMERO,"meta":NUMERO}],"analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
 
     var text = await callClaude(apiKey, prompt_text, 4000, sysPromptEnc, true);
     var parsed = extractJSON(text);
@@ -4438,6 +4509,19 @@ async function generateAnalysisEncerramento() {
 
     _ref.analise = parsed.analise || '';
     _ref.proximos = parsed.proximos || '';
+    // Histórico para o gráfico de evolução comparativo (ano atual vs anterior)
+    if (parsed.historico && Array.isArray(parsed.historico) && parsed.historico.length) {
+      _ref._historico = parsed.historico.map(function(h){
+        var fatA = parseFloat(h.fatAtual);
+        if (isNaN(fatA)) fatA = parseFloat(h.fat) || 0;
+        return {
+          mes: parseInt(h.mes)||0,
+          fat: fatA,
+          fatAnterior: parseFloat(h.fatAnterior)||0,
+          meta: parseFloat(h.meta)||0
+        };
+      }).filter(function(h){ return h.mes>=1 && h.mes<=12; }).sort(function(a,b){return a.mes-b.mes;});
+    }
     var ta1 = document.getElementById('ref-analise');
     var ta2 = document.getElementById('ref-proximos');
     if (ta1) ta1.value = _ref.analise;
@@ -4594,13 +4678,21 @@ function rptGenerateMensal() {
   var clientNormalized = (_rmf.cliente || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
   // Filtra boards: por shortlink se URL configurada, senão por nome do cliente
+  // E também filtra pelo MÊS/ANO do relatório (mostra só o board do mês de referência)
   var filteredBoards = S.trelloBoards ? S.trelloBoards.filter(function(b) {
+    var matchCliente = false;
     if (trelloBoardShort) {
-      return (b.shortLink||'').toLowerCase() === trelloBoardShort || (b.url||'').toLowerCase().indexOf(trelloBoardShort) >= 0;
+      matchCliente = (b.shortLink||'').toLowerCase() === trelloBoardShort || (b.url||'').toLowerCase().indexOf(trelloBoardShort) >= 0;
+    } else {
+      var bNorm = (b.name||'').toLowerCase().replace(/[^a-z0-9]/g, '');
+      matchCliente = bNorm.indexOf(clientNormalized) >= 0 || clientNormalized.indexOf(bNorm.substring(0,6)) >= 0;
     }
-    // fallback: match por nome do cliente no nome do board
-    var bNorm = (b.name||'').toLowerCase().replace(/[^a-z0-9]/g, '');
-    return bNorm.indexOf(clientNormalized) >= 0 || clientNormalized.indexOf(bNorm.substring(0,6)) >= 0;
+    if (!matchCliente) return false;
+    // Filtra pelo mês/ano do filtro do relatório
+    if (typeof boardMatchesMes === 'function' && _rmf.mes) {
+      return boardMatchesMes(b.name, parseInt(_rmf.mes), _rmf.ano);
+    }
+    return true;
   }) : [];
   var filteredCards = S.trelloCards ? S.trelloCards.filter(function(c) {
     return filteredBoards.some(function(b){ return b.id === c.boardId; });
@@ -4831,20 +4923,8 @@ function rptEncerramento() {
   var kpiFields = labels.map(function(l,i){ return '<div class="rpt-cfg-field"><label>'+l+'</label><input id="ref-'+kpiKeys[i]+'" value="'+(_ref[kpiKeys[i]]||'')+'" oninput="_ref[\''+kpiKeys[i]+'\']=this.value" placeholder="—"></div>'; }).join('');
 
   var driveBar = '';
-  var nIdxClientes = (function(){ try { var i = oeGetDriveIndex(); return i.clientes ? Object.keys(i.clientes).length : 0; } catch(e) { return 0; } })();
-  var driveBarEnc = '<div class="rpt-drive-bar">' +
-    (_gToken ?
-      '<span style="font-size:11px;color:#22c55e;font-weight:600;">● Google Drive conectado</span>' +
-      (_ref.cliente ? '<button class="rpt-drive-btn" style="background:var(--teal-dark);margin-left:8px" onclick="triggerDriveLoad(\'encerramento\')">↺ Atualizar via Drive</button>' : '') +
-      '<button class="rpt-drive-btn" style="margin-left:8px;font-size:11px;" onclick="gDriveSignOut()">Desconectar</button>'
-      :
-      '<span style="font-size:11px;color:var(--muted);">Dados carregados automaticamente. </span>' +
-      '<span style="font-size:11px;cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Google Drive</span>' +
-      '<span style="font-size:11px;color:var(--muted);"> para atualização ao vivo.</span>'
-    ) +
-    '<button class="rpt-drive-btn" style="margin-left:auto;background:#1B2B6B;font-size:11px;" onclick="abrirModalIndexarDrive()">📁 Drive Organize (' + nIdxClientes + ' clientes)</button>' +
-    '</div>' +
-    '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">Carregando dados das planilhas do Drive...</div>';
+  // Drive já tem indicador no topbar — não duplica aqui
+  var driveBarEnc = '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">Carregando dados das planilhas do Drive...</div>';
   var formHtml = driveBarEnc + '<div class="rpt-form-panel">' +
     '<div class="rpt-form-title"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>Configurar Relatório de Encerramento de Módulo</div>' +
     '<div class="rpt-form-grid">' +
@@ -4939,7 +5019,7 @@ function rptGenerateEncerramento() {
 
   var tasks = rptTasksForClient(_ref.cliente);
   var flowSec = rptFlowUpSection(tasks, 'Status Operacional — FlowUp');
-  var trelloSec = rptTrelloSection(_ref.cliente);
+  var trelloSec = rptTrelloSection(_ref.cliente, { dtIni: _ref.dtini, dtFim: _ref.dtfim });
 
   var nextModBlock = '';
   if (_ref.proxmod) {
@@ -4957,11 +5037,12 @@ function rptGenerateEncerramento() {
 
   var headerExtra = modBadge + periodoInfo;
 
-  var chartsHtmlEnc = '<div class="rpt-charts-grid">' +
-    '<div class="rpt-chart-wrap"><div class="rpt-chart-title">Indicadores do Módulo</div><canvas id="rpt-chart-fat" height="180"></canvas></div>' +
-    '<div class="rpt-chart-wrap"><div class="rpt-chart-title">Atividades — FlowUp</div><canvas id="rpt-chart-ops" height="180"></canvas></div>' +
-    (S.trelloBoards.length ? '<div class="rpt-chart-wrap" style="grid-column:1/-1"><div class="rpt-chart-title">Progresso por Planejamento — Trello</div><canvas id="rpt-chart-trello" height="130"></canvas></div>' : '') +
-    '</div>';
+  // Gráfico SVG comparativo (ano atual vs anterior) — substitui canvas (gráficos tortos em PDF)
+  var histEnc = _ref._historico || [];
+  var chartsHtmlEnc = '';
+  if (histEnc.length) {
+    chartsHtmlEnc += '<div class="rpt-chart-wrap" style="margin-bottom:12px;"><div class="rpt-chart-title" style="font-size:11px;font-weight:700;color:#1B2B6B;margin-bottom:6px;">Evolução do Faturamento · ' + (_ref.dtfim ? new Date(_ref.dtfim).getFullYear() : new Date().getFullYear()) + ' vs Ano Anterior</div>' + rptGenSvgChart(histEnc, null) + '</div>';
+  }
 
   var actionBarEnc = '<div class="rpt-action-bar">' +
     '<button class="rpt-pdf-btn" onclick="rptDownloadPDF(\'encerramento\')">' +
