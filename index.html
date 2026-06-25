@@ -372,6 +372,22 @@ tbody tr:hover{background:var(--off);}
 </head>
 <body>
 
+<!-- ═══ LOGIN OVERLAY (Google obrigatório, domínio Organize) ═══ -->
+<div id="oe-login-overlay" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1B2B6B,#0a1a7a);z-index:9999;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:#fff;border-radius:16px;padding:40px 36px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4);">
+    <img src="organize-logo.png" style="height:50px;margin-bottom:18px;" onerror="this.style.display='none'">
+    <h2 style="color:#1B2B6B;font-size:20px;font-weight:800;margin-bottom:8px;">Painel Gerencial</h2>
+    <p style="color:#41546A;font-size:13px;line-height:1.5;margin-bottom:24px;">Acesso exclusivo da equipe interna da Organize Empresas. Entre com seu e-mail corporativo Google.</p>
+    <button onclick="oeGoogleLogin()" style="background:#1B2B6B;color:#fff;border:none;border-radius:10px;padding:14px 24px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:10px;width:100%;justify-content:center;">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.2 5.2c-.4.4 6.7-4.9 6.7-14.9 0-1.3-.1-2.6-.4-3.9z"/></svg>
+      Entrar com Google
+    </button>
+    <p id="oe-login-error" style="color:#ef4444;font-size:12px;margin-top:14px;display:none;line-height:1.4;"></p>
+    <p style="color:#8A94A8;font-size:10.5px;margin-top:18px;line-height:1.4;">Apenas e-mails do domínio Organize Empresas têm permissão de acesso.</p>
+  </div>
+</div>
+
+
 <aside class="sidebar">
   <div class="logo-area" onclick="openLogoConfig()" title="Clique para personalizar">
     <svg class="logo-svg" id="logo-svg" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -462,6 +478,7 @@ tbody tr:hover{background:var(--off);}
         <span id="health-trello" title="Trello"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;"></span> Trello</span>
         <span id="health-drive" title="Google Drive"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;"></span> Drive</span>
       </div>
+      <div id="oe-user-chip" style="display:none;align-items:center;gap:6px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--off);"></div>
       <span class="sync-info" id="sync-lbl">Não sincronizado</span>
       <button class="sync-btn" id="sync-btn" onclick="syncAll()">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -1122,6 +1139,148 @@ function calcRisk(p, over, total, done, daysSince) {
 }
 
 // ═══════════════ SYNC ═══════════════
+// ═══════════════ LOGIN GOOGLE OBRIGATÓRIO (Fase 3) ═══════════════
+var OE_ALLOWED_DOMAINS = (function(){
+  try { var saved = JSON.parse(localStorage.getItem('oe_allowed_domains')||'null'); if (saved && saved.length) return saved; } catch(e) {}
+  return ['organizementoring.com', 'organizeempresas.com.br', 'organizementoring.com.br'];
+})();
+
+function oeGetUser() {
+  try { return JSON.parse(localStorage.getItem('oe_user')||'null'); } catch(e) { return null; }
+}
+function oeSetUser(u) { localStorage.setItem('oe_user', JSON.stringify(u)); }
+
+function oeShowLoginError(msg) {
+  var el = document.getElementById('oe-login-error');
+  if (!el) return;
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+
+function oeShowLoginScreen() {
+  var ov = document.getElementById('oe-login-overlay');
+  if (ov) ov.style.display = 'flex';
+}
+function oeHideLoginScreen() {
+  var ov = document.getElementById('oe-login-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+function oeGoogleLogin() {
+  if (!window.google || !window.google.accounts) {
+    oeShowLoginError('Biblioteca Google ainda carregando. Aguarde 3s e tente novamente.');
+    return;
+  }
+  var cid = gClientId();
+  // Usa oauth2 token client com escopos completos (login + Drive + Calendar)
+  var loginClient = google.accounts.oauth2.initTokenClient({
+    client_id: cid,
+    scope: 'email profile openid https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/calendar.readonly',
+    callback: async function(resp) {
+      if (resp.error) {
+        oeShowLoginError('Erro: ' + resp.error);
+        return;
+      }
+      _gToken = resp.access_token;
+      try {
+        var info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + _gToken } });
+        if (!info.ok) throw new Error('Não foi possível obter userinfo (HTTP ' + info.status + ')');
+        var userInfo = await info.json();
+        oeValidateAndLogin(userInfo);
+      } catch(e) {
+        oeShowLoginError('Falha ao validar usuário: ' + e.message);
+      }
+    },
+    error_callback: function(err) {
+      oeShowLoginError('Login cancelado ou bloqueado: ' + (err.type||err.message||'erro desconhecido'));
+    }
+  });
+  loginClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function oeValidateAndLogin(userInfo) {
+  if (!userInfo || !userInfo.email) {
+    oeShowLoginError('Não foi possível obter o e-mail da conta Google.');
+    return;
+  }
+  var email = userInfo.email.toLowerCase();
+  var domain = email.split('@')[1] || '';
+  if (OE_ALLOWED_DOMAINS.indexOf(domain) < 0) {
+    oeShowLoginError('Acesso negado. E-mail "' + email + '" não pertence ao domínio autorizado da Organize Empresas.\n\nDomínios permitidos: ' + OE_ALLOWED_DOMAINS.join(', '));
+    // Revoga o token concedido (não fica com acesso ao Drive de quem não pode entrar)
+    try { google.accounts.oauth2.revoke(_gToken); } catch(e) {}
+    _gToken = null;
+    return;
+  }
+  oeSetUser({
+    email: email,
+    name: userInfo.name || email,
+    picture: userInfo.picture || '',
+    loggedAt: new Date().toISOString()
+  });
+  oeHideLoginScreen();
+  if (typeof _apiHealth !== 'undefined') {
+    _apiHealth.drive = { status:'ok', lastSync: new Date().toISOString(), error: null };
+    if (typeof oeUpdateHealthUI === 'function') oeUpdateHealthUI();
+  }
+  if (typeof updateDriveBar === 'function') updateDriveBar();
+  oeRenderUserInfo();
+  oePostLoginSync();
+}
+
+async function oePostLoginSync() {
+  // Auto-sincroniza após login: render + sync + Drive
+  console.log('[Login] Iniciando sincronização automática pós-login');
+  // Re-render para mostrar a UI agora que o usuário está logado
+  if (typeof renderAll === 'function') {
+    try { renderAll(); } catch(e) { console.warn('[Login] renderAll falhou:', e); }
+  }
+  if (typeof syncAll === 'function') {
+    try { await syncAll(); } catch(e) { console.warn('[Login] syncAll falhou:', e); }
+  }
+  // Indexa Drive em background (não bloqueia)
+  if (_gToken && typeof oeIndexarDriveCompleto === 'function') {
+    setTimeout(function(){ oeIndexarDriveCompleto().catch(function(e){ console.warn('[Login] index Drive:', e); }); }, 1000);
+  }
+}
+
+function oeLogout() {
+  if (!confirm('Sair do painel? Sua sessão será encerrada.')) return;
+  if (_gToken) { try { google.accounts.oauth2.revoke(_gToken); } catch(e) {} }
+  _gToken = null;
+  localStorage.removeItem('oe_user');
+  // Mantém outras configs (filtros do índice Drive etc.)
+  location.reload();
+}
+
+function oeRenderUserInfo() {
+  var user = oeGetUser();
+  var el = document.getElementById('oe-user-chip');
+  if (!el) return;
+  if (!user) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = (user.picture ? '<img src="'+user.picture+'" style="width:24px;height:24px;border-radius:50%;" referrerpolicy="no-referrer">' : '<div style="width:24px;height:24px;border-radius:50%;background:#1B2B6B;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">'+(user.name||'?').charAt(0).toUpperCase()+'</div>') +
+    '<span style="font-size:12px;color:#41546A;font-weight:600;">'+user.name+'</span>' +
+    '<button onclick="oeLogout()" style="background:transparent;border:1px solid #E0E5EE;color:#41546A;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;margin-left:6px;">Sair</button>';
+}
+
+function oeCheckAuth() {
+  var user = oeGetUser();
+  if (!user || !user.email) {
+    oeShowLoginScreen();
+    return false;
+  }
+  // Valida domínio sempre (caso a lista de domínios autorizados tenha mudado)
+  var domain = (user.email||'').split('@')[1] || '';
+  if (OE_ALLOWED_DOMAINS.indexOf(domain) < 0) {
+    localStorage.removeItem('oe_user');
+    oeShowLoginScreen();
+    return false;
+  }
+  oeRenderUserInfo();
+  return true;
+}
+
 // ═══════════════ AUDIT DE SAÚDE DAS APIS (Fase 2) ═══════════════
 var _apiHealth = {
   flowup: { status: 'unknown', lastSync: null, error: null, tasksLoaded: 0, projectsLoaded: 0 },
@@ -5440,16 +5599,19 @@ function applyHashSetup() {
 // ═══════════════ INIT ═══════════════
 function init() {
   loadConfig();
-  // Se veio via link de setup, aplica as credenciais
   loadLogo();
   // Força limpar o search input em MÚLTIPLOS momentos (Chrome autofill insiste em preencher)
   var fsearch = document.getElementById('f-search');
   if (fsearch) {
     fsearch.value = '';
-    // Anti-autofill: revalida após o browser tentar preencher (ocorre depois do DOMContentLoaded)
     setTimeout(function(){ if (fsearch.value && !S.filters.search) fsearch.value = ''; }, 100);
     setTimeout(function(){ if (fsearch.value && !S.filters.search) fsearch.value = ''; }, 500);
     setTimeout(function(){ if (fsearch.value && !S.filters.search) fsearch.value = ''; }, 1500);
+  }
+  // ── CONTROLE DE ACESSO: bloqueia o painel se usuário não autenticado ──
+  if (!oeCheckAuth()) {
+    console.log('[Auth] Usuário não autenticado. Exibindo tela de login.');
+    return; // não prossegue até login
   }
   renderAll();
 
