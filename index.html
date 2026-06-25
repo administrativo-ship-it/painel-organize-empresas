@@ -375,7 +375,9 @@ tbody tr:hover{background:var(--off);}
 <!-- ═══ LOGIN OVERLAY (Google obrigatório, domínio Organize) ═══ -->
 <div id="oe-login-overlay" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1B2B6B,#0a1a7a);z-index:9999;align-items:center;justify-content:center;padding:24px;">
   <div style="background:#fff;border-radius:16px;padding:40px 36px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4);">
-    <img src="organize-logo.png" style="height:50px;margin-bottom:18px;" onerror="this.style.display='none'">
+    <div style="background:linear-gradient(135deg,#1B2B6B,#0a1a7a);border-radius:14px;padding:18px 20px;display:inline-block;margin-bottom:20px;">
+      <img src="organize-logo.png" style="height:48px;display:block;" onerror="this.style.display='none'">
+    </div>
     <h2 style="color:#1B2B6B;font-size:20px;font-weight:800;margin-bottom:8px;">Painel Gerencial</h2>
     <p style="color:#41546A;font-size:13px;line-height:1.5;margin-bottom:24px;">Acesso exclusivo da equipe interna da Organize Empresas. Entre com seu e-mail corporativo Google.</p>
     <button onclick="oeGoogleLogin()" style="background:#1B2B6B;color:#fff;border:none;border-radius:10px;padding:14px 24px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:10px;width:100%;justify-content:center;">
@@ -1192,7 +1194,12 @@ function oeGoogleLogin() {
       }
     },
     error_callback: function(err) {
-      oeShowLoginError('Login cancelado ou bloqueado: ' + (err.type||err.message||'erro desconhecido'));
+      var t = err.type || err.message || '';
+      if (t === 'popup_closed' || t === 'popup_failed_to_open') {
+        oeShowLoginError('Janela do Google foi fechada antes do login. Clique em "Entrar com Google" novamente.');
+      } else {
+        oeShowLoginError('Não foi possível entrar: ' + (t||'erro desconhecido') + '. Tente novamente.');
+      }
     }
   });
   loginClient.requestAccessToken({ prompt: 'consent' });
@@ -4220,12 +4227,14 @@ async function generateAnalysisWithAI() {
     '5. Para os campos do programa "' + programa + '": ' + camposExplicacao + '\n' +
     '6. Formato numérico: sem R$, sem %, sem separador de milhar, ponto como decimal. Ex.: "98500.00", "23.7".\n' +
     '7. APENAS se o valor REALMENTE não existir nem nos VALORES EXTRAÍDOS nem no CSV, retorne 0. NUNCA invente.\n' +
-    '8. Em "analise": estruture em 4 parágrafos curtos cobrindo: (a) INDICADORES — cite valores reais das planilhas; (b) EXECUÇÃO OPERACIONAL — comente concluídas/atrasadas do FlowUp; (c) PLANEJAMENTO ESTRATÉGICO — % execução por QUADRO Trello (não por lista); (d) MATERIAIS — cite os principais documentos do Drive listados acima.\n' +
-    '9. Em "proximos": 3-5 ações concretas baseadas nas atrasadas do FlowUp, nos cards vencidos do Trello e nos materiais pendentes.\n' +
-    '10. Se TODAS as fontes financeiras estiverem vazias, em "analise" inclua: "Dados financeiros indisponíveis no período. Análise baseada em FlowUp, Trello e Drive." e use 0 nos numéricos.\n\n' +
+    '8. ESCOPO ESTRITO DO MÊS: os campos numéricos (fat, meta, cresc, etc.) devem refletir EXCLUSIVAMENTE o mês "' + mesNome + '/' + ano + '". JAMAIS misture com outros meses. Em "analise" e "proximos", cite SOMENTE eventos/dados deste mês.\n' +
+    '9. Em "analise": 3 parágrafos CURTOS (máx. 4 linhas cada): (a) INDICADORES do mês com números reais; (b) EXECUÇÃO — concluídas/atrasadas do FlowUp DO MÊS; (c) PLANEJAMENTO ESTRATÉGICO — % execução por QUADRO Trello + materiais do Drive do mês. Texto enxuto, factual, sem floreios.\n' +
+    '10. Em "proximos": 3-4 ações concretas (frases curtas).\n' +
+    '11. "historico" = array com TODOS os meses do ano "' + ano + '" disponíveis na planilha (formato [{"mes":1,"fat":VALOR,"meta":VALOR},…,{"mes":12,"fat":VALOR,"meta":VALOR}]). Use 0 nos meses sem dado. Isso alimenta o gráfico de evolução. NÃO afeta os campos do mês selecionado.\n' +
+    '12. Se TODAS as fontes financeiras estiverem vazias, em "analise" inclua: "Dados financeiros indisponíveis no mês. Análise baseada em FlowUp, Trello e Drive." e use 0 nos numéricos.\n\n' +
     'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
     '{' +
-    camposEsperados.map(function(k){return '"'+k+'":"NUMERO"';}).join(',') + ',"analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
+    camposEsperados.map(function(k){return '"'+k+'":"NUMERO"';}).join(',') + ',"historico":[{"mes":NUMERO,"fat":NUMERO,"meta":NUMERO}],"analise":"TEXTO_CURTO","proximos":"ACOES_CONCRETAS"}';
 
   var btn = document.getElementById('btn-gerar-ia');
   if (btn) { btn.textContent = 'Gerando análise...'; btn.disabled = true; }
@@ -4245,6 +4254,12 @@ async function generateAnalysisWithAI() {
 
     _rmf.analise = parsed.analise || parsed.resumo || '';
     _rmf.proximos = parsed.proximos || '';
+    // Histórico para o gráfico de evolução do faturamento
+    if (parsed.historico && Array.isArray(parsed.historico) && parsed.historico.length) {
+      _rmf._historico = parsed.historico.map(function(h){
+        return { mes: parseInt(h.mes)||0, fat: parseFloat(h.fat)||0, meta: parseFloat(h.meta)||0 };
+      }).filter(function(h){ return h.mes>=1 && h.mes<=12; }).sort(function(a,b){return a.mes-b.mes;});
+    }
     var analiseEl = document.getElementById('rmf-analise');
     var proximosEl = document.getElementById('rmf-proximos');
     if (analiseEl) analiseEl.value = _rmf.analise;
@@ -4393,9 +4408,10 @@ async function generateAnalysisEncerramento() {
       '5. Campos de TEXTO (modnum, modnom, dtini, dtfim, proxmod): se já preenchidos pelo usuário (nos FILTROS), MANTENHA o valor exato. Se vazios, deixe STRING VAZIA "" — NÃO escreva "(vazio)" literal.\n' +
       '6. "nment" = nº de mentorias realizadas no período. Se vazio, conte mentorias concluídas no FlowUp (tarefas com "mentoria" no nome) ou retorne "0".\n' +
       '7. Valores numéricos sem R$, sem %, sem milhar, ponto como decimal.\n' +
-      '8. Em "analise": estruture em 4 parágrafos cobrindo: (a) INDICADORES DO MÓDULO — cite valores reais; (b) EXECUÇÃO OPERACIONAL — concluídas/atrasadas do FlowUp; (c) PLANEJAMENTO ESTRATÉGICO — % execução por QUADRO Trello; (d) MATERIAIS PRODUZIDOS — cite os principais documentos do Drive entregues no período.\n' +
-      '9. Em "proximos": 4-6 ações concretas para o próximo módulo, baseadas em atrasados FlowUp, cards vencidos Trello e entregáveis pendentes.\n' +
-      '10. Se TODAS as fontes financeiras estiverem vazias: em "analise" inclua "Dados financeiros indisponíveis no período do módulo. Análise baseada em FlowUp, Trello e Drive." e use 0 nos numéricos.\n\n' +
+      '8. ESCOPO ESTRITO DO PERÍODO: TODOS os campos (KPIs, análise, próximos) devem refletir EXCLUSIVAMENTE dados entre "' + (_ref.dtini||'?') + '" e "' + (_ref.dtfim||'?') + '". JAMAIS misture com dados de antes/depois desse período.\n' +
+      '9. Em "analise": 3 parágrafos CURTOS (máx. 4 linhas cada): (a) INDICADORES DO MÓDULO com números reais do período; (b) EXECUÇÃO — concluídas/atrasadas do FlowUp NO PERÍODO; (c) PLANEJAMENTO + MATERIAIS — % execução por QUADRO Trello + documentos do Drive entregues NO PERÍODO. Texto enxuto, factual.\n' +
+      '10. Em "proximos": 4-5 ações concretas para o próximo módulo (frases curtas).\n' +
+      '11. Se TODAS as fontes financeiras estiverem vazias: em "analise" inclua "Dados financeiros indisponíveis no período do módulo." e use 0 nos numéricos.\n\n' +
       'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
       '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"TEXTO_OU_VAZIO","modnom":"TEXTO_OU_VAZIO","dtini":"AAAA-MM-DD_OU_VAZIO","dtfim":"AAAA-MM-DD_OU_VAZIO","proxmod":"TEXTO_OU_VAZIO","nment":"NUM","analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
 
@@ -4465,7 +4481,7 @@ function rptGenerateMensal() {
   var S_emp = 'color:rgba(255,255,255,.55);font-size:11px;margin-top:6px;letter-spacing:1px;text-transform:uppercase;text-align:right;';
   var S_gold = 'height:4px;background:linear-gradient(90deg,#5CC8D4,#85DDE8,#5CC8D4);';
   var S_body2 = 'padding:28px 40px;';
-  var S_sec = 'font-family:Montserrat,Arial,sans-serif;font-size:11px;font-weight:700;color:#1B2B6B;text-transform:uppercase;letter-spacing:2px;border-left:3px solid #5CC8D4;padding-left:10px;margin-bottom:14px;margin-top:26px;';
+  var S_sec = 'font-family:Montserrat,Arial,sans-serif;font-size:10.5px;font-weight:700;color:#1B2B6B;text-transform:uppercase;letter-spacing:1.5px;border-left:3px solid #5CC8D4;padding-left:9px;margin-bottom:8px;margin-top:14px;';
   var S_grid4 = 'display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px;';
   var S_card = 'background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:14px 12px;text-align:center;';
   var S_cardHL = 'background:#1B2B6B;border:1px solid #1B2B6B;border-radius:8px;padding:14px 12px;text-align:center;';
@@ -4613,18 +4629,18 @@ function rptGenerateMensal() {
   // ── DIVISOR ──
   html += '<div style="height:1px;background:#E0E5EE;margin:24px 0;"></div>';
 
-  // ── RESUMO EXECUTIVO ──
+  // ── RESUMO EXECUTIVO (fonte compacta para caber em 2 páginas) ──
   if (_rmf.analise) {
-    html += '<div style="'+S_sec+'">Resumo Executivo</div>';
-    html += '<div style="background:linear-gradient(135deg,#1B2B6B 0%,#2A3F8F 100%);border-radius:8px;padding:22px 26px;margin-top:0;">';
-    html += '<p style="color:rgba(255,255,255,.92);font-size:13px;line-height:1.75;font-style:italic;">'+_rmf.analise.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
+    html += '<div style="'+S_sec+';margin-top:18px;margin-bottom:8px;">Resumo Executivo</div>';
+    html += '<div style="background:linear-gradient(135deg,#1B2B6B 0%,#2A3F8F 100%);border-radius:8px;padding:14px 18px;margin-top:0;">';
+    html += '<p style="color:rgba(255,255,255,.92);font-size:10.5px;line-height:1.5;font-style:italic;text-align:justify;">'+_rmf.analise.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
   }
 
-  // ── PRÓXIMOS PASSOS ──
+  // ── PRÓXIMOS PASSOS (compacto) ──
   if (_rmf.proximos) {
-    html += '<div style="'+S_sec+'">Próximos Passos e Recomendações</div>';
-    html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-left:4px solid #5CC8D4;border-radius:8px;padding:18px 20px;margin-top:0;">';
-    html += '<p style="font-size:13px;line-height:1.7;color:#2C3E50;">'+_rmf.proximos.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
+    html += '<div style="'+S_sec+';margin-top:14px;margin-bottom:8px;">Próximos Passos e Recomendações</div>';
+    html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-left:4px solid #5CC8D4;border-radius:8px;padding:12px 16px;margin-top:0;">';
+    html += '<p style="font-size:10.5px;line-height:1.5;color:#2C3E50;text-align:justify;">'+_rmf.proximos.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
   }
 
   html += '</div>'; // fim body
@@ -4761,11 +4777,9 @@ function rptMensal() {
     '<div id="ai-diag-panel" style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12.5px;"></div>' +
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">'+
     '<button id="btn-gerar-ia" class="rpt-drive-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;border:none;" onclick="generateAnalysisWithAI()">Gerar Relatório com IA</button>'+
-    '<button class="rpt-gen-btn" style="margin-top:0;background:transparent;color:#7C3AED;border:1px solid #7C3AED;" onclick="rptGenerateMensal()">Regenerar Pré-visualização</button>'+
-    '<button id="btn-testar-fontes" style="background:transparent;color:#1B2B6B;border:1px solid #1B2B6B;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="testarFontesIA(\'mensal\')">🔍 Testar Fontes</button>'+
-    '<button style="background:transparent;color:#41546A;border:1px solid #E0E5EE;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="oeAbrirUploadModal(\'mensal\')">📎 Upload manual</button>'+
+    '<button id="btn-testar-fontes" style="background:transparent;color:#1B2B6B;border:1px solid #1B2B6B;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="testarFontesIA(\'mensal\')">Testar Fontes</button>'+
     '</div>' +
-    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA tenta na ordem: <strong>1)</strong> pasta Drive cadastrada no Portal do Cliente, <strong>2)</strong> upload manual, <strong>3)</strong> índice global. Use "Testar Fontes" para verificar o que está disponível.</div>' +
+    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA lê: planilhas (upload ou Drive), Trello, FlowUp e materiais do Drive do mês.</div>' +
     '</div>';
 
   document.getElementById('rpt-filters').innerHTML = '';
@@ -4873,11 +4887,9 @@ function rptEncerramento() {
     '<div id="ai-diag-panel-enc" style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12.5px;"></div>' +
     '<div style="display:flex;gap:12px;margin-top:10px;align-items:center;flex-wrap:wrap;">' +
     '<button id="btn-gerar-ia-enc" class="rpt-gen-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;font-weight:700;" onclick="generateAnalysisEncerramento()">Gerar Relatório com IA</button>' +
-    '<button class="rpt-gen-btn" style="background:transparent;color:#7C3AED;border:1px solid #7C3AED;" onclick="rptGenerateEncerramento()">Regenerar Pré-visualização</button>' +
-    '<button style="background:transparent;color:#1B2B6B;border:1px solid #1B2B6B;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="testarFontesIA(\'encerramento\')">🔍 Testar Fontes</button>' +
-    '<button style="background:transparent;color:#41546A;border:1px solid #E0E5EE;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="oeAbrirUploadModal(\'encerramento\')">📎 Upload manual</button>' +
+    '<button style="background:transparent;color:#1B2B6B;border:1px solid #1B2B6B;padding:10px 18px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;" onclick="testarFontesIA(\'encerramento\')">Testar Fontes</button>' +
     '</div>' +
-    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA tenta na ordem: <strong>1)</strong> pasta Drive cadastrada no Portal do Cliente, <strong>2)</strong> upload manual, <strong>3)</strong> índice global.</div>' +
+    '<div style="font-size:11px;color:#8A94A8;margin-top:6px;">A IA lê as planilhas do período (datas) e cruza com Trello, FlowUp e Drive.</div>' +
     '</div>';
 
   document.getElementById('rpt-filters').innerHTML = '';
