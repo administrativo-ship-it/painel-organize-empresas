@@ -201,7 +201,9 @@ def main():
                 'finished': data['count_finished']
             }
             name = (p.get('Name') or '').strip()
-            print(f'  [{i}/{len(projects)}] #{pid} {name[:40]:40} | abertas={data[\"count_open\"]:3} | total={data[\"count_total\"]:4}')
+            co = data['count_open']
+            ct = data['count_total']
+            print(f'  [{i}/{len(projects)}] #{pid} {name[:40]:40} | abertas={co:3} | total={ct:4}')
         except Exception as e:
             print(f'  [{i}/{len(projects)}] #{pid} ERRO: {e}')
 
