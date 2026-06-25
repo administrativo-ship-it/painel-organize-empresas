@@ -477,6 +477,7 @@ tbody tr:hover{background:var(--off);}
       <option value="">Todas — Tarefas</option>
       <option value="new">Novas Tarefas</option>
       <option value="active">Em Andamento</option>
+      <option value="duetoday">Vencendo Hoje</option>
       <option value="overdue">Atrasadas</option>
       <option value="done">Finalizadas</option>
     </select>
@@ -498,7 +499,7 @@ tbody tr:hover{background:var(--off);}
     <select class="f-sel" id="f-member" onchange="applyFilters()">
       <option value="">Todos — Responsável</option>
     </select>
-    <input class="f-inp" id="f-search" placeholder="Buscar projeto, cliente ou tarefa..." oninput="applyFilters()">
+    <input class="f-inp" id="f-search" placeholder="Buscar projeto, cliente ou tarefa..." oninput="applyFilters()" autocomplete="off" name="oe-search-filter">
     <button class="f-clr" onclick="clearFilters()">✕ Limpar</button>
   </div>
 
@@ -514,8 +515,8 @@ tbody tr:hover{background:var(--off);}
         <div class="chart-wrap"><canvas id="ch-status"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-ttl">Cards Trello por Lista</div>
-        <div class="chart-sub">Progresso dos planejamentos</div>
+        <div class="chart-ttl">Execução por Quadro — Trello</div>
+        <div class="chart-sub">% de conclusão (apenas cards com data de entrega)</div>
         <div class="chart-wrap"><canvas id="ch-trello-lists"></canvas></div>
       </div>
     </div>
@@ -936,22 +937,30 @@ async function loadFlowUpData() {
   if (!r.ok) throw new Error('FlowUp: arquivo de dados não encontrado');
   return r.json();
 }
+function isSameDay(d1, d2) {
+  return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
+}
 function normFlowUpTask(t) {
   const finDate = t.FinalizationDate;
   const endDate = t.EndDate;
   const sn = (t.StatusName || '').toLowerCase();
   const isDoneTask = !!finDate || sn.includes('conclu') || sn.includes('finaliz');
-  const isOverTask = !isDoneTask && endDate && new Date(endDate) < new Date();
+  var endD = endDate ? new Date(endDate) : null;
+  var now = new Date();
+  // "Vencendo hoje" = data de entrega é HOJE e ainda não concluída
+  var isDueTodayTask = !isDoneTask && endD && isSameDay(endD, now);
+  // "Atrasada" = data de entrega anterior a hoje (não inclui hoje) e ainda não concluída
+  var isOverTask = !isDoneTask && endD && endD < now && !isDueTodayTask;
   return {
     id: t.Id, name: t.Title || 'Sem nome',
     project: t.ProjectName || '', projectId: t.ProjectId || '',
     client: extractClient(t.ProjectName || ''),
     responsible: t.UserName || '—',
     deadline: endDate, priority: 'medium',
-    status: isDoneTask ? 'done' : (isOverTask ? 'overdue' : 'active'),
-    isDone: isDoneTask, isOver: isOverTask,
+    status: isDoneTask ? 'done' : (isOverTask ? 'overdue' : (isDueTodayTask ? 'duetoday' : 'active')),
+    isDone: isDoneTask, isOver: isOverTask, isDueToday: isDueTodayTask,
     statusName: t.StatusName || '',
-    daysLate: isOverTask ? Math.floor((Date.now() - new Date(endDate)) / 86400000) : 0,
+    daysLate: isOverTask ? Math.floor((now - endD) / 86400000) : 0,
     tags: [], source: 'flowup', raw: t
   };
 }
@@ -1039,14 +1048,16 @@ function normTask(t) {
 
 function normTrelloCard(card, board, listMap) {
   const due = card.due ? new Date(card.due) : null;
-  const over = due && !card.dueComplete && due < new Date();
+  const now = new Date();
+  const isDueToday = due && !card.dueComplete && isSameDay(due, now);
+  const over = due && !card.dueComplete && due < now && !isDueToday;
   const totalChk = (card.checklists||[]).reduce((a,cl) => a + cl.checkItems.length, 0);
   const doneChk = (card.checklists||[]).reduce((a,cl) => a + cl.checkItems.filter(i => i.state==='complete').length, 0);
   return {
     id: card.id, name: card.name,
     boardId: board.id, boardName: board.name,
     listId: card.idList, listName: listMap[card.idList] || '—',
-    due: card.due, dueComplete: card.dueComplete, isOver: over,
+    due: card.due, dueComplete: card.dueComplete, isOver: over, isDueToday: isDueToday,
     members: (card.members||[]).map(m => m.fullName||m.username||''),
     labels: (card.labels||[]).map(l => l.name||l.color),
     totalChk, doneChk, chkPct: totalChk > 0 ? Math.round(doneChk/totalChk*100) : null,
@@ -1175,6 +1186,8 @@ async function syncAll() {
           const { board, lists, cards, listMap } = r.value;
           S.trelloLists.push(...lists.map(l => ({...l, boardId: board.id, boardName: board.name})));
           var filteredCards = cards.filter(function(c) {
+            // Só considera cards COM data de entrega (são as "tarefas" reais do Trello)
+            if (!c.due) return false;
             var ln = (listMap[c.idList]||'').toUpperCase();
             return !ln.includes('POP') && !ln.includes('MANUAL') && !ln.includes('MODELO');
           });
@@ -1210,7 +1223,7 @@ function deriveMembers() {
 function populateMemberFilter() {
   const sel = document.getElementById('f-member');
   sel.innerHTML = '<option value="">Todos — Responsável</option>';
-  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='—'))].sort();
+  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='—'&&!isUserInactive(r)))].sort();
   names.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
 }
 
@@ -1252,11 +1265,14 @@ function filteredProjects() {
 }
 function filteredTasks() {
   return S.tasks.filter(t => {
+    // Oculta tarefas de usuários inativos (Roberto etc.) — exceto se elas já estiverem concluídas (histórico)
+    if (!t.isDone && isUserInactive(t.responsible)) return false;
     if (S.filters.status === 'done' && !t.isDone) return false;
     if (S.filters.status === 'active' && (t.isDone||t.isOver)) return false;
     var ts = S.filters.taskStatus;
-    if (ts === 'new' && (t.isDone || t.isOver || (t.statusName && /andamento|progress/i.test(t.statusName)))) return false;
-    if (ts === 'active' && (t.isDone || t.isOver)) return false;
+    if (ts === 'new' && (t.isDone || t.isOver || t.isDueToday || (t.statusName && /andamento|progress/i.test(t.statusName)))) return false;
+    if (ts === 'active' && (t.isDone || t.isOver || t.isDueToday)) return false;
+    if (ts === 'duetoday' && !t.isDueToday) return false;
     if (ts === 'overdue' && !t.isOver) return false;
     if (ts === 'done' && !t.isDone) return false;
     if (S.filters.member && t.responsible !== S.filters.member) return false;
@@ -1343,13 +1359,20 @@ function renderOverview() {
     ['#1B2B6B','#1a7a4a','#41546A','#c0392b']
   );
 
-  // Trello lists chart
+  // Trello — Execução por QUADRO (% de conclusão por board, considerando APENAS cards com data de entrega)
   if (S.trelloBoards.length > 0) {
-    const listCounts = {};
-    S.trelloCards.forEach(c => { listCounts[c.listName] = (listCounts[c.listName]||0)+1; });
-    const entries = Object.entries(listCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    var boardStats = S.trelloBoards.map(function(b){
+      var cards = S.trelloCards.filter(function(c){ return c.boardId === b.id && c.due; });
+      var done = cards.filter(function(c){ return c.dueComplete; }).length;
+      var total = cards.length;
+      var pct = total > 0 ? Math.round(done/total*100) : 0;
+      return { name: b.name, pct: pct, done: done, total: total };
+    }).filter(function(b){ return b.total > 0; })
+      .sort(function(a,b){ return b.pct - a.pct; })
+      .slice(0, 10);
     mkChart('ch-trello-lists','bar',
-      entries.map(([k])=>k), entries.map(([,v])=>v),
+      boardStats.map(function(b){ return b.name.length > 30 ? b.name.substring(0,30)+'…' : b.name; }),
+      boardStats.map(function(b){ return b.pct; }),
       ['#0052CC','#0065FF','#2684FF','#4C9AFF','#B3D4FF']
     );
   }
@@ -1401,11 +1424,14 @@ function renderTasks() {
   const ts = filteredTasks();
   const done = ts.filter(t=>t.isDone).length;
   const over = ts.filter(t=>t.isOver).length;
+  const today = ts.filter(t=>t.isDueToday).length;
+  const ativas = ts.length - done - over - today;
   document.getElementById('kpi-tasks').innerHTML = `
     ${kpi('Total', ts.length, 'navy', 'Tarefas filtradas', '<svg style="display:inline;vertical-align:-2px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7h8M8 11h5"/></svg>')}
     ${kpi('Concluídas', done, 'green', `${ts.length>0?Math.round(done/ts.length*100):0}%`, '<svg style="display:inline;vertical-align:-2px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>')}
+    ${kpi('Vencendo Hoje', today, 'orange', 'Prazo hoje', '<svg style="display:inline;vertical-align:-2px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>')}
     ${kpi('Atrasadas', over, 'red', 'Urgente', '<svg style="display:inline;vertical-align:-2px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01M10.29 3.86l-8.4 14.3A2 2 0 003.6 21h16.8a2 2 0 001.71-2.84l-8.4-14.3a2 2 0 00-3.42 0z"/></svg>')}
-    ${kpi('Em Andamento', ts.length-done-over, 'teal', 'Ativas', '<svg style="display:inline;vertical-align:-2px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>')}
+    ${kpi('Em Andamento', ativas, 'teal', 'Ativas', '<svg style="display:inline;vertical-align:-2px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>')}
   `;
   const pL = {critical:'Crítica',high:'Alta',medium:'Média',low:'Baixa'};
   const pC = {critical:'var(--red)',high:'var(--orange)',medium:'#e9c46a',low:'var(--green)'};
@@ -1524,8 +1550,22 @@ function openTrelloBoard(boardId) {
 }
 
 // ─── MEMBERS ───
+// Lista de usuários INATIVOS no FlowUp — não aparecem em responsáveis, gráficos nem filtros
+var FLOWUP_INACTIVE_USERS = (function(){
+  try { return JSON.parse(localStorage.getItem('oe_flowup_inactive')||'["Roberto Andrade"]'); }
+  catch(e) { return ['Roberto Andrade']; }
+})();
+function isUserInactive(name) {
+  if (!name) return true;
+  var n = name.trim().toUpperCase();
+  return FLOWUP_INACTIVE_USERS.some(function(u){
+    var uu = (u||'').trim().toUpperCase();
+    return uu === n || (uu && n.indexOf(uu) >= 0);
+  });
+}
+
 function renderMembers() {
-  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='—'))].sort();
+  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='—'&&!isUserInactive(r)))].sort();
   const colors = ['#1B2B6B','#41546A','#3DBBCC','#2c4a7a','#1a7a4a','#d35400','#0052CC'];
   const grid = document.getElementById('member-grid');
   if (!names.length) { grid.innerHTML = empty('Nenhum responsável', 'Sincronize os dados do FlowUp.'); return; }
@@ -5079,6 +5119,9 @@ function init() {
   loadConfig();
   // Se veio via link de setup, aplica as credenciais
   loadLogo();
+  // Força limpar o search input (browser pode auto-preencher com texto antigo)
+  var fsearch = document.getElementById('f-search');
+  if (fsearch) fsearch.value = '';
   renderAll();
 
   // Sincroniza imediatamente se tiver credenciais
