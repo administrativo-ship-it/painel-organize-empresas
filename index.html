@@ -457,6 +457,11 @@ tbody tr:hover{background:var(--off);}
   <div class="topbar">
     <div class="topbar-title" id="page-title">Visão Geral</div>
     <div class="topbar-right">
+      <div id="api-health" style="display:flex;gap:6px;align-items:center;font-size:11px;cursor:pointer;" onclick="abrirAuditAPIs()" title="Clique para ver detalhes das integrações">
+        <span id="health-flowup" title="FlowUp"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;"></span> FlowUp</span>
+        <span id="health-trello" title="Trello"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;"></span> Trello</span>
+        <span id="health-drive" title="Google Drive"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;"></span> Drive</span>
+      </div>
       <span class="sync-info" id="sync-lbl">Não sincronizado</span>
       <button class="sync-btn" id="sync-btn" onclick="syncAll()">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -1112,6 +1117,60 @@ function calcRisk(p, over, total, done, daysSince) {
 }
 
 // ═══════════════ SYNC ═══════════════
+// ═══════════════ AUDIT DE SAÚDE DAS APIS (Fase 2) ═══════════════
+var _apiHealth = {
+  flowup: { status: 'unknown', lastSync: null, error: null, tasksLoaded: 0, projectsLoaded: 0 },
+  trello: { status: 'unknown', lastSync: null, error: null, boardsLoaded: 0, cardsLoaded: 0 },
+  drive:  { status: 'unknown', lastSync: null, error: null }
+};
+function oeUpdateHealthUI() {
+  function set(id, st) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var color = st === 'ok' ? '#22c55e' : (st === 'error' ? '#ef4444' : '#9ca3af');
+    var nm = id.replace('health-','').replace(/^./, function(c){return c.toUpperCase();});
+    el.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+color+';"></span> ' + nm;
+  }
+  set('health-flowup', _apiHealth.flowup.status);
+  set('health-trello', _apiHealth.trello.status);
+  set('health-drive', (typeof _gToken !== 'undefined' && _gToken) ? 'ok' : _apiHealth.drive.status);
+}
+function abrirAuditAPIs() {
+  var existing = document.getElementById('oe-audit-modal');
+  if (existing) existing.remove();
+  function statusBadge(st) {
+    var bg = st === 'ok' ? '#e8f5ee' : (st === 'error' ? '#fdf0ee' : '#f5f5f5');
+    var c  = st === 'ok' ? '#22c55e' : (st === 'error' ? '#ef4444' : '#6b7280');
+    var label = st === 'ok' ? '✓ OK' : (st === 'error' ? '✗ FALHA' : '? não verificado');
+    return '<span style="background:'+bg+';color:'+c+';padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;">'+label+'</span>';
+  }
+  function row(nome, h, extras) {
+    return '<div style="border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#fafbfd;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><strong style="font-size:13px;color:#1B2B6B;">'+nome+'</strong>'+statusBadge(h.status)+'</div>' +
+      '<div style="font-size:11px;color:#41546A;line-height:1.6;">' +
+        '<div>Última sincronização: ' + (h.lastSync ? new Date(h.lastSync).toLocaleString('pt-BR') : 'nunca') + '</div>' +
+        (extras||'') +
+        (h.error ? '<div style="color:#ef4444;margin-top:4px;">Erro: ' + h.error + '</div>' : '') +
+      '</div></div>';
+  }
+  var html = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">' +
+    '<h3 style="color:#1B2B6B;font-size:17px;margin-bottom:14px;">Audit de Integrações</h3>' +
+    row('FlowUp', _apiHealth.flowup, '<div>Tarefas: ' + _apiHealth.flowup.tasksLoaded + ' · Projetos: ' + _apiHealth.flowup.projectsLoaded + '</div>') +
+    row('Trello', _apiHealth.trello, '<div>Boards: ' + _apiHealth.trello.boardsLoaded + ' · Cards (com data): ' + _apiHealth.trello.cardsLoaded + '</div>') +
+    row('Google Drive', { status: (typeof _gToken!=='undefined'&&_gToken)?'ok':_apiHealth.drive.status, lastSync: _apiHealth.drive.lastSync, error: _apiHealth.drive.error },
+      '<div>OAuth: ' + ((typeof _gToken!=='undefined'&&_gToken)?'conectado':'desconectado') + '</div>') +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">' +
+      '<button onclick="document.getElementById(\'oe-audit-modal\').remove()" style="background:#fff;border:1px solid #E0E5EE;color:#41546A;border-radius:8px;padding:8px 16px;font-weight:600;font-size:12px;cursor:pointer;">Fechar</button>' +
+      '<button onclick="document.getElementById(\'oe-audit-modal\').remove();syncAll();" style="background:#1B2B6B;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;font-size:12px;cursor:pointer;">🔄 Re-sincronizar Tudo</button>' +
+    '</div></div>';
+  var bg = document.createElement('div');
+  bg.id = 'oe-audit-modal';
+  bg.style.cssText = 'position:fixed;inset:0;background:rgba(13,21,38,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  bg.innerHTML = html;
+  document.body.appendChild(bg);
+  bg.addEventListener('click', function(e){ if (e.target === bg) bg.remove(); });
+}
+
 async function syncAll() {
   const hasFlowUp = S.config.fuKey && S.config.fuSubdomain;
   const hasTrello = S.config.trKey && S.config.trToken;
@@ -1133,7 +1192,11 @@ async function syncAll() {
     S.projects = (fuData.projects || []).map(normFlowUpProject);
     S.members = (fuData.members || []).map(u => ({ id: u.Id, name: u.Name, email: u.Email || '' }));
     if (!S.members.length) S.members = deriveMembers();
-  } catch(e) { errors.push('FlowUp: ' + e.message); }
+    _apiHealth.flowup = { status:'ok', lastSync: new Date().toISOString(), error: null, tasksLoaded: S.tasks.length, projectsLoaded: S.projects.length };
+  } catch(e) {
+    errors.push('FlowUp: ' + e.message);
+    _apiHealth.flowup = { status:'error', lastSync: new Date().toISOString(), error: e.message, tasksLoaded: 0, projectsLoaded: 0 };
+  }
 
   if (hasTrello) {
     try {
@@ -1194,13 +1257,17 @@ async function syncAll() {
           S.trelloCards.push(...filteredCards.map(c => normTrelloCard(c, board, listMap)));
         }
       });
-
-    } catch(e) { errors.push('Trello: ' + e.message); }
+      _apiHealth.trello = { status:'ok', lastSync: new Date().toISOString(), error: null, boardsLoaded: S.trelloBoards.length, cardsLoaded: S.trelloCards.length };
+    } catch(e) {
+      errors.push('Trello: ' + e.message);
+      _apiHealth.trello = { status:'error', lastSync: new Date().toISOString(), error: e.message, boardsLoaded: 0, cardsLoaded: 0 };
+    }
   }
 
   populateMemberFilter();
   updateBadges();
   renderAll();
+  oeUpdateHealthUI();
 
   const now = new Date();
   const timeStr = `Atualizado ${now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}`;
@@ -2039,6 +2106,7 @@ function gDriveInitClient() {
         }
         _gToken = resp.access_token;
         console.log('[GDrive] Connected successfully');
+        if (typeof _apiHealth !== 'undefined') { _apiHealth.drive = { status:'ok', lastSync: new Date().toISOString(), error: null }; if (typeof oeUpdateHealthUI === 'function') oeUpdateHealthUI(); }
         updateDriveBar();
         if (_gDrivePendingCb) { var cb = _gDrivePendingCb; _gDrivePendingCb = null; cb(); }
       },
@@ -2377,6 +2445,86 @@ async function oeFindPlanilhasInFolder(folderId, depth, maxDepth) {
   return planilhas;
 }
 
+// ═══════════════ DRIVE — MATERIAIS PRODUZIDOS NO PERÍODO (Fase 2) ═══════════════
+// Lista todos os arquivos (não-planilha) criados/modificados dentro de um período
+async function oeListDriveDocsInPeriod(folderId, dtIni, dtFim, depth) {
+  if (!_gToken || !folderId) return [];
+  if (depth > 3) return [];
+  var docs = [];
+  var children;
+  try { children = await oeListChildren(folderId); }
+  catch(e) { return []; }
+
+  var dtIniDate = dtIni ? new Date(dtIni + 'T00:00:00') : null;
+  var dtFimDate = dtFim ? new Date(dtFim + 'T23:59:59') : null;
+
+  for (var i = 0; i < children.length; i++) {
+    var f = children[i];
+    if (f.mimeType === 'application/vnd.google-apps.folder') {
+      var nested = await oeListDriveDocsInPeriod(f.id, dtIni, dtFim, (depth||0) + 1);
+      docs = docs.concat(nested);
+      continue;
+    }
+    // Pega metadados com createdTime/modifiedTime
+    try {
+      var metaUrl = 'https://www.googleapis.com/drive/v3/files/' + f.id + '?fields=id,name,mimeType,createdTime,modifiedTime,webViewLink,size&supportsAllDrives=true';
+      var res = await fetch(metaUrl, { headers: gAuthHeaders() });
+      if (!res.ok) continue;
+      var meta = await res.json();
+      var modified = meta.modifiedTime ? new Date(meta.modifiedTime) : null;
+      var created = meta.createdTime ? new Date(meta.createdTime) : null;
+      // Filtro por período: considera modifiedTime OU createdTime dentro do range
+      if (dtIniDate || dtFimDate) {
+        var refDate = modified || created;
+        if (!refDate) continue;
+        if (dtIniDate && refDate < dtIniDate) continue;
+        if (dtFimDate && refDate > dtFimDate) continue;
+      }
+      docs.push({
+        id: meta.id, name: meta.name, mime: meta.mimeType,
+        created: meta.createdTime, modified: meta.modifiedTime,
+        link: meta.webViewLink, size: meta.size
+      });
+    } catch(e) { /* skip */ }
+  }
+  return docs;
+}
+
+// Resumo legível dos materiais (para o prompt da IA)
+function oeFormatMateriaisDrive(docs) {
+  if (!docs || !docs.length) return '(nenhum material produzido no período)';
+  var byType = {};
+  docs.forEach(function(d){
+    var t = oeMimeShort(d.mime);
+    if (!byType[t]) byType[t] = [];
+    byType[t].push(d);
+  });
+  var lines = [];
+  lines.push('Total de materiais: ' + docs.length);
+  Object.keys(byType).forEach(function(t){
+    lines.push('');
+    lines.push('▸ ' + t + ' (' + byType[t].length + ')');
+    byType[t].slice(0, 20).forEach(function(d){
+      var dt = d.modified || d.created || '';
+      var dtFmt = dt ? new Date(dt).toLocaleDateString('pt-BR') : '';
+      lines.push('  • ' + d.name + (dtFmt ? ' (' + dtFmt + ')' : ''));
+    });
+    if (byType[t].length > 20) lines.push('  … e mais ' + (byType[t].length - 20));
+  });
+  return lines.join('\n');
+}
+
+function oeMimeShort(mime) {
+  if (!mime) return 'Outro';
+  if (mime.indexOf('document') >= 0) return 'Documento';
+  if (mime.indexOf('spreadsheet') >= 0) return 'Planilha';
+  if (mime.indexOf('presentation') >= 0) return 'Apresentação';
+  if (mime.indexOf('pdf') >= 0) return 'PDF';
+  if (mime.indexOf('image') >= 0) return 'Imagem';
+  if (mime.indexOf('video') >= 0) return 'Vídeo';
+  return 'Outro';
+}
+
 // Lê todas as planilhas da pasta Drive vinculada ao cliente no Portal
 async function oeReadPlanilhasFromClientPortalDrive(clienteName) {
   if (!_gToken) return null;
@@ -2419,8 +2567,131 @@ async function oeReadPlanilhasFromClientPortalDrive(clienteName) {
   return Object.keys(out).length ? out : null;
 }
 
-// ── UPLOAD MANUAL DE PLANILHAS (fallback) ──
+// ═══════════════ UPLOAD DEDICADO POR PERÍODO (Fase 2) ═══════════════
+// Persiste planilhas parseadas (CSV-like) em localStorage por chave (cliente|mes|ano|programa)
 var _oeUploadedSheets = { mensal: null, encerramento: null };
+
+function oeUploadKey(tipo) {
+  if (tipo === 'mensal') {
+    return 'oe_upload_mensal::' + (_rmf.cliente||'') + '::' + (_rmf.programa||'') + '::' + (_rmf.mes||'') + '::' + (_rmf.ano||'');
+  }
+  return 'oe_upload_enc::' + (_ref.cliente||'') + '::' + (_ref.programa||'') + '::' + (_ref.modnum||'');
+}
+
+function oeSavePeriodUploads(tipo, data) {
+  try {
+    // limita tamanho — só persiste se < 4MB (localStorage típico = 5-10MB)
+    var json = JSON.stringify(data);
+    if (json.length > 4000000) {
+      console.warn('[Upload] Dados muito grandes para localStorage, não persistido:', json.length);
+      return;
+    }
+    localStorage.setItem(oeUploadKey(tipo), json);
+  } catch(e) { console.warn('[Upload] Falha ao persistir:', e.message); }
+}
+
+function oeLoadPeriodUploads(tipo) {
+  try {
+    var raw = localStorage.getItem(oeUploadKey(tipo));
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function oeClearPeriodUploads(tipo) {
+  try { localStorage.removeItem(oeUploadKey(tipo)); } catch(e) {}
+  _oeUploadedSheets[tipo] = null;
+  oeRenderUploadList(tipo);
+}
+
+function oeFormatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+// Renderiza a lista visual dos arquivos uploadados
+function oeRenderUploadList(tipo) {
+  var elId = tipo === 'mensal' ? 'oe-uploads-list' : 'oe-uploads-list-enc';
+  var el = document.getElementById(elId);
+  if (!el) return;
+  var saved = oeLoadPeriodUploads(tipo);
+  if (saved && !_oeUploadedSheets[tipo]) _oeUploadedSheets[tipo] = saved.parsed;
+
+  var parsed = _oeUploadedSheets[tipo];
+  var files = saved ? saved.files : [];
+
+  if (!parsed || !Object.keys(parsed).length) {
+    el.innerHTML = '<div style="font-size:12px;color:#8A94A8;font-style:italic;padding:8px 0;">Nenhuma planilha carregada para este período. Arraste arquivos .xlsx aqui ou clique para selecionar.</div>';
+    return;
+  }
+  var html = '<div style="font-size:11px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">✓ ' + Object.keys(parsed).length + ' planilha(s) carregada(s)</div>';
+  Object.keys(parsed).forEach(function(k, i){
+    var sizeStr = files && files[i] ? oeFormatBytes(files[i].size || 0) : '';
+    var tabsCount = (parsed[k].match(/--- ABA:/g) || []).length;
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #E0E5EE;border-radius:6px;margin-bottom:6px;background:#fafbfd;">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2B6B" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>' +
+      '<div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:600;color:#1B2B6B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + k + '</div>' +
+      '<div style="font-size:10.5px;color:#8A94A8;">' + tabsCount + ' aba(s)' + (sizeStr ? ' · ' + sizeStr : '') + '</div></div>' +
+      '<button onclick="oeRemoveUpload(\'' + tipo + '\', \'' + k.replace(/'/g, "\\'") + '\')" style="background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:11px;padding:4px 8px;">Remover</button>' +
+      '</div>';
+  });
+  html += '<button onclick="oeClearPeriodUploads(\'' + tipo + '\')" style="margin-top:4px;background:transparent;color:#ef4444;border:1px solid #f3c9c2;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">✕ Limpar todos</button>';
+  el.innerHTML = html;
+}
+
+function oeRemoveUpload(tipo, key) {
+  if (_oeUploadedSheets[tipo]) {
+    delete _oeUploadedSheets[tipo][key];
+    var saved = oeLoadPeriodUploads(tipo) || { files: [], parsed: {} };
+    delete saved.parsed[key];
+    oeSavePeriodUploads(tipo, saved);
+    oeRenderUploadList(tipo);
+  }
+}
+
+// Handler do input de arquivos no formulário
+async function oeUploadInline(ev, tipo) {
+  var files = Array.from(ev.target.files || []);
+  if (!files.length) return;
+  if (!window.XLSX) { alert('SheetJS ainda carregando. Aguarde 2s e tente novamente.'); return; }
+
+  var elId = tipo === 'mensal' ? 'oe-uploads-list' : 'oe-uploads-list-enc';
+  var el = document.getElementById(elId);
+  if (el) el.innerHTML = '<div style="font-size:12px;color:#41546A;">⏳ Processando ' + files.length + ' arquivo(s)...</div>';
+
+  var current = _oeUploadedSheets[tipo] || {};
+  var savedFiles = (oeLoadPeriodUploads(tipo) || {}).files || [];
+
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    try {
+      var ab = await f.arrayBuffer();
+      var tabs = oeParseXLSX(ab);
+      var cat = oeClassificarArquivo(f.name) || 'outras';
+      var maxChars = 9000, total = 0, parts = [];
+      Object.keys(tabs).forEach(function(t){
+        var block = '--- ABA: ' + t + ' ---\n' + tabs[t];
+        if (total + block.length > maxChars) return;
+        parts.push(block); total += block.length;
+      });
+      var key = cat + ' :: ' + f.name;
+      current[key] = parts.join('\n\n');
+      savedFiles.push({ name: f.name, size: f.size, type: f.type });
+    } catch(e) { console.warn('[Upload]', f.name, e); }
+  }
+  _oeUploadedSheets[tipo] = current;
+  oeSavePeriodUploads(tipo, { files: savedFiles, parsed: current });
+  oeRenderUploadList(tipo);
+  ev.target.value = ''; // reseta o input pra permitir re-upload do mesmo arquivo
+}
+
+function oeHandleDrop(ev, tipo) {
+  ev.preventDefault();
+  ev.currentTarget.style.borderColor = '#E0E5EE';
+  ev.currentTarget.style.background = '#fafbfd';
+  var fakeEv = { target: { files: ev.dataTransfer.files, value: '' } };
+  oeUploadInline(fakeEv, tipo);
+}
 
 function oeAbrirUploadModal(tipo) {
   var existing = document.getElementById('oe-upload-modal');
@@ -3683,12 +3954,27 @@ async function generateAnalysisWithAI() {
   if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
     try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, mesNome, ano); } catch(e) {}
   }
+
+  // 3.5) Materiais produzidos no Drive durante o mês de referência
+  if (btnEarly) { btnEarly.textContent = 'Buscando materiais no Drive...'; }
+  ctx.materiaisDrive = [];
+  if (_gToken && ctx.links.drive) {
+    try {
+      var folderId = oeExtractFolderId(ctx.links.drive);
+      // Período do mês: primeiro ao último dia
+      var ultimoDia = new Date(parseInt(ano), parseInt(_rmf.mes), 0).getDate();
+      var dtIni = ano + '-' + String(_rmf.mes).padStart(2,'0') + '-01';
+      var dtFim = ano + '-' + String(_rmf.mes).padStart(2,'0') + '-' + String(ultimoDia).padStart(2,'0');
+      ctx.materiaisDrive = await oeListDriveDocsInPeriod(folderId, dtIni, dtFim, 0);
+    } catch(e) { console.warn('[AI] erro materiais Drive:', e); }
+  }
   console.log('[AI Mensal] Diagnóstico:', {
     cliente: cliente, mes: mesNome, ano: ano, programa: programa,
     driveConectado: !!(typeof _gToken !== 'undefined' && _gToken),
     driveExtraidos: Object.keys(_rmf).filter(function(k){return ['fat','meta','cresc','cativos','conv','ticket','cmv','dfixas','dvar','impost','ll'].indexOf(k)>=0 && _rmf[k];}).map(function(k){return k+'='+_rmf[k];}),
     planilhasLidas: ctx.sheetsCSV ? Object.keys(ctx.sheetsCSV) : [],
     totalCharsCSV: ctx.sheetsCSV ? Object.values(ctx.sheetsCSV).reduce(function(a,b){return a+b.length;},0) : 0,
+    materiaisDrive: ctx.materiaisDrive.length,
     historico: _rmf._historico,
     dreData: _rmf._dreData
   });
@@ -3742,10 +4028,12 @@ async function generateAnalysisWithAI() {
     'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
     'Em andamento: ' + ctx.flowup.andamentoNomes.join('; ') + '\n' +
     'Atrasadas: ' + ctx.flowup.atrasadasNomes.join('; ') + '\n\n' +
-    '── PLANEJAMENTO TRELLO DESTE CLIENTE ──\n' +
-    'Boards: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
-    'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n' +
+    '── PLANEJAMENTO ESTRATÉGICO TRELLO (POR QUADRO) ──\n' +
+    'Boards: ' + ctx.trello.boards + ' | Cards COM data: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
+    'Quadros ativos: ' + ctx.trello.boardsNomes.join('; ') + '\n' +
     'Cards vencidos: ' + ctx.trello.vencidosNomes.join('; ') + '\n\n' +
+    '── MATERIAIS PRODUZIDOS NO DRIVE (' + mesNome + '/' + ano + ') ──\n' +
+    oeFormatMateriaisDrive(ctx.materiaisDrive) + '\n\n' +
     '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
     '1. PRIORIDADE 1 — Se "VALORES JÁ EXTRAÍDOS PELO DRIVE" contém algum valor, USE-O DIRETAMENTE sem reinterpretar. Esses valores foram extraídos via Google Sheets API e são autoritativos.\n' +
     '2. PRIORIDADE 2 — Para valores ausentes nos VALORES EXTRAÍDOS, ANALISE o CONTEÚDO BRUTO DAS PLANILHAS (CSV). Cada CSV pode ter cabeçalhos como "Mês", "Faturamento", "Meta", "Crescimento", "Ticket Médio", "Conversão", "Clientes", etc.\n' +
@@ -3754,8 +4042,9 @@ async function generateAnalysisWithAI() {
     '5. Para os campos do programa "' + programa + '": ' + camposExplicacao + '\n' +
     '6. Formato numérico: sem R$, sem %, sem separador de milhar, ponto como decimal. Ex.: "98500.00", "23.7".\n' +
     '7. APENAS se o valor REALMENTE não existir nem nos VALORES EXTRAÍDOS nem no CSV, retorne 0. NUNCA invente.\n' +
-    '8. Em "analise" e "proximos": cite os números reais que você usou. Tom factual, sem floreios.\n' +
-    '9. Se TODAS as fontes estiverem vazias, em "analise" escreva: "Conecte o Google Drive ou compartilhe a planilha como pública para leitura automática dos indicadores." e use 0 nos numéricos.\n\n' +
+    '8. Em "analise": estruture em 4 parágrafos curtos cobrindo: (a) INDICADORES — cite valores reais das planilhas; (b) EXECUÇÃO OPERACIONAL — comente concluídas/atrasadas do FlowUp; (c) PLANEJAMENTO ESTRATÉGICO — % execução por QUADRO Trello (não por lista); (d) MATERIAIS — cite os principais documentos do Drive listados acima.\n' +
+    '9. Em "proximos": 3-5 ações concretas baseadas nas atrasadas do FlowUp, nos cards vencidos do Trello e nos materiais pendentes.\n' +
+    '10. Se TODAS as fontes financeiras estiverem vazias, em "analise" inclua: "Dados financeiros indisponíveis no período. Análise baseada em FlowUp, Trello e Drive." e use 0 nos numéricos.\n\n' +
     'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
     '{' +
     camposEsperados.map(function(k){return '"'+k+'":"NUMERO"';}).join(',') + ',"analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
@@ -3846,6 +4135,15 @@ async function generateAnalysisEncerramento() {
     if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) {
       try { ctx.sheetsCSV = await fetchAllClientSheets(ctx.links, null, new Date().getFullYear()); } catch(e) {}
     }
+    // 6) Materiais produzidos no Drive durante o período do módulo
+    if (btn) { btn.textContent = 'Buscando materiais no Drive...'; }
+    ctx.materiaisDrive = [];
+    if (_gToken && ctx.links.drive && (_ref.dtini || _ref.dtfim)) {
+      try {
+        var folderIdEnc = oeExtractFolderId(ctx.links.drive);
+        ctx.materiaisDrive = await oeListDriveDocsInPeriod(folderIdEnc, _ref.dtini, _ref.dtfim, 0);
+      } catch(e) { console.warn('[AI enc] erro materiais Drive:', e); }
+    }
     if (btn) { btn.textContent = 'Gerando análise...'; }
     console.log('[AI Encerramento] Diagnóstico:', {
       cliente: _ref.cliente, programa: programa,
@@ -3904,9 +4202,11 @@ async function generateAnalysisEncerramento() {
       'Concluídas: ' + ctx.flowup.concluidasNomes.join('; ') + '\n' +
       'Em andamento: ' + ctx.flowup.andamentoNomes.join('; ') + '\n' +
       'Atrasadas: ' + ctx.flowup.atrasadasNomes.join('; ') + '\n\n' +
-      '── PLANEJAMENTO TRELLO DESTE CLIENTE ──\n' +
-      'Boards: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
-      'Boards: ' + ctx.trello.boardsNomes.join('; ') + '\n\n' +
+      '── PLANEJAMENTO ESTRATÉGICO TRELLO (POR QUADRO) ──\n' +
+      'Boards: ' + ctx.trello.boards + ' | Cards COM data: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n' +
+      'Quadros ativos: ' + ctx.trello.boardsNomes.join('; ') + '\n\n' +
+      '── MATERIAIS PRODUZIDOS NO DRIVE (período ' + (_ref.dtini||'?') + ' a ' + (_ref.dtfim||'?') + ') ──\n' +
+      oeFormatMateriaisDrive(ctx.materiaisDrive) + '\n\n' +
       '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
       '1. PRIORIDADE 1 — Se "VALORES JÁ EXTRAÍDOS PELO DRIVE" contém algum valor, USE-O DIRETAMENTE. Mapeie para k1..k6 conforme os KPIs do programa.\n' +
       '2. KPIs do programa "' + programa + '": ' + kpisExp + '\n' +
@@ -3915,8 +4215,9 @@ async function generateAnalysisEncerramento() {
       '5. Campos de TEXTO (modnum, modnom, dtini, dtfim, proxmod): se já preenchidos pelo usuário (nos FILTROS), MANTENHA o valor exato. Se vazios, deixe STRING VAZIA "" — NÃO escreva "(vazio)" literal.\n' +
       '6. "nment" = nº de mentorias realizadas no período. Se vazio, conte mentorias concluídas no FlowUp (tarefas com "mentoria" no nome) ou retorne "0".\n' +
       '7. Valores numéricos sem R$, sem %, sem milhar, ponto como decimal.\n' +
-      '8. Em "analise" e "proximos": cite os números reais. Tom factual, sem floreios.\n' +
-      '9. Se TODAS as fontes estiverem vazias: em "analise" escreva "Conecte o Google Drive ou compartilhe a planilha publicamente para leitura automática." e use 0 nos numéricos.\n\n' +
+      '8. Em "analise": estruture em 4 parágrafos cobrindo: (a) INDICADORES DO MÓDULO — cite valores reais; (b) EXECUÇÃO OPERACIONAL — concluídas/atrasadas do FlowUp; (c) PLANEJAMENTO ESTRATÉGICO — % execução por QUADRO Trello; (d) MATERIAIS PRODUZIDOS — cite os principais documentos do Drive entregues no período.\n' +
+      '9. Em "proximos": 4-6 ações concretas para o próximo módulo, baseadas em atrasados FlowUp, cards vencidos Trello e entregáveis pendentes.\n' +
+      '10. Se TODAS as fontes financeiras estiverem vazias: em "analise" inclua "Dados financeiros indisponíveis no período do módulo. Análise baseada em FlowUp, Trello e Drive." e use 0 nos numéricos.\n\n' +
       'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
       '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"TEXTO_OU_VAZIO","modnom":"TEXTO_OU_VAZIO","dtini":"AAAA-MM-DD_OU_VAZIO","dtfim":"AAAA-MM-DD_OU_VAZIO","proxmod":"TEXTO_OU_VAZIO","nment":"NUM","analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
 
@@ -4215,21 +4516,27 @@ function rptMensal() {
       '</div>';
   }
 
-  var linkFields = progLinkFields.map(mkLinkField).join('');
-
   var linksSection = '<div class="rpt-form-section" style="display:flex;align-items:center;gap:8px;">'+
-    '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>'+
-    ' Links e Configuração'+
-    (_rmf._driveLoaded?' <span style="font-size:10px;color:#22c55e;font-weight:600;text-transform:none;letter-spacing:0;">Dados carregados</span>':'')+
+    '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'+
+    ' Planilhas do Período'+
+    '<span style="font-size:10px;color:#8A94A8;font-weight:400;text-transform:none;letter-spacing:0;margin-left:auto;">Persistido por cliente + mês + ano</span>'+
     '</div>'+
-    '<div class="rpt-form-grid" style="grid-template-columns:1fr 1fr;">'+linkFields+'</div>'+
-    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">'+
-    ((_rmf.cliente && (links.planilhaComercialId || links.planilhaId))?'<button class="rpt-drive-btn" style="background:var(--teal-dark)" onclick="triggerDriveLoad(\'mensal\')">↺ Atualizar via Google Drive</button>':'')+
-    (_gToken?'<span style="font-size:11px;color:#22c55e;font-weight:600;">● Google Drive conectado</span>':
-      '<span style="font-size:11px;color:var(--muted);">Dados carregados automaticamente. <span style="cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Drive</span> para atualização ao vivo.</span>')+
-    '<button class="rpt-drive-btn" style="margin-left:auto;background:#1B2B6B;font-size:11px;" onclick="abrirModalIndexarDrive()">📁 Drive Organize (' + ((function(){ try { var i = oeGetDriveIndex(); return i.clientes ? Object.keys(i.clientes).length : 0; } catch(e) { return 0; } })()) + ' clientes)</button>'+
+    '<div id="oe-upload-zone" style="border:2px dashed #1B2B6B;border-radius:10px;padding:18px 20px;text-align:center;cursor:pointer;background:#fafbfd;transition:all .15s;margin-bottom:10px;" '+
+      'onclick="document.getElementById(\'oe-upload-input\').click()" '+
+      'ondragover="event.preventDefault();this.style.background=\'#eef2fb\';this.style.borderColor=\'#7C3AED\';" '+
+      'ondragleave="this.style.background=\'#fafbfd\';this.style.borderColor=\'#1B2B6B\';" '+
+      'ondrop="oeHandleDrop(event,\'mensal\')">'+
+      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1B2B6B" stroke-width="1.5" style="margin-bottom:6px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>'+
+      '<div style="font-size:13px;font-weight:700;color:#1B2B6B;">Arraste planilhas .xlsx aqui</div>'+
+      '<div style="font-size:11px;color:#8A94A8;margin-top:2px;">ou clique para selecionar — INDICADORES COMERCIAIS, FINANCEIROS, FLUXO DE CAIXA, DRE, etc.</div>'+
+      '<input type="file" id="oe-upload-input" accept=".xlsx,.xls" multiple style="display:none;" onchange="oeUploadInline(event,\'mensal\')">'+
     '</div>'+
-    '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">Carregando dados da planilha...</div>';
+    '<div id="oe-uploads-list" style="margin-bottom:12px;"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:#41546A;">'+
+    (_gToken?'<span style="color:#22c55e;font-weight:600;">● Drive conectado</span> · Painel também busca automaticamente na pasta Drive cadastrada no Portal do Cliente':
+      '<span style="color:var(--muted);">Drive desconectado — </span><span style="cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Drive</span> <span style="color:var(--muted);">para leitura automática.</span>')+
+    '</div>'+
+    '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">Carregando dados...</div>';
 
   var kpiSection = '';
   if (_rmf.programa === 'master') {
@@ -4285,6 +4592,7 @@ function rptMensal() {
 
   document.getElementById('rpt-filters').innerHTML = '';
   document.getElementById('report-preview').innerHTML = formHtml + '<div id="rpt-prev"></div>';
+  setTimeout(function(){ oeRenderUploadList('mensal'); }, 50);
 
   if (_rmf.cliente) {
     // Aguarda o JSON carregar antes de aplicar (loadIndicadoresData é async)
@@ -4364,34 +4672,25 @@ function rptEncerramento() {
     '<div class="rpt-cfg-field"><label>Análise Executiva do Módulo</label><textarea id="ref-analise" rows="4" oninput="_ref.analise=this.value">'+(_ref.analise||'')+'</textarea></div>' +
     '<div class="rpt-cfg-field"><label>Próximos Passos e Foco do Próximo Módulo</label><textarea id="ref-proximos" rows="4" oninput="_ref.proximos=this.value">'+(_ref.proximos||'')+'</textarea></div>' +
     '</div>' +
-    '<div class="rpt-form-section">Links e Cadastros</div>' +
-    '<div class="rpt-form-grid">' +
-    (function(){
-      var encProgLinks = {
-        mentoring: [
-          {key:'planilhaComercial', label:'Planilha de Indicadores Comerciais'},
-          {key:'planilhaFinanceiro', label:'Planilha de Indicadores Financeiros'},
-          {key:'planilhaFluxo', label:'Planilha de Fluxo de Caixa'},
-          {key:'drive', label:'Pasta do Drive'},
-          {key:'trello', label:'Board do Trello'},
-          {key:'extra', label:'Link Adicional'}
-        ],
-        master: [
-          {key:'planilhaControladoria', label:'Planilha de Controladoria Financeira'},
-          {key:'drive', label:'Pasta do Drive'},
-          {key:'trello', label:'Board do Trello'},
-          {key:'extra', label:'Link Adicional'}
-        ],
-        marketing: [
-          {key:'planilhaComercial', label:'Planilha de Indicadores Comerciais'},
-          {key:'drive', label:'Pasta do Drive'},
-          {key:'trello', label:'Board do Trello'},
-          {key:'extra', label:'Link Adicional'}
-        ]
-      };
-      var fields = encProgLinks[prog] || encProgLinks.mentoring;
-      return fields.map(function(f){ return encMkLink(f.label, f.key); }).join('');
-    })() +
+    '<div class="rpt-form-section" style="display:flex;align-items:center;gap:8px;">'+
+    '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'+
+    ' Planilhas do Módulo'+
+    '<span style="font-size:10px;color:#8A94A8;font-weight:400;text-transform:none;letter-spacing:0;margin-left:auto;">Persistido por cliente + módulo</span>'+
+    '</div>'+
+    '<div id="oe-upload-zone-enc" style="border:2px dashed #1B2B6B;border-radius:10px;padding:18px 20px;text-align:center;cursor:pointer;background:#fafbfd;transition:all .15s;margin-bottom:10px;" '+
+      'onclick="document.getElementById(\'oe-upload-input-enc\').click()" '+
+      'ondragover="event.preventDefault();this.style.background=\'#eef2fb\';this.style.borderColor=\'#7C3AED\';" '+
+      'ondragleave="this.style.background=\'#fafbfd\';this.style.borderColor=\'#1B2B6B\';" '+
+      'ondrop="oeHandleDrop(event,\'encerramento\')">'+
+      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1B2B6B" stroke-width="1.5" style="margin-bottom:6px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>'+
+      '<div style="font-size:13px;font-weight:700;color:#1B2B6B;">Arraste planilhas .xlsx aqui</div>'+
+      '<div style="font-size:11px;color:#8A94A8;margin-top:2px;">ou clique para selecionar — planilhas do módulo (indicadores, financeiro, fluxo, DRE).</div>'+
+      '<input type="file" id="oe-upload-input-enc" accept=".xlsx,.xls" multiple style="display:none;" onchange="oeUploadInline(event,\'encerramento\')">'+
+    '</div>'+
+    '<div id="oe-uploads-list-enc" style="margin-bottom:12px;"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:#41546A;">'+
+    (_gToken?'<span style="color:#22c55e;font-weight:600;">● Drive conectado</span> · Painel também busca automaticamente na pasta do cliente':
+      '<span style="color:var(--muted);">Drive desconectado — </span><span style="cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Drive</span> <span style="color:var(--muted);">para leitura automática.</span>')+
     '</div>' +
     '<div id="ai-diag-panel-enc" style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12.5px;"></div>' +
     '<div style="display:flex;gap:12px;margin-top:10px;align-items:center;flex-wrap:wrap;">' +
@@ -4405,6 +4704,7 @@ function rptEncerramento() {
 
   document.getElementById('rpt-filters').innerHTML = '';
   document.getElementById('report-preview').innerHTML = formHtml + '<div id="rpt-prev"></div>';
+  setTimeout(function(){ oeRenderUploadList('encerramento'); }, 50);
 
   if (_ref.cliente) {
     var applied = applyIndicadoresData('encerramento');
