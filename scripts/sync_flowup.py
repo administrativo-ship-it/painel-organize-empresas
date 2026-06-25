@@ -1,172 +1,106 @@
 #!/usr/bin/env python3
 """
 Sincroniza dados do FlowUp para flowup-data.json.
-Roda automaticamente via GitHub Actions (cron horário).
+Auth: OAuth2 Password Grant (POST /token com password + subdomain).
+URL base: https://task.flowup.me
 
-Variáveis de ambiente necessárias:
-- FLOWUP_API_KEY   (obrigatório)
-- FLOWUP_SUBDOMAIN (opcional, default: organizementoring)
-- FLOWUP_BASE_URL  (opcional, default: https://app.flowup.com.br/api/v3)
+Variáveis de ambiente:
+- FLOWUP_API_KEY    (a senha de API gerada no painel FlowUp)
+- FLOWUP_SUBDOMAIN  (default: organizementoring)
+- FLOWUP_BASE_URL   (default: https://task.flowup.me)
 """
 import os
 import sys
 import json
 import time
 import urllib.request
+import urllib.parse
 import urllib.error
 
 API_KEY = os.environ.get('FLOWUP_API_KEY', '').strip()
 SUBDOMAIN = os.environ.get('FLOWUP_SUBDOMAIN', 'organizementoring').strip()
-BASE_URL_ENV = os.environ.get('FLOWUP_BASE_URL', '').rstrip('/')
-
-# Lista de URLs candidatas a tentar (o script descobre a correta automaticamente)
-def _candidate_urls():
-    if BASE_URL_ENV:
-        return [BASE_URL_ENV]
-    return [
-        f'https://api.flowup.me/v3',
-        f'https://api.flowup.me/api/v3',
-        f'https://api.flowup.me',
-        f'https://app.flowup.me/api/v3',
-        f'https://app.flowup.me/api/v1',
-        f'https://app.flowup.me/api',
-        f'https://flowup.me/api/v3',
-        f'https://{SUBDOMAIN}.flowup.me/api/v3',
-        f'https://{SUBDOMAIN}.flowup.me/api/v1',
-        f'https://{SUBDOMAIN}.flowup.me/api',
-    ]
-
-# Estado global da URL base resolvida (primeira que respondeu)
-_resolved_base_url = None
+BASE_URL = os.environ.get('FLOWUP_BASE_URL', 'https://task.flowup.me').rstrip('/')
 
 if not API_KEY:
     print('ERRO: defina FLOWUP_API_KEY (secret no GitHub).', file=sys.stderr)
     sys.exit(1)
 
+# Endpoints (extraídos do MCP server oficial)
+EP_TOKEN = '/token'
+EP_LIST_PROJECTS = '/api/v1/public/project/getall'
+EP_QUERY_TASKS = '/api/v1/public/task/querytasks'
+EP_LIST_USERS = '/api/v1/public/user/getactiveusers'
 
-def _request(method, path, body=None, auth_variant=0, base_url=None):
-    """Faz uma requisição HTTP com fallback para variações de autenticação."""
-    bu = base_url or _resolved_base_url or _candidate_urls()[0]
-    url = f'{bu}{path}'
-    headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Subdomain': SUBDOMAIN,
-        'User-Agent': 'organize-painel-sync/1.0'
-    }
-    # Tenta variações comuns de header de auth do FlowUp
-    if auth_variant == 0:
-        headers['Authorization'] = f'Bearer {API_KEY}'
-    elif auth_variant == 1:
-        headers['Authorization'] = API_KEY
-    elif auth_variant == 2:
-        headers['X-Api-Key'] = API_KEY
-    elif auth_variant == 3:
-        headers['Authorization'] = f'Token {API_KEY}'
-    elif auth_variant == 4:
-        headers['X-Auth-Token'] = API_KEY
-    elif auth_variant == 5:
-        headers['Authorization'] = f'apikey {API_KEY}'
-    else:
-        headers['X-Subscription-Key'] = API_KEY
-
-    data = json.dumps(body).encode('utf-8') if body is not None else None
-    req = urllib.request.Request(url, data=data, method=method, headers=headers)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read().decode('utf-8'))
+_access_token = None
+_token_expires_at = 0
 
 
-def _discover_base_url():
-    """Testa as URLs candidatas até encontrar uma que responda (DNS válido)."""
-    global _resolved_base_url
-    if _resolved_base_url:
-        return _resolved_base_url
+def get_access_token():
+    """OAuth2 Password Grant — autentica e retorna o access_token (com cache de 1h)."""
+    global _access_token, _token_expires_at
+    if _access_token and _token_expires_at > time.time() + 60:
+        return _access_token
 
-    # Testa primeiro com endpoint de tarefas (que sabemos que existe)
-    test_endpoints = ['/task/querytasks', '/user/list', '/project/list']
-    methods = {'/task/querytasks': 'POST', '/user/list': 'GET', '/project/list': 'POST'}
+    body = urllib.parse.urlencode({
+        'password': API_KEY,
+        'grant_type': 'password',
+        'scope': 'api',
+        'subdomain': SUBDOMAIN
+    }).encode('utf-8')
 
-    auth_alive_url = None  # URL que respondeu com 401/403 (DNS ok, auth errado)
+    req = urllib.request.Request(
+        f'{BASE_URL}{EP_TOKEN}',
+        data=body,
+        method='POST',
+        headers={
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'User-Agent': 'organize-painel-sync/1.0'
+        }
+    )
 
-    for bu in _candidate_urls():
-        print(f'  Testando: {bu}')
-        url_alive = False
-        for endpoint in test_endpoints:
-            method = methods[endpoint]
-            body = {} if method == 'POST' else None
-            for variant in range(7):
-                try:
-                    _request(method, endpoint, body, variant, base_url=bu)
-                    # SUCESSO total!
-                    _resolved_base_url = bu
-                    print(f'  ✓ URL base resolvida: {bu} (endpoint {endpoint}, auth variant {variant})')
-                    return bu
-                except urllib.error.HTTPError as e:
-                    if e.code in (401, 403):
-                        # URL existe, auth errado — guarda como candidato vivo
-                        if not auth_alive_url:
-                            auth_alive_url = bu
-                            print(f'  ⚠ URL respondeu {e.code} (auth precisa ajuste): {bu}')
-                        continue  # tenta outra variant
-                    if e.code in (404, 405):
-                        break  # esse endpoint não existe aqui, tenta próximo endpoint
-                    # outro erro HTTP (500 etc) — URL viva mas com problema
-                    if not auth_alive_url:
-                        auth_alive_url = bu
-                        print(f'  ⚠ URL respondeu HTTP {e.code}: {bu}')
-                    break
-                except (urllib.error.URLError, OSError) as e:
-                    # DNS / conexão falhou
-                    msg = str(e)
-                    if 'Name or service not known' in msg or 'getaddrinfo' in msg or 'nodename' in msg:
-                        # DNS falhou para esta URL — pula para próxima URL inteira
-                        url_alive = None
-                        break
-                    continue
-                except Exception:
-                    continue
-            if url_alive is None:
-                break  # DNS falhou — próxima URL
-        if url_alive is None:
-            continue
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data = json.loads(r.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        err = e.read().decode('utf-8', errors='ignore')
+        raise RuntimeError(f'Token HTTP {e.code}: {err[:300]}')
 
-    # Nada deu sucesso total, mas se alguma respondeu com 401/403 ela existe
-    if auth_alive_url:
-        _resolved_base_url = auth_alive_url
-        print(f'  ▸ Usando URL com auth pendente: {auth_alive_url}')
-        return auth_alive_url
-    return None
+    token = data.get('access_token')
+    if not token:
+        raise RuntimeError(f'Resposta sem access_token: {data}')
+
+    _access_token = token
+    _token_expires_at = time.time() + int(data.get('expires_in', 3600))
+    return token
 
 
 def api_call(method, path, body=None):
-    """Chama a API tentando até 4 variações de autenticação."""
-    global _resolved_base_url
-    # Garante que temos uma URL base resolvida
-    if not _resolved_base_url:
-        bu = _discover_base_url()
-        if not bu:
-            raise RuntimeError('Nenhuma URL base do FlowUp respondeu. Tentadas: ' + ', '.join(_candidate_urls()))
-    last_err = None
-    for variant in range(7):
-        try:
-            return _request(method, path, body, variant)
-        except urllib.error.HTTPError as e:
-            if e.code in (401, 403) and variant < 3:
-                last_err = e
-                continue
-            err_body = ''
-            try:
-                err_body = e.read().decode('utf-8', errors='ignore')
-            except Exception:
-                pass
-            raise RuntimeError(f'HTTP {e.code} em {method} {path}: {err_body[:300]}')
-        except Exception as e:
-            raise RuntimeError(f'Erro em {method} {path}: {e}')
-    raise RuntimeError(f'Falha de autenticação: {last_err}')
+    """Chama um endpoint da API FlowUp já autenticado."""
+    token = get_access_token()
+    url = f'{BASE_URL}{path}'
+    data = json.dumps(body).encode('utf-8') if body is not None else None
+    req = urllib.request.Request(
+        url,
+        data=data,
+        method=method,
+        headers={
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'organize-painel-sync/1.0'
+        }
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return json.loads(r.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        err = e.read().decode('utf-8', errors='ignore')
+        raise RuntimeError(f'HTTP {e.code} em {method} {path}: {err[:300]}')
 
 
 def fetch_all_pages(method, path, body_fn=None, page_size=200, max_pages=50):
-    """Paginação genérica baseada em CurrentPage/PageSize."""
+    """Paginação por CurrentPage/PageSize."""
     all_results = []
     for page in range(1, max_pages + 1):
         body = body_fn(page, page_size) if body_fn else None
@@ -183,16 +117,19 @@ def fetch_all_pages(method, path, body_fn=None, page_size=200, max_pages=50):
 def main():
     ts = time.strftime('%Y-%m-%d %H:%M:%S')
     print(f'[{ts}] Iniciando sincronização FlowUp')
+    print(f'  Base URL:   {BASE_URL}')
     print(f'  Subdomínio: {SUBDOMAIN}')
-    print(f'  Candidatos: {", ".join(_candidate_urls())}')
-    # Resolve URL antes de começar (mostra qual funcionou)
-    _discover_base_url()
 
-    # 1) Tarefas
+    # 1) Autentica
+    print('Obtendo token de acesso...')
+    get_access_token()
+    print('  ✓ Token obtido')
+
+    # 2) Tarefas
     print('Buscando tarefas...')
     tasks = fetch_all_pages(
         'POST',
-        '/task/querytasks',
+        EP_QUERY_TASKS,
         lambda page, ps: {
             'Filter': {'ShowFinished': True, 'ShowArchived': False},
             'CurrentPage': page,
@@ -201,24 +138,24 @@ def main():
     )
     print(f'  Tarefas: {len(tasks)}')
 
-    # 2) Projetos
+    # 3) Projetos
     print('Buscando projetos...')
     projects = fetch_all_pages(
         'POST',
-        '/project/list',
+        EP_LIST_PROJECTS,
         lambda page, ps: {'Filter': {}, 'CurrentPage': page, 'PageSize': ps}
     )
     print(f'  Projetos: {len(projects)}')
 
-    # 3) Usuários ativos
+    # 4) Usuários ativos
     print('Buscando usuários...')
-    users_resp = api_call('GET', '/user/list')
+    users_resp = api_call('GET', EP_LIST_USERS)
     users = users_resp.get('Result') if isinstance(users_resp, dict) else users_resp
     if not isinstance(users, list):
         users = []
     print(f'  Usuários ativos: {len(users)}')
 
-    # 4) Monta JSON compatível com o painel
+    # 5) Monta JSON compatível com o painel
     output = {
         'generatedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'tasks': [
