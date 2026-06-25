@@ -171,33 +171,70 @@ def main():
             project_ids.add(pid)
     print(f'  Total projetos únicos (API + tasks): {len(project_ids)}')
 
-    # 3) Para cada projeto, busca completa (evita truncamento global)
-    print('Buscando tarefas projeto por projeto (mais confiável)...')
-    all_tasks_by_id = {t['Id']: t for t in initial_tasks if t.get('Id')}
+    # 3) ESTRATÉGIA: API do FlowUp trunca em ~800 items por query.
+    # Como abertas/atrasadas são o que importa pro painel, busca:
+    #   (a) TODAS as tarefas ABERTAS de cada projeto (ShowFinished:false) — sempre cabe
+    #   (b) Total de FINALIZADAS via Count (sem detalhes)
+    print('Buscando tarefas projeto por projeto (estratégia robusta)...')
+    all_tasks_by_id = {}
+    project_stats = {}  # pid → {total, finished_count}
     for i, pid in enumerate(sorted(project_ids), 1):
         try:
-            proj_tasks = fetch_all_pages(
+            # (a) Pega ABERTAS detalhadas
+            open_tasks = fetch_all_pages(
                 'POST',
                 EP_QUERY_TASKS,
                 lambda page, ps: {
-                    'Filter': {'Projects': [pid], 'ShowFinished': True, 'ShowArchived': False},
+                    'Filter': {'Projects': [pid], 'ShowFinished': False, 'ShowArchived': False},
                     'CurrentPage': page,
                     'PageSize': 200
                 },
                 page_size=200
             )
-            antes = len(all_tasks_by_id)
-            for t in proj_tasks:
+            for t in open_tasks:
                 if t.get('Id'):
-                    all_tasks_by_id[t['Id']] = t  # sobrescreve com versão mais completa
-            ganho = len(all_tasks_by_id) - antes
-            pname = next((t.get('ProjectName','?') for t in proj_tasks if t.get('ProjectName')), '?')
-            print(f'  [{i}/{len(project_ids)}] Proj #{pid} ({pname.strip()[:40]}): {len(proj_tasks)} tarefas (+{ganho} novas)')
+                    all_tasks_by_id[t['Id']] = t
+
+            # (b) Pega Count de TOTAL (open+finished) via query mínima
+            resp_total = api_call('POST', EP_QUERY_TASKS, {
+                'Filter': {'Projects': [pid], 'ShowFinished': True, 'ShowArchived': False},
+                'CurrentPage': 1,
+                'PageSize': 1
+            })
+            count_total = resp_total.get('Count', len(open_tasks))
+            count_open = len(open_tasks)
+            count_finished = max(0, count_total - count_open)
+
+            # (c) Pega algumas FINALIZADAS recentes (até 200) só pra ter contexto
+            try:
+                finished_recent = fetch_all_pages(
+                    'POST',
+                    EP_QUERY_TASKS,
+                    lambda page, ps: {
+                        'Filter': {'Projects': [pid], 'ShowFinished': True, 'ShowArchived': False, 'MyTasks': False},
+                        'CurrentPage': page,
+                        'PageSize': 200
+                    },
+                    page_size=200,
+                    max_pages=4  # limita a 4 páginas = 800 items, evita o bug do FlowUp
+                )
+                for t in finished_recent:
+                    if t.get('Id') and t['Id'] not in all_tasks_by_id:
+                        all_tasks_by_id[t['Id']] = t
+            except Exception:
+                pass
+
+            project_stats[pid] = {'total': count_total, 'open': count_open, 'finished': count_finished}
+            pname = next((t.get('ProjectName','?') for t in open_tasks if t.get('ProjectName')), '?')
+            print(f'  [{i}/{len(project_ids)}] Proj #{pid} ({pname.strip()[:35]}): {count_open} abertas / {count_finished} finalizadas / {count_total} total')
         except Exception as e:
             print(f'  [{i}/{len(project_ids)}] Proj #{pid} ERRO: {e}')
 
     tasks = list(all_tasks_by_id.values())
-    print(f'  Tarefas TOTAL (deduplicadas): {len(tasks)}')
+    print(f'  Tarefas TOTAL coletadas (com detalhes): {len(tasks)}')
+    total_real = sum(s.get('total', 0) for s in project_stats.values())
+    total_open = sum(s.get('open', 0) for s in project_stats.values())
+    print(f'  Estatísticas reais: {total_real} total, {total_open} abertas, {total_real-total_open} finalizadas')
 
     # 3) Projetos — já descobertos no passo 2 via /project/getall + complementa via tarefas
     print('Consolidando projetos...')
@@ -258,7 +295,11 @@ def main():
                 'OwnerId': p.get('OwnerId'),
                 'Active': p.get('Active'),
                 'InitialDate': p.get('InitialDate'),
-                'FinalDate': p.get('FinalDate')
+                'FinalDate': p.get('FinalDate'),
+                # Stats reais via API (não apenas baseado nas tarefas coletadas)
+                'TotalTasks': project_stats.get(p.get('Id'), {}).get('total', 0),
+                'OpenTasks': project_stats.get(p.get('Id'), {}).get('open', 0),
+                'FinishedTasks': project_stats.get(p.get('Id'), {}).get('finished', 0)
             } for p in projects
         ],
         'members': [
