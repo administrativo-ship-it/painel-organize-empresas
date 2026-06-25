@@ -1301,20 +1301,24 @@ function renderOverview() {
   const active = ps.filter(p=>p.status==='active').length;
   const done = ps.filter(p=>p.status==='done').length;
   const over = ts.filter(t=>t.isOver).length;
+  const dueToday = ts.filter(t=>t.isDueToday).length;
   const taskDone = ts.filter(t=>t.isDone).length;
   const totalT = ts.length;
   const atRisk = ps.filter(p=>p.risk==='high'||p.risk==='critical').length;
   const trCards = S.trelloCards.length;
   const trDone = S.trelloCards.filter(c=>c.dueComplete).length;
+  const trDueToday = S.trelloCards.filter(c=>c.isDueToday).length;
 
   document.getElementById('kpi-overview').innerHTML = `
     ${kpi('Projetos Ativos', active, 'teal', 'FlowUp em andamento', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>')}
     ${kpi('Projetos Concluídos', done, 'green', 'Finalizados', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>')}
+    ${kpi('Vencendo Hoje', dueToday, 'orange', 'Prazo hoje', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>')}
     ${kpi('Tarefas Atrasadas', over, 'red', 'Ação imediata', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01M10.29 3.86l-8.4 14.3A2 2 0 003.6 21h16.8a2 2 0 001.71-2.84l-8.4-14.3a2 2 0 00-3.42 0z"/></svg>')}
     ${kpi('Conclusão Geral', totalT>0?Math.round(taskDone/totalT*100)+'%':'—', 'navy', `${taskDone} de ${totalT} tarefas`, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5L5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>')}
     ${kpi('Em Risco / Crítico', atRisk, 'orange', 'Projetos críticos', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c.5 4-3 6-3 10a5 5 0 0010 0c0-4-3-6-3-10M10 16a2 2 0 004 0"/></svg>')}
     ${kpi('Boards Trello', S.trelloBoards.length, 'trello', 'Planejamentos ativos', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>')}
     ${kpi('Cards Trello', trCards, 'trello', `${trDone} concluídos`, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7h8M8 11h5"/></svg>')}
+    ${kpi('Cards Vencendo Hoje', trDueToday, 'orange', 'Trello prazo hoje', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg>')}
     ${kpi('Cards Vencidos', S.trelloCards.filter(c=>c.isOver).length, 'red', 'Trello em atraso', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>')}
   `;
 
