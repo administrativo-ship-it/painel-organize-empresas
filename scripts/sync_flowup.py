@@ -17,16 +17,33 @@ import urllib.error
 
 API_KEY = os.environ.get('FLOWUP_API_KEY', '').strip()
 SUBDOMAIN = os.environ.get('FLOWUP_SUBDOMAIN', 'organizementoring').strip()
-BASE_URL = os.environ.get('FLOWUP_BASE_URL', 'https://app.flowup.com.br/api/v3').rstrip('/')
+BASE_URL_ENV = os.environ.get('FLOWUP_BASE_URL', '').rstrip('/')
+
+# Lista de URLs candidatas a tentar (o script descobre a correta automaticamente)
+def _candidate_urls():
+    if BASE_URL_ENV:
+        return [BASE_URL_ENV]
+    return [
+        f'https://{SUBDOMAIN}.flowup.me/api/v3',
+        f'https://{SUBDOMAIN}.flowup.me/api/v1',
+        f'https://app.flowup.me/api/v3',
+        f'https://api.flowup.me/v3',
+        f'https://{SUBDOMAIN}.flowup.me/api',
+        f'https://api.flowup.me/api/v3',
+    ]
+
+# Estado global da URL base resolvida (primeira que respondeu)
+_resolved_base_url = None
 
 if not API_KEY:
     print('ERRO: defina FLOWUP_API_KEY (secret no GitHub).', file=sys.stderr)
     sys.exit(1)
 
 
-def _request(method, path, body=None, auth_variant=0):
+def _request(method, path, body=None, auth_variant=0, base_url=None):
     """Faz uma requisição HTTP com fallback para variações de autenticação."""
-    url = f'{BASE_URL}{path}'
+    bu = base_url or _resolved_base_url or _candidate_urls()[0]
+    url = f'{bu}{path}'
     headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -49,8 +66,43 @@ def _request(method, path, body=None, auth_variant=0):
         return json.loads(r.read().decode('utf-8'))
 
 
+def _discover_base_url():
+    """Testa as URLs candidatas até encontrar uma que responda (DNS válido + qualquer auth)."""
+    global _resolved_base_url
+    if _resolved_base_url:
+        return _resolved_base_url
+    for bu in _candidate_urls():
+        for variant in range(4):
+            try:
+                # Tenta um GET simples no /user/list (endpoint leve)
+                _request('GET', '/user/list', None, variant, base_url=bu)
+                _resolved_base_url = bu
+                print(f'  ✓ URL base resolvida: {bu} (auth variant {variant})')
+                return bu
+            except urllib.error.HTTPError as e:
+                # Endpoint existe mas auth falhou — vamos tentar outra auth
+                if e.code in (401, 403):
+                    continue
+                # Endpoint não existe — tenta próxima URL
+                if e.code in (404, 405):
+                    break
+                continue
+            except (urllib.error.URLError, OSError):
+                # DNS / conexão falhou — próxima URL
+                break
+            except Exception:
+                continue
+    return None
+
+
 def api_call(method, path, body=None):
     """Chama a API tentando até 4 variações de autenticação."""
+    global _resolved_base_url
+    # Garante que temos uma URL base resolvida
+    if not _resolved_base_url:
+        bu = _discover_base_url()
+        if not bu:
+            raise RuntimeError('Nenhuma URL base do FlowUp respondeu. Tentadas: ' + ', '.join(_candidate_urls()))
     last_err = None
     for variant in range(4):
         try:
@@ -58,7 +110,7 @@ def api_call(method, path, body=None):
         except urllib.error.HTTPError as e:
             if e.code in (401, 403) and variant < 3:
                 last_err = e
-                continue  # tenta próxima variação de auth
+                continue
             err_body = ''
             try:
                 err_body = e.read().decode('utf-8', errors='ignore')
@@ -89,7 +141,9 @@ def main():
     ts = time.strftime('%Y-%m-%d %H:%M:%S')
     print(f'[{ts}] Iniciando sincronização FlowUp')
     print(f'  Subdomínio: {SUBDOMAIN}')
-    print(f'  Base URL:   {BASE_URL}')
+    print(f'  Candidatos: {", ".join(_candidate_urls())}')
+    # Resolve URL antes de começar (mostra qual funcionou)
+    _discover_base_url()
 
     # 1) Tarefas
     print('Buscando tarefas...')
