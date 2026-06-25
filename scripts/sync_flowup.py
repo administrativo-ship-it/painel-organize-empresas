@@ -24,12 +24,16 @@ def _candidate_urls():
     if BASE_URL_ENV:
         return [BASE_URL_ENV]
     return [
+        f'https://api.flowup.me/v3',
+        f'https://api.flowup.me/api/v3',
+        f'https://api.flowup.me',
+        f'https://app.flowup.me/api/v3',
+        f'https://app.flowup.me/api/v1',
+        f'https://app.flowup.me/api',
+        f'https://flowup.me/api/v3',
         f'https://{SUBDOMAIN}.flowup.me/api/v3',
         f'https://{SUBDOMAIN}.flowup.me/api/v1',
-        f'https://app.flowup.me/api/v3',
-        f'https://api.flowup.me/v3',
         f'https://{SUBDOMAIN}.flowup.me/api',
-        f'https://api.flowup.me/api/v3',
     ]
 
 # Estado global da URL base resolvida (primeira que respondeu)
@@ -57,8 +61,14 @@ def _request(method, path, body=None, auth_variant=0, base_url=None):
         headers['Authorization'] = API_KEY
     elif auth_variant == 2:
         headers['X-Api-Key'] = API_KEY
-    else:
+    elif auth_variant == 3:
         headers['Authorization'] = f'Token {API_KEY}'
+    elif auth_variant == 4:
+        headers['X-Auth-Token'] = API_KEY
+    elif auth_variant == 5:
+        headers['Authorization'] = f'apikey {API_KEY}'
+    else:
+        headers['X-Subscription-Key'] = API_KEY
 
     data = json.dumps(body).encode('utf-8') if body is not None else None
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
@@ -67,31 +77,64 @@ def _request(method, path, body=None, auth_variant=0, base_url=None):
 
 
 def _discover_base_url():
-    """Testa as URLs candidatas até encontrar uma que responda (DNS válido + qualquer auth)."""
+    """Testa as URLs candidatas até encontrar uma que responda (DNS válido)."""
     global _resolved_base_url
     if _resolved_base_url:
         return _resolved_base_url
+
+    # Testa primeiro com endpoint de tarefas (que sabemos que existe)
+    test_endpoints = ['/task/querytasks', '/user/list', '/project/list']
+    methods = {'/task/querytasks': 'POST', '/user/list': 'GET', '/project/list': 'POST'}
+
+    auth_alive_url = None  # URL que respondeu com 401/403 (DNS ok, auth errado)
+
     for bu in _candidate_urls():
-        for variant in range(4):
-            try:
-                # Tenta um GET simples no /user/list (endpoint leve)
-                _request('GET', '/user/list', None, variant, base_url=bu)
-                _resolved_base_url = bu
-                print(f'  ✓ URL base resolvida: {bu} (auth variant {variant})')
-                return bu
-            except urllib.error.HTTPError as e:
-                # Endpoint existe mas auth falhou — vamos tentar outra auth
-                if e.code in (401, 403):
-                    continue
-                # Endpoint não existe — tenta próxima URL
-                if e.code in (404, 405):
+        print(f'  Testando: {bu}')
+        url_alive = False
+        for endpoint in test_endpoints:
+            method = methods[endpoint]
+            body = {} if method == 'POST' else None
+            for variant in range(7):
+                try:
+                    _request(method, endpoint, body, variant, base_url=bu)
+                    # SUCESSO total!
+                    _resolved_base_url = bu
+                    print(f'  ✓ URL base resolvida: {bu} (endpoint {endpoint}, auth variant {variant})')
+                    return bu
+                except urllib.error.HTTPError as e:
+                    if e.code in (401, 403):
+                        # URL existe, auth errado — guarda como candidato vivo
+                        if not auth_alive_url:
+                            auth_alive_url = bu
+                            print(f'  ⚠ URL respondeu {e.code} (auth precisa ajuste): {bu}')
+                        continue  # tenta outra variant
+                    if e.code in (404, 405):
+                        break  # esse endpoint não existe aqui, tenta próximo endpoint
+                    # outro erro HTTP (500 etc) — URL viva mas com problema
+                    if not auth_alive_url:
+                        auth_alive_url = bu
+                        print(f'  ⚠ URL respondeu HTTP {e.code}: {bu}')
                     break
-                continue
-            except (urllib.error.URLError, OSError):
-                # DNS / conexão falhou — próxima URL
-                break
-            except Exception:
-                continue
+                except (urllib.error.URLError, OSError) as e:
+                    # DNS / conexão falhou
+                    msg = str(e)
+                    if 'Name or service not known' in msg or 'getaddrinfo' in msg or 'nodename' in msg:
+                        # DNS falhou para esta URL — pula para próxima URL inteira
+                        url_alive = None
+                        break
+                    continue
+                except Exception:
+                    continue
+            if url_alive is None:
+                break  # DNS falhou — próxima URL
+        if url_alive is None:
+            continue
+
+    # Nada deu sucesso total, mas se alguma respondeu com 401/403 ela existe
+    if auth_alive_url:
+        _resolved_base_url = auth_alive_url
+        print(f'  ▸ Usando URL com auth pendente: {auth_alive_url}')
+        return auth_alive_url
     return None
 
 
@@ -104,7 +147,7 @@ def api_call(method, path, body=None):
         if not bu:
             raise RuntimeError('Nenhuma URL base do FlowUp respondeu. Tentadas: ' + ', '.join(_candidate_urls()))
     last_err = None
-    for variant in range(4):
+    for variant in range(7):
         try:
             return _request(method, path, body, variant)
         except urllib.error.HTTPError as e:
