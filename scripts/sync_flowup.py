@@ -3,12 +3,13 @@
 Sincroniza FlowUp para flowup-data.json.
 Auth: OAuth2 Password Grant em https://task.flowup.me.
 
-Estratégia (compatível com bugs da API do FlowUp):
-1. Lista projetos via /project/getall (page_size=20, paginação manual)
-2. Para CADA projeto, busca TODAS as tarefas ABERTAS via querytasks
-   (filter sem ShowFinished retorna só abertas — sempre cabe em <= 200)
-3. Para CADA projeto, pega Count total via query mínima (page_size=1)
-4. Para alguns projetos, pega até 4 páginas de finalizadas (até 800) para histórico
+Estratégia (DEFINITIVA — testada com o estado real da API do FlowUp):
+1. /project/getall e /board/getactiveboards retornam VAZIO para esse subdomínio.
+2. Mas /task/querytasks funciona: pagina até cobrir o Count real (1697).
+3. Estratégia: pagina TODAS as tarefas (abertas + finalizadas + arquivadas)
+   via querytasks com PageSize=200. Deriva a lista de projetos das próprias
+   tarefas (cada task carrega ProjectId + ProjectName).
+4. Estatísticas calculadas localmente: total/abertas/finalizadas por projeto.
 
 Variáveis de ambiente:
 - FLOWUP_API_KEY    (senha de API gerada no painel FlowUp)
@@ -25,11 +26,12 @@ if not API_KEY:
     print('ERRO: defina FLOWUP_API_KEY (secret no GitHub).', file=sys.stderr)
     sys.exit(1)
 
-# Endpoints (do MCP oficial)
 EP_TOKEN = '/token'
-EP_LIST_PROJECTS = '/api/v1/public/project/getall'
 EP_QUERY_TASKS = '/api/v1/public/task/querytasks'
 EP_LIST_USERS = '/api/v1/public/user/getactiveusers'
+
+PAGE_SIZE = 200
+MAX_PAGES = 30  # seguro para até 6000 tarefas
 
 _access_token = None
 _token_expires_at = 0
@@ -65,98 +67,74 @@ def api_call(method, path, body=None):
         headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json', 'Accept': 'application/json'}
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as r:
+        with urllib.request.urlopen(req, timeout=120) as r:
             return json.loads(r.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         err = e.read().decode('utf-8', errors='ignore')
         raise RuntimeError(f'HTTP {e.code} em {method} {path}: {err[:300]}')
 
 
-def list_projects():
-    """Lista projetos paginando com page_size=20 (workaround para bug do FlowUp)."""
-    all_proj = []
+def fetch_all_tasks(show_finished=True, show_archived=False):
+    """Pagina o querytasks até esvaziar. Retorna lista de tarefas."""
+    all_tasks = []
     seen_ids = set()
-    for page in range(1, 20):
+    total_count = None
+    for page in range(1, MAX_PAGES + 1):
         try:
-            resp = api_call('POST', EP_LIST_PROJECTS, {
-                'Filter': {}, 'CurrentPage': page, 'PageSize': 20
+            resp = api_call('POST', EP_QUERY_TASKS, {
+                'Filter': {'ShowFinished': show_finished, 'ShowArchived': show_archived},
+                'CurrentPage': page, 'PageSize': PAGE_SIZE
             })
         except Exception as e:
             print(f'  page {page}: ERRO {e}')
             break
         chunk = resp.get('Result') or []
+        if total_count is None:
+            total_count = resp.get('Count', 0)
+            print(f'  Count reportado pela API: {total_count}')
         if not chunk:
+            print(f'  page {page}: vazio (fim da paginação)')
             break
         novos = 0
-        for p in chunk:
-            if p.get('Id') and p['Id'] not in seen_ids:
-                seen_ids.add(p['Id'])
-                all_proj.append(p)
+        for t in chunk:
+            tid = t.get('Id')
+            if tid and tid not in seen_ids:
+                seen_ids.add(tid)
+                all_tasks.append(t)
                 novos += 1
-        total = resp.get('Count', 0)
-        print(f'  page {page}: {len(chunk)} retornados, {novos} novos, Count={total}, total acumulado={len(all_proj)}')
+        print(f'  page {page}: {len(chunk)} retornados, {novos} novos, acumulado={len(all_tasks)}/{total_count}')
         if novos == 0:
             break
-        if len(all_proj) >= total > 0:
-            break
-        time.sleep(0.2)
-    return all_proj
-
-
-def query_tasks_for_project(project_id):
-    """Busca tarefas abertas + count total de um projeto."""
-    # Tarefas ABERTAS — sem ShowFinished (default da API = só abertas)
-    open_tasks = []
-    for page in range(1, 5):  # max 4 páginas = 800 (mas abertas raramente >200)
-        try:
-            resp = api_call('POST', EP_QUERY_TASKS, {
-                'Filter': {'Projects': [project_id]},
-                'CurrentPage': page, 'PageSize': 200
-            })
-        except Exception:
-            break
-        chunk = resp.get('Result') or []
-        if not chunk:
-            break
-        open_tasks.extend(chunk)
-        if len(chunk) < 200:
+        if total_count and len(all_tasks) >= total_count:
             break
         time.sleep(0.3)
+    return all_tasks, total_count or len(all_tasks)
 
-    # Total via Count
-    try:
-        resp_total = api_call('POST', EP_QUERY_TASKS, {
-            'Filter': {'Projects': [project_id], 'ShowFinished': True, 'ShowArchived': False},
-            'CurrentPage': 1, 'PageSize': 1
-        })
-        count_total = resp_total.get('Count', len(open_tasks))
-    except Exception:
-        count_total = len(open_tasks)
 
-    count_open = len(open_tasks)
-    count_finished = max(0, count_total - count_open)
-
-    # Algumas finalizadas pra contexto (até 200 = 1 página)
-    finished_sample = []
-    try:
-        resp_fin = api_call('POST', EP_QUERY_TASKS, {
-            'Filter': {'Projects': [project_id], 'ShowFinished': True, 'ShowArchived': False},
-            'CurrentPage': 1, 'PageSize': 200
-        })
-        finished_sample = resp_fin.get('Result') or []
-        # Filtra só as finalizadas (excluindo as abertas que já temos)
-        open_ids = {t.get('Id') for t in open_tasks}
-        finished_sample = [t for t in finished_sample if t.get('Id') not in open_ids]
-    except Exception:
-        pass
-
-    return {
-        'open': open_tasks,
-        'finished_sample': finished_sample,
-        'count_total': count_total,
-        'count_open': count_open,
-        'count_finished': count_finished
-    }
+def derive_projects(tasks):
+    """Deriva lista única de projetos a partir das tarefas."""
+    projects = {}
+    for t in tasks:
+        pid = t.get('ProjectId')
+        if not pid:
+            continue
+        if pid not in projects:
+            projects[pid] = {
+                'Id': pid,
+                'Name': (t.get('ProjectName') or '').strip(),
+                'TotalTasks': 0,
+                'OpenTasks': 0,
+                'FinishedTasks': 0,
+                'ArchivedTasks': 0
+            }
+        projects[pid]['TotalTasks'] += 1
+        if t.get('Archived'):
+            projects[pid]['ArchivedTasks'] += 1
+        if t.get('Finished'):
+            projects[pid]['FinishedTasks'] += 1
+        else:
+            projects[pid]['OpenTasks'] += 1
+    return list(projects.values())
 
 
 def main():
@@ -169,57 +147,40 @@ def main():
     get_access_token()
     print('  ✓ Token obtido')
 
-    print('Listando projetos via /project/getall...')
-    projects = list_projects()
-    print(f'  Total projetos descobertos: {len(projects)}')
+    print('\nBuscando TODAS as tarefas (finalizadas + abertas, exceto arquivadas)...')
+    tasks, total_count = fetch_all_tasks(show_finished=True, show_archived=False)
+    print(f'  Total coletado: {len(tasks)} (API reportou Count={total_count})')
 
-    print('Buscando usuários ativos...')
-    users_resp = api_call('GET', EP_LIST_USERS)
-    users = users_resp.get('Result') if isinstance(users_resp, dict) else users_resp
-    if not isinstance(users, list):
+    print('\nDerivando projetos a partir das tarefas...')
+    projects = derive_projects(tasks)
+    projects.sort(key=lambda p: -p['TotalTasks'])
+    print(f'  Projetos descobertos: {len(projects)}')
+    for p in projects:
+        name = p['Name'][:42]
+        print(f"    #{p['Id']:3} {name:42} | total={p['TotalTasks']:4} | abertas={p['OpenTasks']:3} | fin={p['FinishedTasks']:4}")
+
+    print('\nBuscando usuários ativos...')
+    try:
+        users_resp = api_call('GET', EP_LIST_USERS)
+        users = users_resp.get('Result') if isinstance(users_resp, dict) else users_resp
+        if not isinstance(users, list):
+            users = []
+    except Exception as e:
+        print(f'  ERRO ao buscar usuários: {e}')
         users = []
     print(f'  Usuários ativos: {len(users)}')
 
-    print('Buscando tarefas por projeto...')
-    all_tasks = {}
-    project_stats = {}
-    for i, p in enumerate(projects, 1):
-        pid = p.get('Id')
-        if not pid:
-            continue
-        try:
-            data = query_tasks_for_project(pid)
-            for t in data['open']:
-                if t.get('Id'):
-                    all_tasks[t['Id']] = t
-            for t in data['finished_sample']:
-                if t.get('Id') and t['Id'] not in all_tasks:
-                    all_tasks[t['Id']] = t
-            project_stats[pid] = {
-                'total': data['count_total'],
-                'open': data['count_open'],
-                'finished': data['count_finished']
-            }
-            name = (p.get('Name') or '').strip()
-            co = data['count_open']
-            ct = data['count_total']
-            print(f'  [{i}/{len(projects)}] #{pid} {name[:40]:40} | abertas={co:3} | total={ct:4}')
-        except Exception as e:
-            print(f'  [{i}/{len(projects)}] #{pid} ERRO: {e}')
-
-    tasks_list = list(all_tasks.values())
-    print(f'  Total de tarefas COLETADAS: {len(tasks_list)} (open detalhadas + finished sample)')
-
-    grand_total = sum(s['total'] for s in project_stats.values())
-    grand_open = sum(s['open'] for s in project_stats.values())
-    print(f'  TOTAIS REAIS (via API Count): {grand_total} total, {grand_open} abertas, {grand_total - grand_open} finalizadas')
+    grand_open = sum(p['OpenTasks'] for p in projects)
+    grand_finished = sum(p['FinishedTasks'] for p in projects)
+    print(f'\nTOTAIS GERAIS: {len(tasks)} tarefas | {grand_open} abertas | {grand_finished} finalizadas | {len(projects)} projetos')
 
     output = {
         'generatedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'totals': {
-            'tasks': grand_total,
+            'tasks': len(tasks),
+            'apiCount': total_count,
             'open': grand_open,
-            'finished': grand_total - grand_open,
+            'finished': grand_finished,
             'projects': len(projects)
         },
         'tasks': [
@@ -235,20 +196,9 @@ def main():
                 'Finished': t.get('Finished'), 'Archived': t.get('Archived'),
                 'ChecklistCount': t.get('ChecklistCount'),
                 'ChecklistCompleted': t.get('ChecklistCompleted')
-            } for t in tasks_list
+            } for t in tasks
         ],
-        'projects': [
-            {
-                'Id': p.get('Id'), 'Name': (p.get('Name') or '').strip(),
-                'StatusName': p.get('StatusName'), 'StatusId': p.get('StatusId'),
-                'OwnerName': p.get('OwnerName'), 'OwnerId': p.get('OwnerId'),
-                'Active': p.get('Active'),
-                'InitialDate': p.get('InitialDate'), 'FinalDate': p.get('FinalDate'),
-                'TotalTasks': project_stats.get(p.get('Id'), {}).get('total', 0),
-                'OpenTasks': project_stats.get(p.get('Id'), {}).get('open', 0),
-                'FinishedTasks': project_stats.get(p.get('Id'), {}).get('finished', 0)
-            } for p in projects
-        ],
+        'projects': projects,
         'members': [
             {'Id': u.get('Id'), 'Name': u.get('Name'), 'Email': u.get('Email'),
              'JobName': u.get('JobName'), 'Profile': u.get('Profile'),
@@ -260,7 +210,7 @@ def main():
     with open(os.environ.get('OUTPUT_PATH', 'flowup-data.json'), 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, separators=(',', ':'))
 
-    print(f'OK -> flowup-data.json')
+    print(f'\nOK -> flowup-data.json')
 
 
 if __name__ == '__main__':
