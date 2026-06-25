@@ -125,18 +125,52 @@ def main():
     get_access_token()
     print('  ✓ Token obtido')
 
-    # 2) Tarefas
-    print('Buscando tarefas...')
-    tasks = fetch_all_pages(
+    # 2) Primeiro busca ALL tasks (pode truncar — usado só pra descobrir projects)
+    print('Buscando tarefas (descoberta de projetos)...')
+    initial_tasks = fetch_all_pages(
         'POST',
         EP_QUERY_TASKS,
         lambda page, ps: {
             'Filter': {'ShowFinished': True, 'ShowArchived': False},
             'CurrentPage': page,
-            'PageSize': ps
-        }
+            'PageSize': 500
+        },
+        page_size=500
     )
-    print(f'  Tarefas: {len(tasks)}')
+    project_ids = set()
+    for t in initial_tasks:
+        pid = t.get('ProjectId')
+        if pid:
+            project_ids.add(pid)
+    print(f'  Descoberta inicial: {len(initial_tasks)} tarefas, {len(project_ids)} projetos únicos')
+
+    # 3) Para cada projeto, busca completa (evita truncamento global)
+    print('Buscando tarefas projeto por projeto (mais confiável)...')
+    all_tasks_by_id = {t['Id']: t for t in initial_tasks if t.get('Id')}
+    for i, pid in enumerate(sorted(project_ids), 1):
+        try:
+            proj_tasks = fetch_all_pages(
+                'POST',
+                EP_QUERY_TASKS,
+                lambda page, ps: {
+                    'Filter': {'Projects': [pid], 'ShowFinished': True, 'ShowArchived': False},
+                    'CurrentPage': page,
+                    'PageSize': 500
+                },
+                page_size=500
+            )
+            antes = len(all_tasks_by_id)
+            for t in proj_tasks:
+                if t.get('Id'):
+                    all_tasks_by_id[t['Id']] = t  # sobrescreve com versão mais completa
+            ganho = len(all_tasks_by_id) - antes
+            pname = next((t.get('ProjectName','?') for t in proj_tasks if t.get('ProjectName')), '?')
+            print(f'  [{i}/{len(project_ids)}] Proj #{pid} ({pname.strip()[:40]}): {len(proj_tasks)} tarefas (+{ganho} novas)')
+        except Exception as e:
+            print(f'  [{i}/{len(project_ids)}] Proj #{pid} ERRO: {e}')
+
+    tasks = list(all_tasks_by_id.values())
+    print(f'  Tarefas TOTAL (deduplicadas): {len(tasks)}')
 
     # 3) Projetos — endpoint quebra com page_size grande, usa 25
     # E tenta múltiplos formatos de body (FlowUp é exigente)
@@ -171,6 +205,21 @@ def main():
                 break
         except Exception as e:
             print(f'  [{label}] falhou: {e}')
+    # Fallback: se o endpoint não retornou nada, deriva dos tasks
+    if not projects:
+        print('  ⚠ Endpoint de projetos retornou 0 — derivando de tarefas')
+        seen = {}
+        for t in tasks:
+            pid = t.get('ProjectId')
+            if pid and pid not in seen:
+                seen[pid] = {
+                    'Id': pid,
+                    'Name': (t.get('ProjectName') or '').strip(),
+                    'StatusName': 'Em Andamento',  # presumido
+                    'Active': True
+                }
+        projects = list(seen.values())
+        print(f'  Projetos derivados: {len(projects)}')
     print(f'  Projetos: {len(projects)}')
 
     # 4) Usuários ativos
