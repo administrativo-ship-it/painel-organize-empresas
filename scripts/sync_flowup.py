@@ -99,7 +99,7 @@ def api_call(method, path, body=None):
         raise RuntimeError(f'HTTP {e.code} em {method} {path}: {err[:300]}')
 
 
-def fetch_all_pages(method, path, body_fn=None, page_size=200, max_pages=50):
+def fetch_all_pages(method, path, body_fn=None, page_size=200, max_pages=100):
     """Paginação por CurrentPage/PageSize."""
     all_results = []
     for page in range(1, max_pages + 1):
@@ -160,9 +160,9 @@ def main():
         lambda page, ps: {
             'Filter': {'ShowFinished': True, 'ShowArchived': False},
             'CurrentPage': page,
-            'PageSize': 500
+            'PageSize': 200
         },
-        page_size=500
+        page_size=200
     )
     project_ids = set(project_ids_from_api)
     for t in initial_tasks:
@@ -182,9 +182,9 @@ def main():
                 lambda page, ps: {
                     'Filter': {'Projects': [pid], 'ShowFinished': True, 'ShowArchived': False},
                     'CurrentPage': page,
-                    'PageSize': 500
+                    'PageSize': 200
                 },
-                page_size=500
+                page_size=200
             )
             antes = len(all_tasks_by_id)
             for t in proj_tasks:
