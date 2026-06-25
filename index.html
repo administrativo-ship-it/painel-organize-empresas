@@ -504,7 +504,7 @@ tbody tr:hover{background:var(--off);}
     <select class="f-sel" id="f-member" onchange="applyFilters()">
       <option value="">Todos — Responsável</option>
     </select>
-    <input class="f-inp" id="f-search" placeholder="Buscar projeto, cliente ou tarefa..." oninput="applyFilters()" autocomplete="off" name="oe-search-filter">
+    <input class="f-inp" id="f-search" type="search" placeholder="Buscar projeto, cliente ou tarefa..." oninput="applyFilters()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="oe-no-autofill-search-x7k" data-lpignore="true" data-form-type="other">
     <button class="f-clr" onclick="clearFilters()">✕ Limpar</button>
   </div>
 
@@ -937,10 +937,15 @@ const S = {
 };
 
 // ═══════════════ FLOWUP (dados estáticos via JSON) ═══════════════
+var _flowupDataMeta = { fetchedAt: null, generatedAt: null };
 async function loadFlowUpData() {
   const r = await fetch('./flowup-data.json?t=' + Date.now());
+  _flowupDataMeta.fetchedAt = new Date().toISOString();
+  _flowupDataMeta.lastModified = r.headers.get('last-modified') || null;
   if (!r.ok) throw new Error('FlowUp: arquivo de dados não encontrado');
-  return r.json();
+  var data = await r.json();
+  _flowupDataMeta.generatedAt = data.generatedAt || data.exported_at || data.timestamp || data._meta?.generated || null;
+  return data;
 }
 function isSameDay(d1, d2) {
   return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
@@ -1153,9 +1158,23 @@ function abrirAuditAPIs() {
         (h.error ? '<div style="color:#ef4444;margin-top:4px;">Erro: ' + h.error + '</div>' : '') +
       '</div></div>';
   }
-  var html = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">' +
+  // Contagens reais ao vivo para detectar divergências
+  var totAtras = (S.tasks||[]).filter(function(t){return t.isOver;}).length;
+  var totHoje  = (S.tasks||[]).filter(function(t){return t.isDueToday;}).length;
+  var totConc  = (S.tasks||[]).filter(function(t){return t.isDone;}).length;
+  var totAndam = (S.tasks||[]).filter(function(t){return !t.isDone && !t.isOver && !t.isDueToday;}).length;
+  var generated = _flowupDataMeta && _flowupDataMeta.generatedAt ? new Date(_flowupDataMeta.generatedAt) : null;
+  var ageMin = generated ? Math.round((Date.now() - generated.getTime())/60000) : null;
+  var ageTxt = ageMin === null ? '(sem timestamp no JSON)' : (ageMin < 60 ? ageMin + ' min atrás' : (ageMin/60).toFixed(1) + ' h atrás');
+  var staleWarn = ageMin !== null && ageMin > 1440 ? '<div style="color:#b45309;margin-top:4px;">⚠ Dados do FlowUp com mais de 24h — pode haver divergência com o sistema ao vivo.</div>' : '';
+
+  var html = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:620px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">' +
     '<h3 style="color:#1B2B6B;font-size:17px;margin-bottom:14px;">Audit de Integrações</h3>' +
-    row('FlowUp', _apiHealth.flowup, '<div>Tarefas: ' + _apiHealth.flowup.tasksLoaded + ' · Projetos: ' + _apiHealth.flowup.projectsLoaded + '</div>') +
+    row('FlowUp', _apiHealth.flowup,
+      '<div>Total tarefas: ' + (S.tasks||[]).length + ' · Projetos: ' + _apiHealth.flowup.projectsLoaded + '</div>' +
+      '<div>Distribuição: ' + totConc + ' concluídas · ' + totAndam + ' em andamento · <strong style="color:#d35400;">' + totHoje + ' vencendo hoje</strong> · <strong style="color:#c0392b;">' + totAtras + ' atrasadas</strong></div>' +
+      '<div>JSON gerado: ' + (generated ? generated.toLocaleString('pt-BR') : 'desconhecido') + ' · ' + ageTxt + '</div>' +
+      staleWarn) +
     row('Trello', _apiHealth.trello, '<div>Boards: ' + _apiHealth.trello.boardsLoaded + ' · Cards (com data): ' + _apiHealth.trello.cardsLoaded + '</div>') +
     row('Google Drive', { status: (typeof _gToken!=='undefined'&&_gToken)?'ok':_apiHealth.drive.status, lastSync: _apiHealth.drive.lastSync, error: _apiHealth.drive.error },
       '<div>OAuth: ' + ((typeof _gToken!=='undefined'&&_gToken)?'conectado':'desconectado') + '</div>') +
@@ -1332,8 +1351,8 @@ function filteredProjects() {
 }
 function filteredTasks() {
   return S.tasks.filter(t => {
-    // Oculta tarefas de usuários inativos (Roberto etc.) — exceto se elas já estiverem concluídas (histórico)
-    if (!t.isDone && isUserInactive(t.responsible)) return false;
+    // Tarefas de usuários inativos CONTINUAM contando nos totais/listas
+    // (só são ocultadas da página Responsáveis e do dropdown de filtro)
     if (S.filters.status === 'done' && !t.isDone) return false;
     if (S.filters.status === 'active' && (t.isDone||t.isOver)) return false;
     var ts = S.filters.taskStatus;
@@ -5423,9 +5442,15 @@ function init() {
   loadConfig();
   // Se veio via link de setup, aplica as credenciais
   loadLogo();
-  // Força limpar o search input (browser pode auto-preencher com texto antigo)
+  // Força limpar o search input em MÚLTIPLOS momentos (Chrome autofill insiste em preencher)
   var fsearch = document.getElementById('f-search');
-  if (fsearch) fsearch.value = '';
+  if (fsearch) {
+    fsearch.value = '';
+    // Anti-autofill: revalida após o browser tentar preencher (ocorre depois do DOMContentLoaded)
+    setTimeout(function(){ if (fsearch.value && !S.filters.search) fsearch.value = ''; }, 100);
+    setTimeout(function(){ if (fsearch.value && !S.filters.search) fsearch.value = ''; }, 500);
+    setTimeout(function(){ if (fsearch.value && !S.filters.search) fsearch.value = ''; }, 1500);
+  }
   renderAll();
 
   // Sincroniza imediatamente se tiver credenciais
