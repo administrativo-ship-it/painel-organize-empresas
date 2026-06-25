@@ -138,13 +138,39 @@ def main():
     )
     print(f'  Tarefas: {len(tasks)}')
 
-    # 3) Projetos
+    # 3) Projetos — endpoint quebra com page_size grande, usa 25
+    # E tenta múltiplos formatos de body (FlowUp é exigente)
     print('Buscando projetos...')
-    projects = fetch_all_pages(
-        'POST',
-        EP_LIST_PROJECTS,
-        lambda page, ps: {'Filter': {}, 'CurrentPage': page, 'PageSize': ps}
-    )
+    projects = []
+    body_variants = [
+        ('Filter:{}', lambda page, ps: {'Filter': {}, 'CurrentPage': page, 'PageSize': ps}),
+        ('sem Filter', lambda page, ps: {'CurrentPage': page, 'PageSize': ps}),
+        ('Filter:Active=true', lambda page, ps: {'Filter': {'Active': True}, 'CurrentPage': page, 'PageSize': ps}),
+        ('Filter:null', lambda page, ps: {'Filter': None, 'CurrentPage': page, 'PageSize': ps}),
+    ]
+    PROJECTS_PAGE_SIZE = 25  # FlowUp /project/getall só funciona com page_size pequeno
+    for label, bf in body_variants:
+        try:
+            test = api_call('POST', EP_LIST_PROJECTS, bf(1, PROJECTS_PAGE_SIZE))
+            cnt = test.get('Count', 0)
+            results = test.get('Result') or []
+            print(f'  [{label}] Count={cnt}, Result.length={len(results)}')
+            if len(results) > 0:
+                print(f'  ✓ Usando body "{label}" (Count: {cnt})')
+                # Pagina manualmente com page_size pequeno
+                projects = list(results)
+                page = 2
+                while len(projects) < cnt and page < 20:
+                    resp = api_call('POST', EP_LIST_PROJECTS, bf(page, PROJECTS_PAGE_SIZE))
+                    more = resp.get('Result') or []
+                    if not more:
+                        break
+                    projects.extend(more)
+                    page += 1
+                    time.sleep(0.3)
+                break
+        except Exception as e:
+            print(f'  [{label}] falhou: {e}')
     print(f'  Projetos: {len(projects)}')
 
     # 4) Usuários ativos
