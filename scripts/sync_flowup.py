@@ -125,8 +125,35 @@ def main():
     get_access_token()
     print('  ✓ Token obtido')
 
-    # 2) Primeiro busca ALL tasks (pode truncar — usado só pra descobrir projects)
-    print('Buscando tarefas (descoberta de projetos)...')
+    # 2) PRIMEIRO descobre TODOS os projetos via /project/getall com page_size pequeno
+    print('Descobrindo projetos via /project/getall (page_size=25)...')
+    discovered_projects = []
+    body_variants = [
+        ('Filter:{}', lambda page, ps: {'Filter': {}, 'CurrentPage': page, 'PageSize': ps}),
+        ('sem Filter', lambda page, ps: {'CurrentPage': page, 'PageSize': ps}),
+        ('Filter:Active=true', lambda page, ps: {'Filter': {'Active': True}, 'CurrentPage': page, 'PageSize': ps}),
+    ]
+    for label, bf in body_variants:
+        try:
+            results_total = []
+            for p in range(1, 10):
+                resp = api_call('POST', EP_LIST_PROJECTS, bf(p, 25))
+                chunk = resp.get('Result') or []
+                if not chunk: break
+                results_total.extend(chunk)
+                time.sleep(0.2)
+            print(f'  [{label}] retornou {len(results_total)} projetos')
+            if len(results_total) > len(discovered_projects):
+                discovered_projects = results_total
+        except Exception as e:
+            print(f'  [{label}] falhou: {e}')
+
+    # Fallback: se ainda zero, busca via tarefas
+    project_ids_from_api = {p.get('Id') for p in discovered_projects if p.get('Id')}
+    print(f'  Projetos descobertos via /project/getall: {len(project_ids_from_api)}')
+
+    # 2b) Busca inicial de tarefas (para garantir cobertura)
+    print('Buscando tarefas (descoberta complementar)...')
     initial_tasks = fetch_all_pages(
         'POST',
         EP_QUERY_TASKS,
@@ -137,12 +164,12 @@ def main():
         },
         page_size=500
     )
-    project_ids = set()
+    project_ids = set(project_ids_from_api)
     for t in initial_tasks:
         pid = t.get('ProjectId')
         if pid:
             project_ids.add(pid)
-    print(f'  Descoberta inicial: {len(initial_tasks)} tarefas, {len(project_ids)} projetos únicos')
+    print(f'  Total projetos únicos (API + tasks): {len(project_ids)}')
 
     # 3) Para cada projeto, busca completa (evita truncamento global)
     print('Buscando tarefas projeto por projeto (mais confiável)...')
@@ -172,55 +199,21 @@ def main():
     tasks = list(all_tasks_by_id.values())
     print(f'  Tarefas TOTAL (deduplicadas): {len(tasks)}')
 
-    # 3) Projetos — endpoint quebra com page_size grande, usa 25
-    # E tenta múltiplos formatos de body (FlowUp é exigente)
-    print('Buscando projetos...')
-    projects = []
-    body_variants = [
-        ('Filter:{}', lambda page, ps: {'Filter': {}, 'CurrentPage': page, 'PageSize': ps}),
-        ('sem Filter', lambda page, ps: {'CurrentPage': page, 'PageSize': ps}),
-        ('Filter:Active=true', lambda page, ps: {'Filter': {'Active': True}, 'CurrentPage': page, 'PageSize': ps}),
-        ('Filter:null', lambda page, ps: {'Filter': None, 'CurrentPage': page, 'PageSize': ps}),
-    ]
-    PROJECTS_PAGE_SIZE = 25  # FlowUp /project/getall só funciona com page_size pequeno
-    for label, bf in body_variants:
-        try:
-            test = api_call('POST', EP_LIST_PROJECTS, bf(1, PROJECTS_PAGE_SIZE))
-            cnt = test.get('Count', 0)
-            results = test.get('Result') or []
-            print(f'  [{label}] Count={cnt}, Result.length={len(results)}')
-            if len(results) > 0:
-                print(f'  ✓ Usando body "{label}" (Count: {cnt})')
-                # Pagina manualmente com page_size pequeno
-                projects = list(results)
-                page = 2
-                while len(projects) < cnt and page < 20:
-                    resp = api_call('POST', EP_LIST_PROJECTS, bf(page, PROJECTS_PAGE_SIZE))
-                    more = resp.get('Result') or []
-                    if not more:
-                        break
-                    projects.extend(more)
-                    page += 1
-                    time.sleep(0.3)
-                break
-        except Exception as e:
-            print(f'  [{label}] falhou: {e}')
-    # Fallback: se o endpoint não retornou nada, deriva dos tasks
-    if not projects:
-        print('  ⚠ Endpoint de projetos retornou 0 — derivando de tarefas')
-        seen = {}
-        for t in tasks:
-            pid = t.get('ProjectId')
-            if pid and pid not in seen:
-                seen[pid] = {
-                    'Id': pid,
-                    'Name': (t.get('ProjectName') or '').strip(),
-                    'StatusName': 'Em Andamento',  # presumido
-                    'Active': True
-                }
-        projects = list(seen.values())
-        print(f'  Projetos derivados: {len(projects)}')
-    print(f'  Projetos: {len(projects)}')
+    # 3) Projetos — já descobertos no passo 2 via /project/getall + complementa via tarefas
+    print('Consolidando projetos...')
+    projects = list(discovered_projects)
+    existing_pids = {p.get('Id') for p in projects}
+    for t in tasks:
+        pid = t.get('ProjectId')
+        if pid and pid not in existing_pids:
+            projects.append({
+                'Id': pid,
+                'Name': (t.get('ProjectName') or '').strip(),
+                'StatusName': 'Em Andamento',
+                'Active': True
+            })
+            existing_pids.add(pid)
+    print(f'  Projetos finais: {len(projects)}')
 
     # 4) Usuários ativos
     print('Buscando usuários...')
