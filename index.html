@@ -4483,13 +4483,59 @@ async function generateAnalysisEncerramento() {
       mentoriasCalendar: ctx.mentoriasCalendar.count
     });
 
+    // Estrutura oficial dos programas — para a IA identificar próximo módulo e atividades previstas
+    var METODO_PROGRAMAS = {
+      mentoring: {
+        nome: 'Organize Mentoring',
+        tipo: 'Mentoria em grupo · 12 meses · 7 módulos',
+        modulos: [
+          {n: 1, nome: 'Diagnóstico e Estrutura', meses: 'Meses 1-2', foco: 'Diagnóstico organizacional + produção de TODOS os entregáveis do programa'},
+          {n: 2, nome: 'Planejamento Estratégico e Gestão Comercial', meses: 'Meses 3-4', foco: 'PE Anual + PE Mensal no Trello + Planilha Indicadores Comerciais'},
+          {n: 3, nome: 'Gestão de Processos', meses: 'Meses 5-6', foco: 'Apresentação de POPs + configuração de rotina operacional'},
+          {n: 4, nome: 'Gestão Financeira', meses: 'Meses 7-8', foco: 'Método Organizar-Controlar-Analisar; Fluxo de Caixa + Indicadores Financeiros ativados'},
+          {n: 5, nome: 'Gestão de Equipe', meses: 'Meses 9-10', foco: 'Processo seletivo + liderança + rotina gestão de pessoas'},
+          {n: 6, nome: 'Gestão do Atendimento ao Cliente', meses: 'Mês 11', foco: 'Padrão de atendimento + fidelização + pós-venda'},
+          {n: 7, nome: 'Sustentabilidade e Crescimento', meses: 'Mês 12', foco: 'Plano de Crescimento Sustentável + Relatório Final + Avaliação Maturidade'}
+        ]
+      },
+      marketing: {
+        nome: 'Organize Marketing e Vendas',
+        tipo: 'Mentoria individual · 6 meses · 23 encontros',
+        modulos: [
+          {n: 1, nome: 'Diagnóstico e Planejamento', meses: 'Mês 1', foco: 'Diagnóstico Comercial + Marketing + Planejamento integrado no Trello'},
+          {n: 2, nome: 'Estruturação e Implementação', meses: 'Mês 2', foco: 'Funil de vendas + CRM + Perfil digital + Cronograma conteúdo 30 dias'},
+          {n: 3, nome: 'Criação de Conteúdo e Processo de Vendas', meses: 'Mês 3', foco: 'Método 8 passos + Scripts + Roteiros de vídeos + Tratamento objeções'},
+          {n: 4, nome: 'Atração e Conversão de Vendas', meses: 'Mês 4', foco: 'Prospecção ativa + Campanha mensal + Follow-up estratégico'},
+          {n: 5, nome: 'Otimização e Performance', meses: 'Mês 5', foco: 'Análise via dados + Planilha Indicadores Comerciais + Melhoria contínua'},
+          {n: 6, nome: 'Consolidação e Crescimento', meses: 'Mês 6', foco: 'Processo comercial consolidado + Plano de crescimento + Relatório Final'}
+        ]
+      },
+      master: {
+        nome: 'Organize Master',
+        tipo: 'Mentoria individual personalizada · 12-24 meses',
+        modulos: [
+          {n: 1, nome: 'Diagnóstico e Mapeamento', meses: '2 meses', foco: 'Diagnóstico Organizacional + Mapeamento Financeiro + Mapeamento Processos + Plano de Ação Organizacional'},
+          {n: 2, nome: 'Estruturação Organizacional', meses: '1 mês', foco: 'Filosofia + Organograma + Regimento + Reintegração da equipe pelo cliente'},
+          {n: 99, nome: 'Personalizado conforme Plano de Ação', meses: 'Variável', foco: 'Estruturação de áreas prioritárias: Adm, Financeiro, Pessoas, Comercial, Operação, Estoque, Marketing'}
+        ]
+      }
+    };
+    var metodoAtivo = METODO_PROGRAMAS[programa] || METODO_PROGRAMAS.mentoring;
+    var moduloAtual = metodoAtivo.modulos.find(function(m){ return String(m.n) === String(_ref.modnum||''); });
+    var proxModuloOficial = null;
+    if (moduloAtual) {
+      var idxM = metodoAtivo.modulos.indexOf(moduloAtual);
+      proxModuloOficial = metodoAtivo.modulos[idxM + 1] || null;
+    }
+
     // Análise baseada APENAS em Trello + FlowUp + Drive — sem indicadores financeiros
-    var sysPromptEnc = 'Você é um consultor de gestão que analisa o desempenho de clientes em programas de mentoria empresarial. Suas regras:\n' +
+    var sysPromptEnc = 'Você é um consultor de gestão que analisa o desempenho de clientes em programas de mentoria empresarial da Organize Empresas. Suas regras:\n' +
       '1. Baseie a análise EXCLUSIVAMENTE em dados objetivos das tarefas no FlowUp, cards no Trello e materiais no Drive — fornecidos nas FONTES DE DADOS.\n' +
       '2. JAMAIS invente fatos, números ou eventos. Se algo não está nas fontes, NÃO mencione.\n' +
       '3. NÃO faça nenhuma análise financeira (faturamento, lucro, margens, ROI etc.). Foco é OPERACIONAL: cumprimento de tarefas pelo cliente.\n' +
       '4. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois.\n' +
-      '5. Respeite ESTRITAMENTE o período informado (dtini..dtfim) — considere apenas eventos dentro desse intervalo.';
+      '5. Respeite ESTRITAMENTE o período informado (dtini..dtfim) — considere apenas eventos dentro desse intervalo.\n' +
+      '6. Use a ESTRUTURA OFICIAL do programa fornecida no contexto para identificar o próximo módulo e suas atividades previstas (não invente nomes de módulos).';
 
     var prompt_text = '═══════════════════ FILTROS DO USUÁRIO ═══════════════════\n' +
       'CLIENTE: "' + (_ref.cliente || 'N/A') + '"\n' +
@@ -4518,6 +4564,18 @@ async function generateAnalysisEncerramento() {
       (ctx.mentoriasCalendar.events.length
         ? ctx.mentoriasCalendar.events.map(function(e){ return '- ' + (e.start||'').substring(0,10) + ' · ' + e.title; }).join('\n')
         : '(nenhuma mentoria registrada no Calendar para este cliente no período)') + '\n\n' +
+      '═══════════════════ MÉTODO OFICIAL DO PROGRAMA ═══════════════════\n' +
+      'PROGRAMA: ' + metodoAtivo.nome + ' (' + metodoAtivo.tipo + ')\n\n' +
+      'MÓDULOS DO PROGRAMA:\n' +
+      metodoAtivo.modulos.map(function(m){
+        return 'Módulo ' + m.n + ' — ' + m.nome + ' (' + m.meses + ')\n   Foco: ' + m.foco;
+      }).join('\n') + '\n\n' +
+      (moduloAtual
+        ? 'MÓDULO ATUAL DO CLIENTE: ' + moduloAtual.n + ' — ' + moduloAtual.nome + '\n'
+        : 'MÓDULO ATUAL: não informado nos filtros\n') +
+      (proxModuloOficial
+        ? 'PRÓXIMO MÓDULO OFICIAL: ' + proxModuloOficial.n + ' — ' + proxModuloOficial.nome + '\n   Foco do próximo: ' + proxModuloOficial.foco + '\n\n'
+        : '\n') +
       '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
       '1. ESCOPO DO PERÍODO ("' + (_ref.dtini||'?') + '" a "' + (_ref.dtfim||'?') + '") — REGRA OBRIGATÓRIA: toda a análise deve considerar EXCLUSIVAMENTE este intervalo. Eventos fora do período NÃO devem entrar.\n' +
       '2. FOCO DA ANÁLISE: desempenho do cliente na execução das tarefas atribuídas a ele no FlowUp (etapas Organize Mentoring / Master / Estratégico — atividades sob responsabilidade do cliente).\n' +
@@ -4530,11 +4588,11 @@ async function generateAnalysisEncerramento() {
       '(b) PRINCIPAIS AVANÇOS — entregas concretas: tarefas mais relevantes concluídas + cards do Trello finalizados + materiais entregues no Drive (cite até 3 nomes específicos).\n' +
       '(c) PONTOS DE ATENÇÃO — atrasos, tarefas pendentes críticas, lacunas que impactaram o andamento. Se tudo OK, dizer.\n\n' +
       '─── CONTEÚDO DOS CAMPOS DO PRÓXIMO MÓDULO ───\n' +
-      'A IA deve identificar automaticamente, com base no programa e no histórico do cliente, o que vem a seguir:\n' +
-      '"proxmod" = nome do próximo módulo do programa "' + programa + '" (se já não foi informado nos filtros).\n' +
-      '"proxAtividades" = 3-5 atividades principais previstas no próximo módulo (frases curtas, uma por linha, com bullets "• ").\n' +
-      '"proxTarefasCliente" = 3-5 tarefas concretas que o CLIENTE deverá executar no próximo módulo (uma por linha, "• ").\n' +
-      '"proxAtencoes" = 2-4 pontos de atenção que o cliente deve observar para o bom andamento (uma por linha, "• ").\n' +
+      'IMPORTANTE: use a ESTRUTURA OFICIAL DO PROGRAMA acima para identificar o próximo módulo (NÃO invente nomes).\n' +
+      '"proxmod" = nome OFICIAL do próximo módulo conforme listado em "MÉTODO OFICIAL DO PROGRAMA" acima. Se já preenchido nos filtros, mantenha.\n' +
+      '"proxAtividades" = 3-5 atividades principais do próximo módulo extraídas do "Foco" listado acima (frases curtas, uma por linha, com bullets "• ").\n' +
+      '"proxTarefasCliente" = 3-5 tarefas concretas que o CLIENTE deverá executar no próximo módulo (uma por linha, "• "). Base: foco do próximo módulo + lacunas do módulo atual.\n' +
+      '"proxAtencoes" = 2-4 pontos de atenção que o cliente deve observar (uma por linha, "• "). Use principalmente: tarefas atrasadas que precisam ser resolvidas antes de avançar.\n' +
       '"proximos" = resumo curto (3-4 linhas) integrando tudo acima.\n\n' +
       'FORMATO DA RESPOSTA (JSON apenas, todos os campos obrigatórios):\n' +
       '{"modnum":"TEXTO_OU_VAZIO","modnom":"TEXTO_OU_VAZIO","dtini":"AAAA-MM-DD_OU_VAZIO","dtfim":"AAAA-MM-DD_OU_VAZIO","proxmod":"NOME_DO_PROXIMO_MODULO","nment":"NUM",' +
