@@ -4342,6 +4342,22 @@ async function generateAnalysisWithAI() {
           meta: parseFloat(h.meta)||0
         };
       }).filter(function(h){ return h.mes>=1 && h.mes<=12; }).sort(function(a,b){return a.mes-b.mes;});
+
+      // Garante consistência: o ponto do mês selecionado no gráfico deve refletir
+      // os MESMOS valores que aparecem nos cards (fat/meta do mês de referência)
+      var mesSel = parseInt(_rmf.mes) || 0;
+      var fatCard = parseFloat(parsed.fat) || parseFloat(_rmf.fat) || 0;
+      var metaCard = parseFloat(parsed.meta) || parseFloat(_rmf.meta) || 0;
+      if (mesSel >= 1 && mesSel <= 12 && (fatCard > 0 || metaCard > 0)) {
+        var existing = _rmf._historico.find(function(h){ return h.mes === mesSel; });
+        if (existing) {
+          if (fatCard > 0) existing.fat = fatCard;
+          if (metaCard > 0) existing.meta = metaCard;
+        } else {
+          _rmf._historico.push({ mes: mesSel, fat: fatCard, fatAnterior: 0, meta: metaCard });
+          _rmf._historico.sort(function(a,b){return a.mes-b.mes;});
+        }
+      }
     }
     var analiseEl = document.getElementById('rmf-analise');
     var proximosEl = document.getElementById('rmf-proximos');
