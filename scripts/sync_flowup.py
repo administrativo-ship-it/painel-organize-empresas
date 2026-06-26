@@ -146,38 +146,33 @@ def main():
     novos = merge_into(all_tasks, g)
     print(f'  +{novos} (Count={c}) | total={len(all_tasks)}')
 
-    # FASE 2: Para cada projeto descoberto, varrer mes a mes com DateRange
-    # Estrategia que evita truncagem: Projects:[pid] + DateRange limita o universo
+    # FASE 2: Para cada projeto, buscar ABERTAS (ShowFinished:false)
+    # Critico: a busca global trunca em ~1500, mas por projeto/abertas cabe num bloco.
     initial_pids = set(t.get('ProjectId') for t in all_tasks.values() if t.get('ProjectId'))
-    # Tambem inclui projetos com ID 1..MAX_PID por seguranca (descobre projetos ocultos)
     candidate_pids = sorted(initial_pids | set(range(1, MAX_PID + 1)))
-    print(f'\n[2] Varredura projeto x mes (DateRange) — {len(candidate_pids)} pids x meses {START_YEAR}..{END_YEAR}')
+    print(f'\n[2] Por projeto: APENAS ABERTAS ({len(candidate_pids)} pids)')
 
     for pid in candidate_pids:
-        added_proj = 0
-        for y, m, ds, de in month_iter(START_YEAR, END_YEAR):
-            tks, cnt = paginate({
-                'Projects': [pid],
-                'ShowFinished': True, 'ShowArchived': True,
-                'DateRange': {'Start': ds, 'End': de}
-            }, f'p{pid} {y}-{m:02d}')
-            if tks:
-                adicionados = merge_into(all_tasks, tks)
-                added_proj += adicionados
-        if added_proj > 0:
-            print(f'  pid={pid}: +{added_proj} novas | acumulado={len(all_tasks)}')
+        tks, cnt = paginate({
+            'Projects': [pid],
+            'ShowFinished': False, 'ShowArchived': False
+        }, f'p{pid}-open')
+        if tks:
+            adicionados = merge_into(all_tasks, tks)
+            if adicionados > 0 or cnt > 0:
+                print(f'  pid={pid}: abertas={len(tks)} Count={cnt} +{adicionados} novas | acumulado={len(all_tasks)}')
 
-    # FASE 3: tarefas sem EndDate (DateRange nao alcanca) — busca por projeto sem DateRange
-    print(f'\n[3] Busca por projeto SEM DateRange (captura tarefas sem EndDate)')
+    # FASE 3: Para cada projeto, todas as tarefas (cobre finalizadas que faltaram)
+    print(f'\n[3] Por projeto: TODAS (ShowFinished:true, ShowArchived:true)')
     for pid in candidate_pids:
         tks, cnt = paginate({
             'Projects': [pid],
             'ShowFinished': True, 'ShowArchived': True
-        }, f'p{pid}-noDate')
+        }, f'p{pid}-all')
         if tks:
             adicionados = merge_into(all_tasks, tks)
             if adicionados > 0:
-                print(f'  pid={pid}: +{adicionados} novas (sem DateRange) | acumulado={len(all_tasks)}')
+                print(f'  pid={pid}: total Count={cnt} +{adicionados} novas | acumulado={len(all_tasks)}')
 
     print(f'\n[CONSOLIDACAO]')
     tasks_list = list(all_tasks.values())
