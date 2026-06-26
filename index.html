@@ -1078,15 +1078,19 @@ function normTask(t) {
 function normTrelloCard(card, board, listMap) {
   const due = card.due ? new Date(card.due) : null;
   const now = new Date();
-  const isDueToday = due && !card.dueComplete && isSameDay(due, now);
-  const over = due && !card.dueComplete && due < now && !isDueToday;
+  const listName = listMap[card.idList] || '—';
+  // Detecta conclusão pelo nome da lista (cards sem data nunca têm dueComplete=true)
+  const listIsDone = /conclu[ií]|feito|finaliz|^done$|^fechad|encerrad|✓/i.test(listName);
+  const dueComplete = !!card.dueComplete || listIsDone;
+  const isDueToday = due && !dueComplete && isSameDay(due, now);
+  const over = due && !dueComplete && due < now && !isDueToday;
   const totalChk = (card.checklists||[]).reduce((a,cl) => a + cl.checkItems.length, 0);
   const doneChk = (card.checklists||[]).reduce((a,cl) => a + cl.checkItems.filter(i => i.state==='complete').length, 0);
   return {
     id: card.id, name: card.name,
     boardId: board.id, boardName: board.name,
-    listId: card.idList, listName: listMap[card.idList] || '—',
-    due: card.due, dueComplete: card.dueComplete, isOver: over, isDueToday: isDueToday,
+    listId: card.idList, listName: listName,
+    due: card.due, dueComplete: dueComplete, isOver: over, isDueToday: isDueToday,
     members: (card.members||[]).map(m => m.fullName||m.username||''),
     labels: (card.labels||[]).map(l => l.name||l.color),
     totalChk, doneChk, chkPct: totalChk > 0 ? Math.round(doneChk/totalChk*100) : null,
@@ -1431,13 +1435,8 @@ async function syncAll() {
         if (r.status === 'fulfilled') {
           const { board, lists, cards, listMap } = r.value;
           S.trelloLists.push(...lists.map(l => ({...l, boardId: board.id, boardName: board.name})));
-          var filteredCards = cards.filter(function(c) {
-            // Só considera cards COM data de entrega (são as "tarefas" reais do Trello)
-            if (!c.due) return false;
-            var ln = (listMap[c.idList]||'').toUpperCase();
-            return !ln.includes('POP') && !ln.includes('MANUAL') && !ln.includes('MODELO');
-          });
-          S.trelloCards.push(...filteredCards.map(c => normTrelloCard(c, board, listMap)));
+          // Traz TODOS os cards (com ou sem data) — o painel exibe a estrutura completa do quadro
+          S.trelloCards.push(...cards.map(c => normTrelloCard(c, board, listMap)));
         }
       });
       _apiHealth.trello = { status:'ok', lastSync: new Date().toISOString(), error: null, boardsLoaded: S.trelloBoards.length, cardsLoaded: S.trelloCards.length };
