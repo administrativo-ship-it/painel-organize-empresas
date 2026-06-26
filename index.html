@@ -3147,6 +3147,58 @@ async function gDriveSearchSheet(clienteName, keyword) {
   return files.length ? files[0].id : null;
 }
 
+// ═══════════════ GOOGLE CALENDAR — Buscar mentorias do cliente no período ═══════════════
+// Conta eventos do Google Calendar primário que contenham o nome do cliente no título/descrição
+// e que tenham ocorrido entre dtini e dtfim (inclusive). Retorna { count, events: [...] }.
+async function oeCountMentoriasInPeriod(clienteName, dtini, dtfim) {
+  if (!_gToken || !clienteName) return { count: 0, events: [] };
+  try {
+    var timeMin = dtini ? new Date(dtini+'T00:00:00').toISOString() : new Date(Date.now() - 365*86400000).toISOString();
+    var timeMax = dtfim ? new Date(dtfim+'T23:59:59').toISOString() : new Date().toISOString();
+    // Normaliza nome (tira prefixos comuns do FlowUp como "GRUPO 01 - 2026 ORGANIZE MENTORING - ")
+    var cleanName = String(clienteName)
+      .replace(/^(GRUPO\s*\d+\s*-\s*)?(\d{4}\s*)?(ORGANIZE\s+(MENTORING|MASTER|MARKETING|EMPRESAS|ESTRAT[ÉE]GICO|ESTRAT[EÉ]GICO\s+E\s+VENDAS)\s*-\s*)?/i, '')
+      .trim();
+    if (!cleanName) cleanName = clienteName;
+    var url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events?'
+      + 'q=' + encodeURIComponent(cleanName)
+      + '&timeMin=' + encodeURIComponent(timeMin)
+      + '&timeMax=' + encodeURIComponent(timeMax)
+      + '&singleEvents=true&orderBy=startTime&maxResults=250';
+    var res = await fetch(url, { headers: gAuthHeaders() });
+    if (!res.ok) {
+      console.warn('[Calendar] HTTP ' + res.status);
+      return { count: 0, events: [] };
+    }
+    var data = await res.json();
+    var items = data.items || [];
+    // Filtro adicional: o título precisa MENCIONAR o cliente (a API faz busca em todos os campos
+    // mas queremos só eventos com o nome explícito no resumo) — mais conservador.
+    var nameUp = cleanName.toUpperCase();
+    var filtered = items.filter(function(ev){
+      var txt = ((ev.summary||'') + ' ' + (ev.description||'')).toUpperCase();
+      return txt.indexOf(nameUp) >= 0;
+    });
+    // Considera apenas eventos passados (mentorias já realizadas, não futuras)
+    var nowIso = new Date().toISOString();
+    var realizados = filtered.filter(function(ev){
+      var end = (ev.end && (ev.end.dateTime || ev.end.date)) || '';
+      return end && end <= nowIso;
+    });
+    return {
+      count: realizados.length,
+      events: realizados.map(function(ev){ return {
+        title: ev.summary || '',
+        start: (ev.start && (ev.start.dateTime || ev.start.date)) || '',
+        end: (ev.end && (ev.end.dateTime || ev.end.date)) || ''
+      }; })
+    };
+  } catch(e) {
+    console.warn('[Calendar] erro:', e);
+    return { count: 0, events: [] };
+  }
+}
+
 // ── Parse helpers ──
 
 function parseBRL(v) {
@@ -4409,11 +4461,26 @@ async function generateAnalysisEncerramento() {
         ctx.materiaisDrive = await oeListDriveDocsInPeriod(folderIdEnc, _ref.dtini, _ref.dtfim, 0);
       } catch(e) { console.warn('[AI enc] erro materiais Drive:', e); }
     }
+    // Mentorias realizadas — busca no Google Calendar (eventos do cliente no período)
+    if (btn) { btn.textContent = 'Contando mentorias na agenda...'; }
+    ctx.mentoriasCalendar = { count: 0, events: [] };
+    if (_gToken && _ref.cliente && (_ref.dtini || _ref.dtfim)) {
+      try {
+        ctx.mentoriasCalendar = await oeCountMentoriasInPeriod(_ref.cliente, _ref.dtini, _ref.dtfim);
+        // Atualiza _ref.nment automaticamente com o número encontrado
+        if (ctx.mentoriasCalendar.count > 0) {
+          _ref.nment = String(ctx.mentoriasCalendar.count);
+          var nmentEl = document.getElementById('ref-nment');
+          if (nmentEl) nmentEl.value = _ref.nment;
+        }
+      } catch(e) { console.warn('[AI enc] erro Calendar:', e); }
+    }
     if (btn) { btn.textContent = 'Gerando análise...'; }
     console.log('[AI Encerramento] Diagnóstico:', {
       cliente: _ref.cliente, programa: programa,
       flowupTasks: ctx.flowup.total, trelloBoards: ctx.trello.boards,
-      materiaisDrive: ctx.materiaisDrive.length
+      materiaisDrive: ctx.materiaisDrive.length,
+      mentoriasCalendar: ctx.mentoriasCalendar.count
     });
 
     // Análise baseada APENAS em Trello + FlowUp + Drive — sem indicadores financeiros
@@ -4446,12 +4513,17 @@ async function generateAnalysisEncerramento() {
       'Cards vencidos: ' + (ctx.trello.vencidosNomes||[]).join('; ') + '\n\n' +
       '── MATERIAIS PRODUZIDOS NO DRIVE (período ' + (_ref.dtini||'?') + ' a ' + (_ref.dtfim||'?') + ') ──\n' +
       oeFormatMateriaisDrive(ctx.materiaisDrive) + '\n\n' +
+      '── MENTORIAS REALIZADAS NO PERÍODO (Google Calendar) ──\n' +
+      'Total: ' + (ctx.mentoriasCalendar.count) + '\n' +
+      (ctx.mentoriasCalendar.events.length
+        ? ctx.mentoriasCalendar.events.map(function(e){ return '- ' + (e.start||'').substring(0,10) + ' · ' + e.title; }).join('\n')
+        : '(nenhuma mentoria registrada no Calendar para este cliente no período)') + '\n\n' +
       '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
       '1. ESCOPO DO PERÍODO ("' + (_ref.dtini||'?') + '" a "' + (_ref.dtfim||'?') + '") — REGRA OBRIGATÓRIA: toda a análise deve considerar EXCLUSIVAMENTE este intervalo. Eventos fora do período NÃO devem entrar.\n' +
       '2. FOCO DA ANÁLISE: desempenho do cliente na execução das tarefas atribuídas a ele no FlowUp (etapas Organize Mentoring / Master / Estratégico — atividades sob responsabilidade do cliente).\n' +
       '3. PROIBIDO mencionar: faturamento, meta, lucro, margem, ponto de equilíbrio, capital, inadimplência ou qualquer indicador financeiro. ZERO análise financeira.\n' +
       '4. Campos de TEXTO (modnum, modnom, dtini, dtfim, proxmod): se preenchidos nos FILTROS, mantenha; se vazios, deixe "" (NÃO escreva "(vazio)").\n' +
-      '5. "nment": se vazio, conte mentorias concluídas no FlowUp do período (tarefas com "mentoria" no nome) ou retorne "0".\n\n' +
+      '5. "nment": SEMPRE use o número exato de mentorias do Google Calendar (campo "MENTORIAS REALIZADAS NO PERÍODO" acima). Se 0, retorne "0".\n\n' +
       '─── CONTEÚDO DA "analise" (Análise Executiva) ───\n' +
       'Produza 3 parágrafos CURTOS (3-4 linhas cada) avaliando o cliente neste módulo:\n' +
       '(a) COMPROMETIMENTO E ANDAMENTO — quantas tarefas o cliente concluiu vs pendentes/atrasadas (números reais). Avalie a postura do cliente na execução.\n' +
