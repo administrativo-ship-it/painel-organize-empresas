@@ -4591,12 +4591,40 @@ function rptGenerateMensal() {
   }
 
   // ── GRÁFICO SVG ──
-  var historico = _rmf._historico;
-  if (historico && historico.length > 1) {
+  // SEMPRE força o ponto do mês selecionado a usar os MESMOS valores dos cards.
+  // O histórico da IA pode trazer valores inconsistentes (mês acumulado, parcial, etc).
+  // Aqui sobrescrevemos o mês de referência com a fonte de verdade: _rmf.fat / _rmf.meta.
+  var historico = (_rmf._historico || []).map(function(h){ return Object.assign({}, h); });
+  var mesSelInt = parseInt(_rmf.mes) || 0;
+  if (mesSelInt >= 1 && mesSelInt <= 12) {
+    var idxRef = historico.findIndex(function(h){ return h.mes === mesSelInt; });
+    var fatRef = (fatN > 0 ? fatN : 0);
+    var metaRef = (metaN > 0 ? metaN : 0);
+    // Calcula fatAnterior a partir do crescimento (se disponível): fatAnt = fatN / (1 + cresc/100)
+    var fatAntRef = 0;
+    if (fatRef > 0 && !isNaN(crescN) && crescN > -100) {
+      fatAntRef = fatRef / (1 + crescN/100);
+    } else if (idxRef >= 0) {
+      fatAntRef = historico[idxRef].fatAnterior || 0;
+    }
+    if (idxRef >= 0) {
+      historico[idxRef].fat = fatRef;
+      historico[idxRef].meta = metaRef;
+      historico[idxRef].fatAnterior = fatAntRef;
+    } else if (fatRef > 0 || metaRef > 0) {
+      historico.push({ mes: mesSelInt, fat: fatRef, meta: metaRef, fatAnterior: fatAntRef });
+      historico.sort(function(a,b){ return a.mes - b.mes; });
+    }
+  }
+  // Gera histórico mínimo quando IA não retornou nada — só com o mês selecionado
+  if (!historico.length && (fatN > 0 || metaN > 0)) {
+    historico = [{ mes: mesSelInt, fat: fatN, meta: metaN, fatAnterior: 0 }];
+  }
+  if (historico.length >= 1) {
     html += '<div style="'+S_sec+'">Evolução do Faturamento</div>';
     html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:18px;margin-top:0;">';
     html += '<div style="font-size:11px;font-weight:600;color:#6B7A99;text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;">Faturamento Realizado vs. Meta · '+_rmf.ano+'</div>';
-    html += rptGenSvgChart(historico, _rmf.mes);
+    html += rptGenSvgChart(historico, mesSelInt);
     html += '</div>';
   }
 
