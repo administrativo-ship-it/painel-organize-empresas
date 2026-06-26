@@ -3,34 +3,38 @@
 Sincroniza FlowUp -> flowup-data.json via API REST direta (sem MCP).
 OAuth2 Password Grant em https://task.flowup.me.
 
-Estratégia DEFINITIVA (cobertura máxima):
-1. Busca geral via /task/querytasks (ShowFinished:true, ShowArchived:false)
-   - Pagina com PageSize=200 até esgotar
-2. Para CADA projectId de 1 a MAX_PROJECT_ID (varredura), faz query específica
-   por Projects:[pid] — captura projetos que não aparecem na busca geral
-3. Para CADA usuário ativo, faz query por Users:[uid] — captura tarefas
-   atribuídas a usuários ocultos da busca geral
-4. Mescla tudo pelo Id único (deduplicação)
-5. Inclui também tarefas ARQUIVADAS para projetos antigos
-6. Deriva projetos das próprias tarefas (cada task carrega ProjectId+ProjectName)
+ESTRATEGIA DEFINITIVA (testada e validada):
+A API de /task/querytasks trunca em ~1500 itens GLOBAL — mas COM filtro DateRange
+retorna o Count real (testado: ORGANIZE EMPRESAS jun/2026 = 359 tarefas, vs 815
+total no JSON anterior). Solucao: paginar MES A MES usando DateRange.
+
+1. Para cada mes entre START_YEAR e END_YEAR, query com DateRange do mes
+2. Pagina ate cobrir o Count do mes
+3. Mescla tudo pelo Id (deduplicacao)
+4. Tambem inclui arquivadas
+5. Deriva projetos das tarefas
 """
-import os, sys, json, time, urllib.request, urllib.parse, urllib.error
+import os, sys, json, time, calendar, urllib.request, urllib.parse, urllib.error
+from datetime import datetime
 
 API_KEY = os.environ.get('FLOWUP_API_KEY', '').strip()
 SUBDOMAIN = os.environ.get('FLOWUP_SUBDOMAIN', 'organizementoring').strip()
 BASE_URL = os.environ.get('FLOWUP_BASE_URL', 'https://task.flowup.me').rstrip('/')
 
 if not API_KEY:
-    print('ERRO: defina FLOWUP_API_KEY', file=sys.stderr); sys.exit(1)
+    print('ERRO: FLOWUP_API_KEY ausente', file=sys.stderr); sys.exit(1)
 
 EP_TOKEN = '/token'
 EP_QUERY_TASKS = '/api/v1/public/task/querytasks'
 EP_LIST_USERS = '/api/v1/public/user/getactiveusers'
 
 PAGE_SIZE = 200
-MAX_PAGES = 30
-MAX_PROJECT_ID = 40   # FlowUp mostra ate id ~28; varremos com folga
-MAX_USER_ID = 30      # Cobre usuarios ativos + inativos
+MAX_PAGES_PER_MONTH = 20
+
+# Janela de meses: 4 anos pra tras + 2 pra frente cobre tudo
+NOW = datetime.utcnow()
+START_YEAR = NOW.year - 4
+END_YEAR = NOW.year + 2
 
 _token, _exp = None, 0
 
@@ -66,39 +70,36 @@ def api(method, path, body=None):
             return json.loads(r.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         err = e.read().decode('utf-8', errors='ignore')
-        raise RuntimeError(f'HTTP {e.code} {method} {path}: {err[:300]}')
+        raise RuntimeError(f'HTTP {e.code}: {err[:200]}')
 
 
-def paginate_query(filter_obj, max_pages=MAX_PAGES, label=''):
-    """Pagina querytasks com filtro custom. Retorna (tasks, total_count_reported)."""
-    out = []
-    total = None
-    for page in range(1, max_pages + 1):
+def paginate(filter_obj, label=''):
+    """Pagina querytasks com filtro. Retorna (tasks, count_reported)."""
+    out, total = [], None
+    for page in range(1, MAX_PAGES_PER_MONTH + 1):
         try:
-            resp = api('POST', EP_QUERY_TASKS, {
+            r = api('POST', EP_QUERY_TASKS, {
                 'Filter': filter_obj, 'CurrentPage': page, 'PageSize': PAGE_SIZE
             })
         except Exception as e:
             print(f'    {label} p{page}: ERRO {e}')
             break
-        chunk = resp.get('Result') or []
-        if total is None:
-            total = resp.get('Count', 0)
+        chunk = r.get('Result') or []
+        if total is None: total = r.get('Count', 0)
         if not chunk: break
         out.extend(chunk)
         if total and len(out) >= total: break
         if len(chunk) < PAGE_SIZE: break
-        time.sleep(0.15)
+        time.sleep(0.1)
     return out, total or len(out)
 
 
-def merge_tasks(target_dict, new_tasks):
-    """Adiciona novas em target_dict (id -> task). Retorna novos adicionados."""
+def merge_into(target, new_list):
     novos = 0
-    for t in new_tasks:
+    for t in new_list:
         tid = t.get('Id')
-        if tid and tid not in target_dict:
-            target_dict[tid] = t
+        if tid and tid not in target:
+            target[tid] = t
             novos += 1
     return novos
 
@@ -120,61 +121,56 @@ def derive_projects(tasks):
     return list(projs.values())
 
 
+def month_iter(start_year, end_year):
+    for y in range(start_year, end_year + 1):
+        for m in range(1, 13):
+            last_day = calendar.monthrange(y, m)[1]
+            start = f'{y:04d}-{m:02d}-01T00:00:00'
+            end = f'{y:04d}-{m:02d}-{last_day:02d}T23:59:59'
+            yield y, m, start, end
+
+
 def main():
     ts = time.strftime('%Y-%m-%d %H:%M:%S')
-    print(f'[{ts}] Iniciando sincronizacao FlowUp via API REST')
-    print(f'  Base: {BASE_URL} | Subdominio: {SUBDOMAIN}')
-
+    print(f'[{ts}] Sync FlowUp via API REST (DateRange mensal)')
+    print(f'  Base: {BASE_URL} | Sub: {SUBDOMAIN}')
     get_token()
     print('  Token OK')
 
-    all_tasks = {}  # id -> task
+    all_tasks = {}
 
-    print('\n[FASE 1] Busca geral (ShowFinished:true)')
-    g1, c1 = paginate_query({'ShowFinished': True, 'ShowArchived': False}, label='geral')
-    novos = merge_tasks(all_tasks, g1)
-    print(f'  Coletadas: {len(g1)} | Count API: {c1} | Acumulado: {len(all_tasks)}')
+    # FASE 1: Busca geral (cobre tarefas sem EndDate)
+    print('\n[1] Busca geral (ShowFinished:true, ShowArchived:true)')
+    g, c = paginate({'ShowFinished': True, 'ShowArchived': True}, 'global')
+    novos = merge_into(all_tasks, g)
+    print(f'  +{novos} (Count={c}) | total={len(all_tasks)}')
 
-    print('\n[FASE 2] Busca geral incluindo arquivadas')
-    g2, c2 = paginate_query({'ShowFinished': True, 'ShowArchived': True}, label='arquivadas')
-    novos2 = merge_tasks(all_tasks, g2)
-    print(f'  Novas (arquivadas): {novos2} | Acumulado: {len(all_tasks)}')
-
-    print(f'\n[FASE 3] Varredura por ProjectId 1..{MAX_PROJECT_ID}')
-    project_ids_found = set(t.get('ProjectId') for t in all_tasks.values() if t.get('ProjectId'))
-    for pid in range(1, MAX_PROJECT_ID + 1):
-        # SHOW FINISHED + ARCHIVED para cobrir tudo do projeto
-        tks, cnt = paginate_query(
-            {'Projects': [pid], 'ShowFinished': True, 'ShowArchived': True},
-            label=f'p{pid}'
-        )
+    # FASE 2: Janela mensal com DateRange (cobre o que a busca global trunca)
+    print(f'\n[2] Varredura por mes (DateRange) — {START_YEAR}..{END_YEAR}')
+    total_meses = 0
+    meses_com_dados = 0
+    for y, m, ds, de in month_iter(START_YEAR, END_YEAR):
+        total_meses += 1
+        tks, cnt = paginate({
+            'ShowFinished': True, 'ShowArchived': True,
+            'DateRange': {'Start': ds, 'End': de}
+        }, f'{y}-{m:02d}')
         if tks:
-            adicionados = merge_tasks(all_tasks, tks)
-            project_ids_found.add(pid)
-            if adicionados > 0:
-                print(f'  pid={pid}: +{adicionados} novas (total projeto: {len(tks)}, Count={cnt})')
-
-    print(f'\n[FASE 4] Varredura por UserId 1..{MAX_USER_ID}')
-    for uid in range(1, MAX_USER_ID + 1):
-        tks, cnt = paginate_query(
-            {'Users': [uid], 'ShowFinished': True, 'ShowArchived': True},
-            label=f'u{uid}'
-        )
-        if tks:
-            adicionados = merge_tasks(all_tasks, tks)
-            if adicionados > 0:
-                print(f'  uid={uid}: +{adicionados} novas (Count={cnt})')
+            adicionados = merge_into(all_tasks, tks)
+            if adicionados > 0 or cnt > 0:
+                meses_com_dados += 1
+                print(f'  {y}-{m:02d}: coletadas={len(tks)} Count={cnt} +{adicionados} novas | acumulado={len(all_tasks)}')
 
     print(f'\n[CONSOLIDACAO]')
     tasks_list = list(all_tasks.values())
-    print(f'  Total UNIVERSO de tarefas: {len(tasks_list)}')
+    print(f'  Total UNIVERSO: {len(tasks_list)} tarefas (meses processados: {total_meses}, com dados: {meses_com_dados})')
 
     projects = derive_projects(tasks_list)
     projects.sort(key=lambda p: -p['TotalTasks'])
-    print(f'  Projetos descobertos: {len(projects)}')
+    print(f'  Projetos: {len(projects)}')
     for p in projects:
-        nome = p['Name'][:45]
-        print(f"    #{p['Id']:3} {nome:45} | total={p['TotalTasks']:4} | abertas={p['OpenTasks']:3} | fin={p['FinishedTasks']:4} | arq={p['ArchivedTasks']:3}")
+        nome = p['Name'][:42]
+        print(f"    #{p['Id']:3} {nome:42} | tot={p['TotalTasks']:4} | ab={p['OpenTasks']:3} | fin={p['FinishedTasks']:4} | arq={p['ArchivedTasks']:3}")
 
     print('\n[USUARIOS]')
     try:
@@ -188,14 +184,13 @@ def main():
     g_open = sum(p['OpenTasks'] for p in projects)
     g_fin = sum(p['FinishedTasks'] for p in projects)
     g_arq = sum(p['ArchivedTasks'] for p in projects)
-    print(f'\n[TOTAIS] {len(tasks_list)} tarefas | abertas={g_open} | finalizadas={g_fin} | arquivadas={g_arq} | projetos={len(projects)}')
+    print(f'\n[TOTAIS] tarefas={len(tasks_list)} | abertas={g_open} | fin={g_fin} | arq={g_arq} | projetos={len(projects)}')
 
     output = {
         'generatedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'totals': {
-            'tasks': len(tasks_list),
-            'open': g_open, 'finished': g_fin, 'archived': g_arq,
-            'projects': len(projects)
+            'tasks': len(tasks_list), 'open': g_open,
+            'finished': g_fin, 'archived': g_arq, 'projects': len(projects)
         },
         'tasks': [
             {
