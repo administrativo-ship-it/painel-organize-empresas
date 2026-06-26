@@ -31,10 +31,11 @@ EP_LIST_USERS = '/api/v1/public/user/getactiveusers'
 PAGE_SIZE = 200
 MAX_PAGES_PER_MONTH = 20
 
-# Janela de meses: 4 anos pra tras + 2 pra frente cobre tudo
+# Janela de meses: 1 ano pra tras + 1 pra frente (otimizado: 30pid x 36mes ~= 1080 calls)
 NOW = datetime.utcnow()
-START_YEAR = NOW.year - 4
-END_YEAR = NOW.year + 2
+START_YEAR = NOW.year - 1
+END_YEAR = NOW.year + 1
+MAX_PID = 30
 
 _token, _exp = None, 0
 
@@ -90,7 +91,7 @@ def paginate(filter_obj, label=''):
         out.extend(chunk)
         if total and len(out) >= total: break
         if len(chunk) < PAGE_SIZE: break
-        time.sleep(0.1)
+        time.sleep(0.05)
     return out, total or len(out)
 
 
@@ -145,21 +146,38 @@ def main():
     novos = merge_into(all_tasks, g)
     print(f'  +{novos} (Count={c}) | total={len(all_tasks)}')
 
-    # FASE 2: Janela mensal com DateRange (cobre o que a busca global trunca)
-    print(f'\n[2] Varredura por mes (DateRange) — {START_YEAR}..{END_YEAR}')
-    total_meses = 0
-    meses_com_dados = 0
-    for y, m, ds, de in month_iter(START_YEAR, END_YEAR):
-        total_meses += 1
+    # FASE 2: Para cada projeto descoberto, varrer mes a mes com DateRange
+    # Estrategia que evita truncagem: Projects:[pid] + DateRange limita o universo
+    initial_pids = set(t.get('ProjectId') for t in all_tasks.values() if t.get('ProjectId'))
+    # Tambem inclui projetos com ID 1..MAX_PID por seguranca (descobre projetos ocultos)
+    candidate_pids = sorted(initial_pids | set(range(1, MAX_PID + 1)))
+    print(f'\n[2] Varredura projeto x mes (DateRange) — {len(candidate_pids)} pids x meses {START_YEAR}..{END_YEAR}')
+
+    for pid in candidate_pids:
+        added_proj = 0
+        for y, m, ds, de in month_iter(START_YEAR, END_YEAR):
+            tks, cnt = paginate({
+                'Projects': [pid],
+                'ShowFinished': True, 'ShowArchived': True,
+                'DateRange': {'Start': ds, 'End': de}
+            }, f'p{pid} {y}-{m:02d}')
+            if tks:
+                adicionados = merge_into(all_tasks, tks)
+                added_proj += adicionados
+        if added_proj > 0:
+            print(f'  pid={pid}: +{added_proj} novas | acumulado={len(all_tasks)}')
+
+    # FASE 3: tarefas sem EndDate (DateRange nao alcanca) — busca por projeto sem DateRange
+    print(f'\n[3] Busca por projeto SEM DateRange (captura tarefas sem EndDate)')
+    for pid in candidate_pids:
         tks, cnt = paginate({
-            'ShowFinished': True, 'ShowArchived': True,
-            'DateRange': {'Start': ds, 'End': de}
-        }, f'{y}-{m:02d}')
+            'Projects': [pid],
+            'ShowFinished': True, 'ShowArchived': True
+        }, f'p{pid}-noDate')
         if tks:
             adicionados = merge_into(all_tasks, tks)
-            if adicionados > 0 or cnt > 0:
-                meses_com_dados += 1
-                print(f'  {y}-{m:02d}: coletadas={len(tks)} Count={cnt} +{adicionados} novas | acumulado={len(all_tasks)}')
+            if adicionados > 0:
+                print(f'  pid={pid}: +{adicionados} novas (sem DateRange) | acumulado={len(all_tasks)}')
 
     print(f'\n[CONSOLIDACAO]')
     tasks_list = list(all_tasks.values())
