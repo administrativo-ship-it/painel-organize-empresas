@@ -424,7 +424,7 @@ tbody tr:hover{background:var(--off);}
   </div>
   <div class="nav-item" onclick="showPage('trello',this)">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
-    Planejamento Trello
+    Quadros do Trello
     <span class="nav-badge blue" id="badge-trello">—</span>
   </div>
   <div class="nav-item" onclick="showPage('members',this)">
@@ -605,8 +605,8 @@ tbody tr:hover{background:var(--off);}
         <div class="chart-wrap"><canvas id="ch-risk"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-ttl">Cards Trello: Concluídos vs Abertos</div>
-        <div class="chart-sub">Por board/planejamento</div>
+        <div class="chart-ttl">Trello — Progresso por Cliente</div>
+        <div class="chart-sub">Concluído x pendente por Área de Trabalho</div>
         <div class="chart-wrap"><canvas id="ch-trello-progress"></canvas></div>
       </div>
     </div>
@@ -796,7 +796,7 @@ tbody tr:hover{background:var(--off);}
         </button>
         <button class="rpt-type-btn" id="rtype-trello" onclick="selectReportType('trello',this)">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
-          Planejamentos Trello
+          Quadros do Trello
         </button>
         <button class="rpt-type-btn" id="rtype-mensal" onclick="selectReportType('mensal',this)">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -1393,21 +1393,19 @@ async function syncAll() {
         orgs.filter(o => /organize\s*empresas/i.test(o.displayName || o.name || '')).map(o => o.id)
       );
 
-      // Meses em português para validar padrão no nome
-      const MESES = ['JANEIRO','FEVEREIRO','MARÇO','MARCO','ABRIL','MAIO','JUNHO',
-                     'JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
-
-      // Filtro: só planejamentos mensais de clientes, sem MODELO
+      // Filtro: todos os quadros de clientes, exceto MODELOS e workspace Organize Empresas
       let boards = allBoards.filter(b => {
-        if (!b.idOrganization) return false;                    // só workspaces
+        if (b.closed) return false;                             // sem boards fechados
+        if (!b.idOrganization) return false;                    // só dentro de workspaces
         if (excludeOrgIds.has(b.idOrganization)) return false;  // não Organize Empresas
-        const n = b.name.toUpperCase();
+        const n = (b.name || '').toUpperCase();
         if (n.includes('MODELO')) return false;                 // sem MODELO
-        if (!MESES.some(m => n.includes(m))) return false;     // deve ter mês
-        if (!/20\d{2}/.test(n)) return false;                  // deve ter ano 20XX
         return true;
       });
 
+      // Mantém workspaces (=clientes) visíveis no estado para o dashboard
+      const visibleOrgIds = new Set(boards.map(b => b.idOrganization));
+      S.trelloOrgs = orgs.filter(o => visibleOrgIds.has(o.id));
       S.trelloBoards = boards;
       S.trelloCards = [];
       S.trelloLists = [];
@@ -1568,7 +1566,7 @@ function renderOverview() {
     ${kpi('Tarefas Atrasadas', over, 'red', 'Ação imediata', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01M10.29 3.86l-8.4 14.3A2 2 0 003.6 21h16.8a2 2 0 001.71-2.84l-8.4-14.3a2 2 0 00-3.42 0z"/></svg>')}
     ${kpi('Conclusão Geral', totalT>0?Math.round(taskDone/totalT*100)+'%':'—', 'navy', `${taskDone} de ${totalT} tarefas`, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5L5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>')}
     ${kpi('Em Risco / Crítico', atRisk, 'orange', 'Projetos críticos', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c.5 4-3 6-3 10a5 5 0 0010 0c0-4-3-6-3-10M10 16a2 2 0 004 0"/></svg>')}
-    ${kpi('Boards Trello', S.trelloBoards.length, 'trello', 'Planejamentos ativos', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>')}
+    ${kpi('Quadros Trello', S.trelloBoards.length, 'trello', 'Quadros ativos', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>')}
     ${kpi('Cards Trello', trCards, 'trello', `${trDone} concluídos`, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7h8M8 11h5"/></svg>')}
     ${kpi('Cards Vencendo Hoje', trDueToday, 'orange', 'Trello prazo hoje', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg>')}
     ${kpi('Cards Vencidos', S.trelloCards.filter(c=>c.isOver).length, 'red', 'Trello em atraso', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>')}
@@ -1719,7 +1717,7 @@ function renderTrello() {
   const avgChk = withChk.length > 0 ? Math.round(withChk.reduce((a,c)=>a+c.chkPct,0)/withChk.length) : 0;
 
   kpiEl.innerHTML = `
-    ${kpi('Boards Ativos', boards.length, 'trello', 'Planejamentos Trello', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>')}
+    ${kpi('Quadros Ativos', boards.length, 'trello', 'Quadros do Trello', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>')}
     ${kpi('Total de Cards', totalCards, 'navy', 'Em todos os boards', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7h8M8 11h5"/></svg>')}
     ${kpi('Cards Concluídos', doneCards, 'green', `${totalCards>0?Math.round(doneCards/totalCards*100):0}% do total`, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>')}
     ${kpi('Cards Vencidos', overCards, 'red', 'Requerem atenção', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01M10.29 3.86l-8.4 14.3A2 2 0 003.6 21h16.8a2 2 0 001.71-2.84l-8.4-14.3a2 2 0 00-3.42 0z"/></svg>')}
@@ -1749,7 +1747,7 @@ function renderTrello() {
         ${withDue > 0 ? `<span class="chip">${withDue} com prazo</span>` : ''}
       </div>
       <div class="trello-lists">
-        ${lists.slice(0,5).map(l => {
+        ${lists.map(l => {
           const cnt = cards.filter(c=>c.listId===l.id).length;
           return `<div class="trello-list-row"><span>${l.name}</span><span class="trello-list-count">${cnt}</span></div>`;
         }).join('')}
@@ -1787,7 +1785,7 @@ function openTrelloBoard(boardId) {
           const listCards = cards.filter(c=>c.listId===list.id);
           return `<div class="list-col">
             <div class="list-col-name">${list.name} <span style="font-size:10px;color:var(--muted);font-weight:400">(${listCards.length})</span></div>
-            ${listCards.slice(0,15).map(card => {
+            ${listCards.map(card => {
               const due = card.due ? new Date(card.due).toLocaleDateString('pt-BR') : null;
               return `<div class="trello-card-item">
                 <div style="font-weight:${card.dueComplete?400:600};text-decoration:${card.dueComplete?'line-through':''};color:${card.dueComplete?'var(--muted)':'var(--txt)'}">${card.name}</div>
@@ -1796,7 +1794,6 @@ function openTrelloBoard(boardId) {
                 ${card.members.length > 0 ? `<div class="card-chk">${card.members.join(', ')}</div>` : ''}
               </div>`;
             }).join('')}
-            ${listCards.length > 15 ? `<div style="text-align:center;font-size:11px;color:var(--muted);padding:6px">+${listCards.length-15} cards</div>` : ''}
           </div>`;
         }).join('')}
       </div>
@@ -1871,11 +1868,27 @@ function renderDashboard() {
   mkChart('ch-risk','doughnut', ['Baixo','Moderado','Alto','Crítico'],
     [rm.low,rm.moderate,rm.high,rm.critical], ['#1a7a4a','#b45309','#d35400','#c0392b']);
 
-  // Trello progress per board
-  const boardNames = S.trelloBoards.map(b=>b.name.length>18?b.name.slice(0,18)+'…':b.name);
-  const donePerBoard = S.trelloBoards.map(b=>S.trelloCards.filter(c=>c.boardId===b.id&&c.dueComplete).length);
-  const openPerBoard = S.trelloBoards.map(b=>S.trelloCards.filter(c=>c.boardId===b.id&&!c.dueComplete).length);
-  mkChartStacked('ch-trello-progress', boardNames, donePerBoard, openPerBoard);
+  // Trello progresso por Área de Trabalho (cliente)
+  const orgs = S.trelloOrgs || [];
+  const orgMap = {};
+  orgs.forEach(o => { orgMap[o.id] = { name: o.displayName || o.name, done: 0, open: 0, over: 0, boards: 0, cards: 0 }; });
+  S.trelloBoards.forEach(b => {
+    if (b.idOrganization && orgMap[b.idOrganization]) orgMap[b.idOrganization].boards++;
+  });
+  S.trelloCards.forEach(c => {
+    const b = S.trelloBoards.find(x => x.id === c.boardId);
+    if (!b) return;
+    const o = orgMap[b.idOrganization];
+    if (!o) return;
+    o.cards++;
+    if (c.dueComplete) o.done++;
+    else { o.open++; if (c.isOver) o.over++; }
+  });
+  const orgList = Object.values(orgMap).filter(o => o.cards > 0 || o.boards > 0).sort((a,b)=>b.cards - a.cards);
+  const orgLabels = orgList.map(o => o.name.length > 22 ? o.name.slice(0,22)+'…' : o.name);
+  const orgDone = orgList.map(o => o.done);
+  const orgOpen = orgList.map(o => o.open);
+  mkChartStacked('ch-trello-progress', orgLabels, orgDone, orgOpen);
 
   const tbody = document.getElementById('prog-body');
   tbody.innerHTML = ps.map(p => {
@@ -3723,90 +3736,92 @@ var LOGO_ORGANIZE_B64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABDgAAAQ4C
 function rptGenSvgChart(historico, mesSel) {
   if (!historico || !historico.length) return '';
   var months = historico.slice();
-  // Mostrar no máximo 7 meses
   if (months.length > 7) months = months.slice(-7);
 
-  var maxVal = 0;
-  months.forEach(function(h) {
-    if ((h.fat||0) > maxVal) maxVal = h.fat;
-    if ((h.fatAnterior||0) > maxVal) maxVal = h.fatAnterior;
-    if ((h.meta||0) > maxVal) maxVal = h.meta;
-  });
-  if (!maxVal) return '';
-  maxVal = maxVal * 1.12;
+  // Detecta o que existe nos dados — só desenha séries com valores
+  var hasFat = months.some(function(h){ return (h.fat||0) > 0; });
+  var hasMeta = months.some(function(h){ return (h.meta||0) > 0; });
+  var hasAnt = months.some(function(h){ return (h.fatAnterior||0) > 0; });
+  if (!hasFat && !hasMeta && !hasAnt) return '';
 
-  var W = 820, H = 210;
-  var padL = 72, padR = 20, padT = 22, padB = 42;
+  var series = [];
+  if (hasFat) series.push({key:'fat', label:'Realizado', color:'#1B2B6B'});
+  if (hasMeta) series.push({key:'meta', label:'Meta', color:'#3DBBCC'});
+  if (hasAnt) series.push({key:'fatAnterior', label:'Ano anterior', color:'#94A3B8'});
+
+  var maxVal = 0;
+  months.forEach(function(h){ series.forEach(function(s){ if ((h[s.key]||0) > maxVal) maxVal = h[s.key]; }); });
+  if (!maxVal) return '';
+  // Arredonda topo para múltiplo "limpo"
+  var pow = Math.pow(10, Math.floor(Math.log10(maxVal)));
+  maxVal = Math.ceil(maxVal * 1.15 / pow) * pow;
+
+  var W = 820, H = 260;
+  var padL = 70, padR = 18, padT = 26, padB = 56;
   var chartW = W - padL - padR;
   var chartH = H - padT - padB;
   var n = months.length;
-  var step = chartW / (n + 1);
-  var sc = function(v) { return padT + chartH - ((v||0) / maxVal * chartH); };
-  var xp = function(i) { return padL + step * (i + 1); };
+  var groupW = chartW / n;
+  var barGap = 4;
+  var barW = Math.max(8, (groupW - barGap*2 - 14) / series.length);
 
-  // Grid + Y labels
+  var sc = function(v){ return padT + chartH - ((v||0) / maxVal * chartH); };
+
+  // Grid + labels Y
   var grid = '';
   for (var yi = 0; yi <= 4; yi++) {
     var yv = maxVal * yi / 4;
     var yy = sc(yv);
-    var lbl = yv >= 1000 ? 'R$' + (yv/1000).toFixed(0) + 'k' : 'R$' + yv.toFixed(0);
-    grid += '<line x1="'+padL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yy.toFixed(1)+'" stroke="#E0E5EE" stroke-width="1"'+(yi===0?'':' stroke-dasharray="4,4"')+'/>';
-    grid += '<text x="'+(padL-6)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#8A94A8">'+lbl+'</text>';
+    var lbl = yv >= 1000 ? 'R$ ' + (yv/1000).toFixed(0) + 'k' : 'R$ ' + yv.toFixed(0);
+    grid += '<line x1="'+padL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yy.toFixed(1)+'" stroke="#E5E9F0" stroke-width="1"'+(yi===0?'':' stroke-dasharray="3,4"')+'/>';
+    grid += '<text x="'+(padL-8)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="10" fill="#8A94A8" font-weight="500">'+lbl+'</text>';
   }
 
-  // Ano Anterior line (cinza pontilhado)
-  var hasAnterior = months.some(function(h){ return h.fatAnterior > 0; });
-  var anteriorSvg = '';
-  if (hasAnterior) {
-    var antPts = months.map(function(h,i){ return xp(i).toFixed(1)+','+sc(h.fatAnterior||0).toFixed(1); }).join(' ');
-    anteriorSvg = '<polyline points="'+antPts+'" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="3,3"/>';
-    months.forEach(function(h,i){
-      if (!h.fatAnterior) return;
-      var x=xp(i), y=sc(h.fatAnterior);
-      anteriorSvg += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3" fill="#9CA3AF"/>';
+  // Barras agrupadas + valor topo
+  var bars = '';
+  var xlabels = '';
+  months.forEach(function(h, i){
+    var gx = padL + groupW * i + groupW/2;
+    var startX = gx - (series.length * barW + (series.length-1) * barGap) / 2;
+    var isSel = (h.mesNum === mesSel);
+    series.forEach(function(s, si){
+      var v = h[s.key] || 0;
+      var bx = startX + si * (barW + barGap);
+      var by = sc(v);
+      var bh = (padT + chartH) - by;
+      if (v > 0) {
+        var op = (s.key === 'fat' && isSel) ? 1 : (s.key === 'fat' ? 0.95 : 0.85);
+        bars += '<rect x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="2.5" fill="'+s.color+'" opacity="'+op+'"/>';
+        // Valor em cima da barra Realizado (foco principal)
+        if (s.key === 'fat') {
+          var vt = v >= 1000 ? 'R$ '+(v/1000).toFixed(1)+'k' : 'R$ '+v.toFixed(0);
+          bars += '<text x="'+(bx + barW/2).toFixed(1)+'" y="'+(by - 5).toFixed(1)+'" text-anchor="middle" font-size="'+(isSel?10:9)+'" fill="#1B2B6B" font-weight="'+(isSel?'700':'600')+'">'+vt+'</text>';
+        }
+      } else {
+        bars += '<rect x="'+bx.toFixed(1)+'" y="'+(padT+chartH-2).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="2" rx="1" fill="'+s.color+'" opacity="0.25"/>';
+      }
     });
-  }
-
-  // Meta line
-  var metaPts = months.map(function(h,i){ return xp(i).toFixed(1)+','+sc(h.meta||0).toFixed(1); }).join(' ');
-  var meta = '<polyline points="'+metaPts+'" fill="none" stroke="#3DBBCC" stroke-width="2.5" stroke-dasharray="6,4"/>';
-  months.forEach(function(h,i){
-    var x=xp(i), y=sc(h.meta||0);
-    meta += '<rect x="'+(x-4).toFixed(1)+'" y="'+(y-4).toFixed(1)+'" width="8" height="8" rx="2" fill="#3DBBCC"/>';
-  });
-  meta = anteriorSvg + meta;
-
-  // Realizado line
-  var fatPts = [], fat = '';
-  months.forEach(function(h,i){
-    var x=xp(i), isSel=(h.mesNum===mesSel);
-    if (h.fat > 0) {
-      var y=sc(h.fat);
-      fatPts.push(x.toFixed(1)+','+y.toFixed(1));
-      var v=h.fat>=1000?'R$'+(h.fat/1000).toFixed(1)+'k':'R$'+h.fat;
-      fat += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(isSel?7:5)+'" fill="#1B2B6B"/>';
-      fat += '<text x="'+x.toFixed(1)+'" y="'+(y-12).toFixed(1)+'" text-anchor="middle" font-size="'+(isSel?10:9)+'" fill="#1B2B6B" font-weight="'+(isSel?'bold':'400')+'">'+v+'</text>';
-    } else {
-      var yb=sc(0);
-      fat += '<circle cx="'+x.toFixed(1)+'" cy="'+yb.toFixed(1)+'" r="4" fill="#1B2B6B" opacity="0.3"/>';
-      fat += '<text x="'+x.toFixed(1)+'" y="'+(yb+16).toFixed(1)+'" text-anchor="middle" font-size="9" fill="#8A94A8" font-style="italic">n/d</text>';
+    // Label do mês
+    var lblColor = isSel ? '#1B2B6B' : '#3E4A5E';
+    var lblWeight = isSel ? '800' : '600';
+    xlabels += '<text x="'+gx.toFixed(1)+'" y="'+(padT+chartH+18).toFixed(1)+'" text-anchor="middle" font-size="11" fill="'+lblColor+'" font-weight="'+lblWeight+'">'+h.mes+'</text>';
+    if (isSel) {
+      xlabels += '<rect x="'+(gx-12).toFixed(1)+'" y="'+(padT+chartH+24).toFixed(1)+'" width="24" height="3" rx="1.5" fill="#1B2B6B"/>';
     }
   });
-  if (fatPts.length >= 2) fat = '<polyline points="'+fatPts.join(' ')+'" fill="none" stroke="#1B2B6B" stroke-width="2.5"/>'+fat;
 
-  // X labels
-  var xlbls = months.map(function(h,i){
-    var x=xp(i), isSel=(h.mesNum===mesSel);
-    return '<text x="'+x.toFixed(1)+'" y="'+(H-padB+18)+'" text-anchor="middle" font-size="11" fill="'+(isSel?'#1B2B6B':'#2C3E50')+'" font-weight="'+(isSel?'800':'600')+'">'+h.mes+(isSel?'●':'')+' </text>';
-  }).join('');
+  // Legenda — quadradinhos coloridos
+  var lgX = padL;
+  var lgY = H - 14;
+  var legend = '';
+  series.forEach(function(s){
+    legend += '<rect x="'+lgX+'" y="'+(lgY-9)+'" width="14" height="14" rx="3" fill="'+s.color+'"/>';
+    legend += '<text x="'+(lgX+20)+'" y="'+(lgY+2)+'" font-size="11" fill="#2C3E50" font-weight="600">'+s.label+'</text>';
+    lgX += 26 + s.label.length * 7;
+  });
 
-  // Legend (com 3 séries: Realizado / Ano Anterior / Meta)
-  var lx = W-340;
-  var legend = '<line x1="'+lx+'" y1="'+(H-8)+'" x2="'+(lx+24)+'" y2="'+(H-8)+'" stroke="#1B2B6B" stroke-width="2.5"/><circle cx="'+(lx+12)+'" cy="'+(H-8)+'" r="4" fill="#1B2B6B"/><text x="'+(lx+29)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Realizado</text>'
-    + (hasAnterior ? '<line x1="'+(lx+90)+'" y1="'+(H-8)+'" x2="'+(lx+114)+'" y2="'+(H-8)+'" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="3,3"/><circle cx="'+(lx+102)+'" cy="'+(H-8)+'" r="3" fill="#9CA3AF"/><text x="'+(lx+119)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Ano anterior</text>' : '')
-    +'<line x1="'+(lx+210)+'" y1="'+(H-8)+'" x2="'+(lx+234)+'" y2="'+(H-8)+'" stroke="#3DBBCC" stroke-width="2.5" stroke-dasharray="5,3"/><rect x="'+(lx+218)+'" y="'+(H-12)+'" width="8" height="8" rx="2" fill="#3DBBCC"/><text x="'+(lx+239)+'" y="'+(H-4)+'" font-size="10" fill="#2C3E50">Meta</text>';
-
-  return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%">'+grid+meta+fat+xlbls+legend+'</svg>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:280px;">'
+    + grid + bars + xlabels + legend + '</svg>';
 }
 
 // ════════ ANÁLISE COM IA ════════
@@ -4237,11 +4252,11 @@ async function generateAnalysisWithAI() {
   // Define quais campos a IA deve preencher conforme o programa
   var camposEsperados = (programa === 'master') ?
     ['fat','cmv','dfixas','dvar','impost','ll','cgiro','inadim'] :
-    ['fat','meta','cresc','cativos','conv','ticket'];
+    ['fat','meta','cresc','cativos'];
 
   var camposExplicacao = (programa === 'master') ?
     'fat=Faturamento Bruto (R$, número), cmv=CMV (R$, número), dfixas=Despesas Fixas (R$), dvar=Despesas Variáveis (R$), impost=Impostos (R$), ll=Lucro Líquido (R$), cgiro=Capital de Giro (R$), inadim=Inadimplência (% sem o símbolo)' :
-    'fat=Faturamento do Mês (R$, número), meta=Meta do Mês (R$, número), cresc=Crescimento vs. ano anterior (% sem símbolo), cativos=Clientes Ativos (número inteiro), conv=Taxa de Conversão (% sem símbolo), ticket=Ticket Médio (R$, número)';
+    'fat=Faturamento do Mês (R$, número), meta=Meta do Mês (R$, número), cresc=Crescimento vs. ano anterior (% sem símbolo), cativos=Clientes Ativos (número inteiro)';
 
   var sysPrompt = 'Você é um extrator determinístico de dados que responde APENAS com JSON válido. Suas regras absolutas:\n' +
     '1. NUNCA invente, estime ou chute números. Use APENAS valores que aparecem literalmente nas FONTES DE DADOS fornecidas.\n' +
@@ -4477,14 +4492,15 @@ async function generateAnalysisEncerramento() {
       '5. Campos de TEXTO (modnum, modnom, dtini, dtfim, proxmod): se já preenchidos pelo usuário (nos FILTROS), MANTENHA o valor exato. Se vazios, deixe STRING VAZIA "" — NÃO escreva "(vazio)" literal.\n' +
       '6. "nment" = nº de mentorias realizadas no período. Se vazio, conte mentorias concluídas no FlowUp (tarefas com "mentoria" no nome) ou retorne "0".\n' +
       '7. Valores numéricos sem R$, sem %, sem milhar, ponto como decimal.\n' +
-      '8. ESCOPO DO PERÍODO ("' + (_ref.dtini||'?') + '" a "' + (_ref.dtfim||'?') + '"): priorize dados deste período. Se a planilha NÃO tiver dados para esse período exato mas tiver para meses dentro do range, AGREGUE/SOME os valores dos meses encontrados nesse range. Se REALMENTE não existir dado, use o mês mais próximo anterior ao período e mencione isso na "analise". NUNCA invente.\n' +
-      '9. EXTRAÇÃO INTELIGENTE DOS KPIs: examine TODAS as abas/colunas das planilhas. Procure linhas de meses cujas datas caiam entre dtini e dtfim. Some o faturamento desses meses; calcule média de % e ticket. Se o módulo é mensal (período de ~30 dias), use o mês específico.\n' +
+      '8. ESCOPO DO PERÍODO ("' + (_ref.dtini||'?') + '" a "' + (_ref.dtfim||'?') + '") — REGRA OBRIGATÓRIA E ESTRITA: TODA a análise deve considerar EXCLUSIVAMENTE este intervalo. PROIBIDO usar dados de meses fora desse range. Agregue/some apenas valores dos meses cujas datas caem DENTRO de dtini..dtfim. Se NÃO houver dado dentro do período, retorne 0 nos numéricos e mencione "Sem dados financeiros para o período" na análise. NUNCA use dados de meses anteriores nem posteriores ao período.\n' +
+      '9. EXTRAÇÃO INTELIGENTE DOS KPIs: examine TODAS as abas/colunas das planilhas. Considere APENAS linhas de meses cujas datas caiam ENTRE dtini e dtfim (inclusive). Some o faturamento desses meses; calcule média ponderada de % quando aplicável. Para módulos mensais (~30 dias), use o mês específico que pertence ao período.\n' +
       '10. HISTÓRICO COMPARATIVO ANO ATUAL vs ANO ANTERIOR: campo "historico" no JSON com array dos 12 meses contendo {mes, fatAtual (ano de dtfim), fatAnterior (ano - 1), meta}. Use 0 onde faltar dado.\n' +
       '11. Em "analise": 3 parágrafos CURTOS (máx. 4 linhas cada): (a) INDICADORES DO MÓDULO com números reais; (b) EXECUÇÃO — concluídas/atrasadas do FlowUp NO PERÍODO; (c) PLANEJAMENTO + MATERIAIS — % execução por QUADRO Trello + documentos do Drive entregues NO PERÍODO.\n' +
       '12. Em "proximos": 4-5 ações concretas para o próximo módulo (frases curtas).\n' +
-      '13. Se TODAS as fontes financeiras estiverem vazias: em "analise" inclua "Dados financeiros indisponíveis no módulo." e use 0 nos numéricos.\n\n' +
+      '13. Se TODAS as fontes financeiras estiverem vazias: em "analise" inclua "Dados financeiros indisponíveis no módulo." e use 0 nos numéricos.\n' +
+      '14. INDICADORES DINÂMICOS — IMPORTANTE: além dos k1..k6 fixos do programa, analise as planilhas e produza um array "kpisDinamicos" com 3 a 6 indicadores financeiros que REALMENTE EXISTEM nos dados do período. Cada item: {label:"Nome do Indicador", value:NUMERO, type:"moeda"|"percentual"|"numero"}. Exemplos válidos: Faturamento Bruto, Lucro Líquido, Margem de Lucro, Ponto de Equilíbrio, CMV, Despesas Fixas, Despesas Variáveis, Inadimplência, Capital de Giro, Crescimento, ROI, etc. NÃO invente — só inclua indicadores cujos valores você EXTRAIU da planilha do período. Se nenhum indicador puder ser calculado com dados reais, retorne array vazio [].\n\n' +
       'FORMATO DA RESPOSTA (JSON apenas, preencha todos os campos):\n' +
-      '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","modnum":"TEXTO_OU_VAZIO","modnom":"TEXTO_OU_VAZIO","dtini":"AAAA-MM-DD_OU_VAZIO","dtfim":"AAAA-MM-DD_OU_VAZIO","proxmod":"TEXTO_OU_VAZIO","nment":"NUM","historico":[{"mes":1,"fatAtual":NUMERO,"fatAnterior":NUMERO,"meta":NUMERO}],"analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
+      '{"k1":"NUM","k2":"NUM","k3":"NUM","k4":"NUM","k5":"NUM","k6":"NUM","kpisDinamicos":[{"label":"TEXTO","value":NUMERO,"type":"moeda"}],"modnum":"TEXTO_OU_VAZIO","modnom":"TEXTO_OU_VAZIO","dtini":"AAAA-MM-DD_OU_VAZIO","dtfim":"AAAA-MM-DD_OU_VAZIO","proxmod":"TEXTO_OU_VAZIO","nment":"NUM","historico":[{"mes":1,"fatAtual":NUMERO,"fatAnterior":NUMERO,"meta":NUMERO}],"analise":"TEXTO_FACTUAL","proximos":"ACOES_CONCRETAS"}';
 
     var text = await callClaude(apiKey, prompt_text, 4000, sysPromptEnc, true);
     var parsed = extractJSON(text);
@@ -4497,6 +4513,15 @@ async function generateAnalysisEncerramento() {
         if (el) el.value = _ref[k];
       }
     });
+
+    // KPIs DINÂMICOS — IA escolheu indicadores relevantes do período
+    if (Array.isArray(parsed.kpisDinamicos)) {
+      _ref.kpisDinamicos = parsed.kpisDinamicos
+        .filter(function(k){ return k && k.label && k.value !== undefined && k.value !== null; })
+        .slice(0, 6);
+    } else {
+      _ref.kpisDinamicos = [];
+    }
 
     // Demais campos
     ['modnum','modnom','dtini','dtfim','proxmod','nment'].forEach(function(k){
@@ -4566,7 +4591,7 @@ function rptGenerateMensal() {
   var S_gold = 'height:4px;background:linear-gradient(90deg,#5CC8D4,#85DDE8,#5CC8D4);';
   var S_body2 = 'padding:28px 40px;';
   var S_sec = 'font-family:Montserrat,Arial,sans-serif;font-size:10.5px;font-weight:700;color:#1B2B6B;text-transform:uppercase;letter-spacing:1.5px;border-left:3px solid #5CC8D4;padding-left:9px;margin-bottom:8px;margin-top:14px;';
-  var S_grid4 = 'display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px;';
+  var S_grid4 = 'display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:8px;';
   var S_card = 'background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:14px 12px;text-align:center;';
   var S_cardHL = 'background:#1B2B6B;border:1px solid #1B2B6B;border-radius:8px;padding:14px 12px;text-align:center;';
   var S_lbl = 'font-size:10px;color:#6B7A99;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;';
@@ -4607,13 +4632,6 @@ function rptGenerateMensal() {
   var fat25Str = (fat25 && fat25.fat2025 > 0) ? mesNome.substring(0,3)+'/25: '+fmtBRL(fat25.fat2025) : '';
   html += '<div style="'+S_card+'"><div style="'+S_lbl+'">Crescimento vs. 2025</div><div style="'+crescColor+'">'+crescStr+'</div><div style="'+S_hint+'">'+fat25Str+'</div></div>';
 
-  // Card 3: Conversão
-  var convStr = (!isNaN(convN) && _rmf.conv) ? convN.toFixed(1)+'%' : '—';
-  html += '<div style="'+S_card+'"><div style="'+S_lbl+'">Taxa de Conversão</div><div style="'+S_val+'">'+convStr+'</div><div style="'+S_hint+'">&nbsp;</div></div>';
-
-  // Card 4: Ticket Médio
-  var ticketStr = ticketN > 0 ? fmtBRL(ticketN) : (_rmf.ticket ? fmtBRL(_rmf.ticket) : '—');
-  html += '<div style="'+S_card+'"><div style="'+S_lbl+'">Ticket Médio</div><div style="'+S_val+'">'+ticketStr+'</div><div style="'+S_hint+'">&nbsp;</div></div>';
   html += '</div>';
 
   // ── BARRA DE META ──
@@ -4840,14 +4858,12 @@ function rptMensal() {
       '<div class="rpt-cfg-field"><label>Inadimplência (%)</label><input id="rmf-inadim" value="'+(_rmf.inadim||'')+'" oninput="_rmf.inadim=this.value" placeholder="Ex: 3.2"></div>' +
       '</div>';
   } else {
-    kpiSection = '<div class="rpt-form-section">Indicadores Comerciais (preenchidos automaticamente via planilha ou manualmente)</div>' +
+    kpiSection = '<div class="rpt-form-section">Indicadores Financeiros (preenchidos automaticamente via planilha ou manualmente)</div>' +
       '<div class="rpt-form-grid">' +
       '<div class="rpt-cfg-field"><label>Faturamento do Mês (R$)</label><input id="rmf-fat" value="'+(_rmf.fat||'')+'" oninput="_rmf.fat=this.value" placeholder="Ex: 98500"></div>' +
       '<div class="rpt-cfg-field"><label>Meta do Mês (R$)</label><input id="rmf-meta" value="'+(_rmf.meta||'')+'" oninput="_rmf.meta=this.value" placeholder="Ex: 90000"></div>' +
       '<div class="rpt-cfg-field"><label>Crescimento vs. Ano Anterior (%)</label><input id="rmf-cresc" value="'+(_rmf.cresc||'')+'" oninput="_rmf.cresc=this.value" placeholder="Ex: 23.7"></div>' +
       '<div class="rpt-cfg-field"><label>Clientes Ativos</label><input id="rmf-cativos" value="'+(_rmf.cativos||'')+'" oninput="_rmf.cativos=this.value" placeholder="Ex: 47"></div>' +
-      '<div class="rpt-cfg-field"><label>Taxa de Conversão (%)</label><input id="rmf-conv" value="'+(_rmf.conv||'')+'" oninput="_rmf.conv=this.value" placeholder="Ex: 38"></div>' +
-      '<div class="rpt-cfg-field"><label>Ticket Médio (R$)</label><input id="rmf-ticket" value="'+(_rmf.ticket||'')+'" oninput="_rmf.ticket=this.value" placeholder="Ex: 2095"></div>' +
       '</div>';
   }
 
@@ -5006,12 +5022,38 @@ function rptGenerateEncerramento() {
   var periodoStr = '';
   if (_ref.dtini && _ref.dtfim) periodoStr = new Date(_ref.dtini+'T12:00:00').toLocaleDateString('pt-BR') + ' a ' + new Date(_ref.dtfim+'T12:00:00').toLocaleDateString('pt-BR');
 
+  // Formata valor do KPI conforme o tipo (moeda, %, número)
+  function fmtKpiValue(label, raw, typeHint) {
+    if (raw === undefined || raw === null || raw === '' || raw === '—') return '—';
+    var s = String(raw).trim();
+    if (s === '—' || s === '-') return '—';
+    var num = parseFloat(s.replace(/\./g,'').replace(',', '.').replace(/[^\d.\-]/g,''));
+    if (isNaN(num)) return s;
+    var lbl = (label||'').toLowerCase();
+    var isMoeda = typeHint === 'moeda' || (typeHint == null && /faturamento|lucro|equil|capital|giro|meta|ticket|cmv|despesa|imposto|receita|custo|venda/.test(lbl));
+    var isPct = typeHint === 'percentual' || (typeHint == null && /margem|inadimpl|cresciment|convers|roi|taxa|%/.test(lbl));
+    if (isMoeda) return 'R$ ' + num.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    if (isPct) return num.toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + '%';
+    return num.toLocaleString('pt-BR');
+  }
+
+  // Usa kpisDinamicos da IA se disponível, senão usa os labels fixos do programa
+  var kpisToShow = [];
+  if (Array.isArray(_ref.kpisDinamicos) && _ref.kpisDinamicos.length >= 3) {
+    kpisToShow = _ref.kpisDinamicos.map(function(k){
+      return { label: k.label, value: fmtKpiValue(k.label, k.value, k.type) };
+    });
+  } else {
+    kpisToShow = labels.map(function(l, i){
+      return { label: l, value: fmtKpiValue(l, _ref[kpiKeys[i]]) };
+    });
+  }
+
   var kpiHtml = '<div class="rpt-kpi-highlight">' +
     '<div style="font-size:10.5px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;font-weight:600">Indicadores do Módulo ' + (_ref.modnum?'Nº '+_ref.modnum:'') + ' — ' + programaLabel + '</div>' +
     '<div class="rpt-kpi-highlight-grid">';
-  labels.forEach(function(l,i){
-    var v = _ref[kpiKeys[i]] || '—';
-    kpiHtml += '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+v+'</div><div class="rpt-kpi-h-sub">'+l+'</div></div>';
+  kpisToShow.forEach(function(k){
+    kpiHtml += '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+k.value+'</div><div class="rpt-kpi-h-sub">'+k.label+'</div></div>';
   });
   kpiHtml += '</div>';
   if (_ref.nment) kpiHtml += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);font-size:11.5px;color:rgba(255,255,255,.85)">Mentorias realizadas no módulo: <strong>' + _ref.nment + '</strong></div>';
@@ -5442,7 +5484,7 @@ function rptSummary() {
     '<div class="rpt-sec">Projetos FlowUp (' + ps.length + ')</div>' +
     '<div class="table-wrap" style="margin-bottom:24px"><table><thead><tr><th>#</th><th>Projeto</th><th>Cliente</th><th>Responsável</th><th>Total</th><th>Concluídas</th><th>Atrasadas</th><th>Progresso</th><th>Status</th><th>Risco</th></tr></thead><tbody>' + projRows + '</tbody></table></div>' +
     riskSection +
-    '<div class="rpt-sec" style="margin-top:24px">Planejamentos Trello (' + boards + ')</div>' +
+    '<div class="rpt-sec" style="margin-top:24px">Quadros do Trello (' + boards + ')</div>' +
     '<div class="table-wrap" style="margin-bottom:0"><table><thead><tr><th>Board</th><th>Cards</th><th>Vencidos</th></tr></thead><tbody>' + trelloRows + '</tbody></table></div>' +
     rptFooter();
 }
@@ -5640,7 +5682,7 @@ function rptTrello() {
     boardsHtml +
     rptFooter();
 }
-const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Planejamento Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', portal:'Portal do Cliente', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
+const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Quadros do Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', portal:'Portal do Cliente', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
 function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
