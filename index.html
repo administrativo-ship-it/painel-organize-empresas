@@ -6335,12 +6335,389 @@ function rgcPdfChart(mensal) {
     + grid + bars + xlabels + legend + '</svg>';
 }
 
+// ═══════════════════════════════════════════════════════════════
+// PDF NATIVO VETORIAL — jsPDF puro, texto selecionável, sem rasterização
+// ═══════════════════════════════════════════════════════════════
 async function rgcDownloadPDF() {
   var ok = _rgcData.filter(function(d){ return !d.error; });
   if (!ok.length) { alert('Nenhum dado para gerar PDF.'); return; }
-  if (typeof html2canvas === 'undefined' || !window.jspdf || !window.jspdf.jsPDF) {
-    alert('Bibliotecas de PDF não carregadas.'); return;
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF não carregado.'); return; }
+
+  var btn = document.getElementById('rgc-btn-pdf');
+  var oldTxt = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Gerando PDF...'; }
+
+  try {
+    var analiseMap = {};
+    if (_rgcAIAnalysis && Array.isArray(_rgcAIAnalysis.analises_por_cliente)) {
+      _rgcAIAnalysis.analises_por_cliente.forEach(function(r){ analiseMap[r.cliente] = r.analise; });
+    }
+
+    // Pré-carrega logo para obter aspect ratio
+    var logoBase64 = (typeof S !== 'undefined' && S.logoConfig && S.logoConfig.img) ? S.logoConfig.img : (typeof LOGO_ORGANIZE_B64 !== 'undefined' ? LOGO_ORGANIZE_B64 : '');
+    var logoMime = (logoBase64.indexOf('image/jpeg')!==-1) ? 'JPEG' : 'PNG';
+    var logoImg = null;
+    if (logoBase64) {
+      logoImg = await new Promise(function(res){
+        var img = new Image();
+        img.onload = function(){ res(img); };
+        img.onerror = function(){ res(null); };
+        img.src = logoBase64;
+      });
+    }
+
+    var JsPDF = window.jspdf.jsPDF;
+    var doc = new JsPDF({ unit:'mm', format:'a4', orientation:'portrait', compress:true });
+    var PW = 210, PH = 297;
+
+    // Paleta
+    var COL = {
+      navy:[27,43,107], navyDark:[15,26,69], teal:[92,200,212],
+      purple:[124,58,237], purpleBg:[245,243,255],
+      green:[22,163,74], red:[220,38,38], amber:[245,158,11], sky:[14,165,233],
+      txt:[44,62,80], txtMuted:[107,122,153],
+      bg:[245,247,250], bgWhite:[255,255,255], border:[224,229,238],
+      blueBg:[239,246,255], blueBorder:[191,219,254], blueTxt:[30,58,138]
+    };
+
+    var MES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    var hoje = new Date();
+    var mesAtualN = hoje.getMonth()+1;
+    var anoAtual = hoje.getFullYear();
+    var periodoLabel = 'Jan a '+MES_ABR[mesAtualN-1];
+    var dataHoje = hoje.toLocaleDateString('pt-BR');
+    var horaHoje = hoje.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+
+    function setFill(c){ doc.setFillColor(c[0],c[1],c[2]); }
+    function setText(c){ doc.setTextColor(c[0],c[1],c[2]); }
+    function setDraw(c){ doc.setDrawColor(c[0],c[1],c[2]); }
+    function rect(x,y,w,h,c,r){ setFill(c); if(r) doc.roundedRect(x,y,w,h,r,r,'F'); else doc.rect(x,y,w,h,'F'); }
+    function rectBd(x,y,w,h,fc,bc,r,lw){ setFill(fc); setDraw(bc); doc.setLineWidth(lw||0.2);
+      if(r) doc.roundedRect(x,y,w,h,r,r,'FD'); else doc.rect(x,y,w,h,'FD'); }
+    function drawLogo(x,y,h){
+      if(!logoImg || !logoBase64) return 0;
+      var w = h * (logoImg.width/logoImg.height);
+      try { doc.addImage(logoBase64, logoMime, x, y, w, h, undefined, 'FAST'); } catch(e){}
+      return w;
+    }
+    function fmtBRL(v){
+      return 'R$ '+(Math.round((v||0)*100)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+    function fmtPct(v){
+      return (Math.round((v||0)*100*10)/10).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+    }
+    function fmtBRLk(v){
+      var k=(v||0)/1000;
+      if(Math.abs(k)>=100) return 'R$ '+Math.round(k)+'k';
+      return 'R$ '+(Math.round(k*10)/10).toLocaleString('pt-BR')+'k';
+    }
+    function qBadgeColors(score){
+      if(score>=85) return {bg:[220,252,231], fg:[22,101,52]};
+      if(score>=65) return {bg:[224,242,254], fg:[7,89,133]};
+      if(score>=40) return {bg:[254,243,199], fg:[146,64,14]};
+      return {bg:[254,226,226], fg:[153,27,27]};
+    }
+
+    function pageHeader(title) {
+      var H = 13;
+      rect(0,0,PW,H,COL.navy);
+      var contentX = 8;
+      if (logoImg) {
+        var pad=1.2, badgeH=H-pad*2;
+        var badgeW = badgeH*(logoImg.width/logoImg.height) + 4;
+        rect(contentX, pad, badgeW, badgeH, COL.bgWhite, 1.2);
+        drawLogo(contentX+2, pad+1, badgeH-2);
+        contentX += badgeW + 4;
+      }
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+      setText(COL.bgWhite);
+      doc.text('ORGANIZE EMPRESAS', contentX, H/2-1.6, {baseline:'middle'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      doc.text(title, contentX, H/2+2.4, {baseline:'middle'});
+      doc.setFontSize(8);
+      setText([200,210,230]);
+      var pLabel = periodoLabel+'/'+anoAtual;
+      doc.text(pLabel, PW-8, H/2, {align:'right', baseline:'middle'});
+      return H;
+    }
+
+    // ═══════════════ CAPA ═══════════════
+    rect(0,0,PW,PH,COL.navyDark);
+    rect(0,0,PW,PH*0.62,COL.navy);
+    if (logoImg) {
+      var capaLogoH = 32;
+      var capaLogoW = capaLogoH * (logoImg.width/logoImg.height);
+      var badgeW = capaLogoW + 30, badgeH = capaLogoH + 16;
+      var badgeX = (PW-badgeW)/2, badgeY = 68;
+      rect(badgeX, badgeY, badgeW, badgeH, COL.bgWhite, 4);
+      drawLogo((PW-capaLogoW)/2, badgeY+8, capaLogoH);
+    }
+    rect(PW/2-22, 130, 44, 1.6, COL.teal, 0.8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(26);
+    setText(COL.bgWhite);
+    doc.text('Relatório Gerencial', PW/2, 149, {align:'center'});
+    doc.text('de Indicadores Comerciais', PW/2, 160, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(12);
+    setText([200,210,230]);
+    doc.text('Análise individual de '+ok.length+' cliente(s) · '+periodoLabel+'/'+anoAtual, PW/2, 174, {align:'center'});
+    var dateText = 'Emitido em '+dataHoje+' às '+horaHoje;
+    doc.setFontSize(10);
+    var pillW = doc.getTextWidth(dateText) + 16;
+    rect(PW/2-pillW/2, 200, pillW, 8, [50,65,130], 2);
+    setText(COL.bgWhite);
+    doc.text(dateText, PW/2, 205.5, {align:'center'});
+
+    // ═══════════════ SUMÁRIO ═══════════════
+    doc.addPage();
+    setFill(COL.bgWhite); doc.rect(0,0,PW,PH,'F');
+    var hH = pageHeader('Sumário do Relatório');
+    var y = hH + 8;
+
+    rectBd(14,y,PW-28,15,COL.blueBg,COL.blueBorder,2);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    setText(COL.blueTxt);
+    var introText = 'Cada empresa abaixo possui página própria com dashboard, gráfico Meta vs Realizado, indicadores acumulados e análise individualizada da IA. Não há consolidação financeira entre clientes.';
+    var introLines = doc.splitTextToSize(introText, PW-32);
+    doc.text(introLines, 17, y+5);
+    y += 19;
+
+    var qm = Math.round(ok.reduce(function(a,d){return a+d.qualidade.score;},0)/ok.length);
+    var qmCol = qm>=65?COL.green:qm>=40?COL.amber:COL.red;
+    var kw = (PW-28-6)/2;
+    rectBd(14,y,kw,22,COL.bgWhite,COL.border,2.5);
+    rectBd(14+kw+6,y,kw,22,COL.bgWhite,COL.border,2.5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7);
+    setText(COL.txtMuted);
+    doc.text('CLIENTES ANALISADOS', 18, y+5);
+    doc.text('QUALIDADE MÉDIA DE PREENCHIMENTO', 18+kw+6, y+5);
+    doc.setFontSize(20); setText(COL.navy);
+    doc.text(String(ok.length), 18, y+14);
+    setText(qmCol);
+    doc.text(qm+'%', 18+kw+6, y+14);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    setText(COL.txtMuted);
+    doc.text('Empresas com planilha processada', 18, y+19);
+    doc.text('Atualização das planilhas pelos clientes', 18+kw+6, y+19);
+    y += 28;
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    setText(COL.txtMuted);
+    doc.text('EMPRESAS NESTE RELATÓRIO', 14, y);
+    y += 4;
+    var tx = 14, tw = PW-28;
+    rect(tx,y,tw,7,COL.bg);
+    setText(COL.txtMuted); doc.setFontSize(7);
+    doc.text('#', tx+4, y+4.6);
+    doc.text('CLIENTE', tx+12, y+4.6);
+    doc.text('PROGRAMA', tx+95, y+4.6);
+    doc.text('QUALIDADE', tx+tw-4, y+4.6, {align:'right'});
+    y += 7;
+    ok.forEach(function(d, i){
+      setDraw(COL.border); doc.setLineWidth(0.1);
+      doc.line(tx,y,tx+tw,y);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      setText(COL.txtMuted);
+      doc.text(String(i+1), tx+4, y+5);
+      doc.setFont('helvetica','bold'); setText(COL.navy);
+      doc.text(d.cliente.substring(0,42), tx+12, y+5);
+      doc.setFont('helvetica','normal'); setText(COL.txtMuted);
+      doc.text((d.programa||'—'), tx+95, y+5);
+      var q = d.qualidade; var bc = qBadgeColors(q.score);
+      var badgeText = (q.classificacao+' '+q.score+'%').toUpperCase();
+      doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+      var bw = doc.getTextWidth(badgeText)+5;
+      rect(tx+tw-bw-2, y+1.5, bw, 5, bc.bg, 2.5);
+      setText(bc.fg);
+      doc.text(badgeText, tx+tw-bw-2+bw/2, y+5, {align:'center'});
+      y += 7.5;
+    });
+
+    // ═══════════════ POR CLIENTE ═══════════════
+    ok.forEach(function(d, idx) {
+      doc.addPage();
+      setFill(COL.bgWhite); doc.rect(0,0,PW,PH,'F');
+      var hHc = pageHeader(d.cliente);
+      var y = hHc + 6;
+      var k = d.kpis, q = d.qualidade;
+      var pct = k.metaAnual>0 ? k.fatAnual/k.metaAnual : 0;
+      var pctColor = pct>=0.85?COL.green:pct>=0.5?COL.amber:COL.red;
+      var crescColor = k.crescTotalPct>=0?COL.green:COL.red;
+      var cx = 12, cw = PW-24;
+
+      // Nome cliente + programa
+      doc.setFont('helvetica','bold'); doc.setFontSize(18);
+      setText(COL.navy);
+      doc.text(d.cliente, cx, y+8);
+      doc.setFont('helvetica','bold'); doc.setFontSize(7);
+      setText(COL.txtMuted);
+      doc.text((d.programa||'').toUpperCase(), cx, y+13);
+      // badge top-right
+      var bc2 = qBadgeColors(q.score);
+      var badge2 = (q.classificacao+' '+q.score+'%').toUpperCase();
+      doc.setFontSize(8); doc.setFont('helvetica','bold');
+      var bw2 = doc.getTextWidth(badge2)+8;
+      rect(cx+cw-bw2, y+3, bw2, 6, bc2.bg, 3);
+      setText(bc2.fg);
+      doc.text(badge2, cx+cw-bw2+bw2/2, y+7.2, {align:'center'});
+      y += 18;
+
+      // Pill roxa Acumulado
+      var pillText = 'ACUMULADO · '+(periodoLabel+'/'+anoAtual).toUpperCase();
+      doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+      var pillW2 = doc.getTextWidth(pillText)+8;
+      rect(cx, y, pillW2, 5.5, COL.purpleBg, 2.5);
+      setText(COL.purple);
+      doc.text(pillText, cx+4, y+3.8);
+      y += 10;
+
+      // KPIs 2x2
+      var kpiData = [
+        {label:'FATURAMENTO '+periodoLabel.toUpperCase(), val:fmtBRL(k.fatAnual), sub:'Meta acumulada: '+fmtBRL(k.metaAnual), col:COL.navy},
+        {label:'ATINGIMENTO', val:fmtPct(pct), sub:(k.metasBatidas||0)+' de '+(k.metasBatidasDe||0)+' metas batidas', col:pctColor},
+        {label:'CRESCIMENTO VS '+periodoLabel.toUpperCase()+'/ANT', val:(k.crescTotalPct>=0?'+':'')+fmtPct(k.crescTotalPct), sub:fmtBRL(k.fat2025)+' → '+fmtBRL(k.fat2026), col:crescColor},
+        {label:'TICKET MÉDIO', val:fmtBRL(k.ticketAnual), sub:'Conversão: '+fmtPct(k.convAnual), col:COL.navy}
+      ];
+      var kpiW = (cw-4)/2, kpiH = 19;
+      for (var ki=0; ki<4; ki++){
+        var kx = cx + (ki%2)*(kpiW+4);
+        var ky = y + Math.floor(ki/2)*(kpiH+3);
+        rectBd(kx, ky, kpiW, kpiH, COL.bgWhite, COL.border, 2);
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.3);
+        setText(COL.txtMuted);
+        doc.text(kpiData[ki].label.substring(0,38), kx+3, ky+4);
+        doc.setFontSize(13); setText(kpiData[ki].col);
+        doc.text(kpiData[ki].val, kx+3, ky+11);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7);
+        setText(COL.txtMuted);
+        doc.text(kpiData[ki].sub.substring(0,48), kx+3, ky+16);
+      }
+      y += kpiH*2 + 3 + 4;
+
+      // Gráfico
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+      setText(COL.txtMuted);
+      doc.text('META vs REALIZADO POR MÊS', cx, y);
+      y += 2.5;
+      var chartH = 48, chartW = cw, chartX = cx, chartY = y;
+      rectBd(chartX, chartY, chartW, chartH, COL.bgWhite, COL.border, 1.5);
+      var chartData = d.mensal.filter(function(m){ return m.mes<=mesAtualN && (m.meta>0||m.realizado>0); });
+      if (chartData.length>0) {
+        var maxV = 0;
+        chartData.forEach(function(m){ if(m.meta>maxV)maxV=m.meta; if(m.realizado>maxV)maxV=m.realizado; });
+        if (maxV<=0) maxV = 1;
+        var iLeft = chartX+15, iRight = chartX+chartW-4;
+        var iTop = chartY+4, iBot = chartY+chartH-7;
+        var plotW = iRight-iLeft, plotH = iBot-iTop;
+        setDraw([230,234,240]); doc.setLineWidth(0.1);
+        doc.setFont('helvetica','normal'); doc.setFontSize(5.5);
+        setText(COL.txtMuted);
+        for (var g=0; g<=4; g++){
+          var gy = iTop + (plotH/4)*g;
+          doc.line(iLeft, gy, iRight, gy);
+          doc.text(fmtBRLk(maxV*(1-g/4)), chartX+2, gy+1.3);
+        }
+        var step = plotW/chartData.length;
+        var barW = Math.min(step*0.32, 6);
+        chartData.forEach(function(m){
+          var ccx = iLeft + step*(chartData.indexOf(m)) + step/2;
+          var hMeta = (m.meta/maxV)*plotH;
+          var hReal = (m.realizado/maxV)*plotH;
+          rect(ccx-barW-0.5, iBot-hMeta, barW, hMeta, [148,163,184]);
+          rect(ccx+0.5, iBot-hReal, barW, hReal, COL.navy);
+          if (m.realizado>0) {
+            doc.setFont('helvetica','bold'); doc.setFontSize(5);
+            setText(COL.navy);
+            doc.text(fmtBRLk(m.realizado), ccx+0.5+barW/2, iBot-hReal-0.6, {align:'center'});
+          }
+          doc.setFont('helvetica','normal'); doc.setFontSize(6);
+          setText(COL.txtMuted);
+          doc.text(m.nome.substring(0,3), ccx, iBot+4, {align:'center'});
+        });
+        var legY = chartY+chartH-2.5;
+        rect(iRight-32, legY-1.5, 2.2, 2.2, [148,163,184]);
+        doc.setFontSize(5.5); doc.setFont('helvetica','normal');
+        setText(COL.txtMuted);
+        doc.text('Meta', iRight-29, legY);
+        rect(iRight-18, legY-1.5, 2.2, 2.2, COL.navy);
+        doc.text('Realizado', iRight-15, legY);
+      } else {
+        doc.setFont('helvetica','italic'); doc.setFontSize(9);
+        setText(COL.txtMuted);
+        doc.text('Sem dados mensais para o período', chartX+chartW/2, chartY+chartH/2, {align:'center'});
+      }
+      y += chartH + 4;
+
+      // Card preenchimento
+      rectBd(cx, y, cw, 14, COL.bg, COL.border, 2);
+      doc.setFont('helvetica','bold'); doc.setFontSize(7);
+      setText(COL.navy);
+      doc.text('PREENCHIMENTO DA PLANILHA', cx+4, y+4.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      setText(COL.txt);
+      var parts = [
+        [String(q.diasPreenchidos), '/'+q.diasEsperados+' dias úteis'],
+        [String(q.mesesPreenchidos), '/'+q.mesesEsperados+' meses com vendas'],
+        [String(q.metasDefinidas), '/12 metas definidas']
+      ];
+      var pxBase = cx+4;
+      parts.forEach(function(p){
+        doc.setFont('helvetica','bold'); setText(COL.navy);
+        doc.text(p[0], pxBase, y+10.5);
+        var bw = doc.getTextWidth(p[0]);
+        doc.setFont('helvetica','normal'); setText(COL.txtMuted);
+        doc.text(p[1], pxBase+bw, y+10.5);
+        pxBase += bw + doc.getTextWidth(p[1]) + 7;
+      });
+      y += 18;
+
+      // Análise IA
+      var analise = analiseMap[d.cliente];
+      if (analise) {
+        if (y > PH-50) { doc.addPage(); pageHeader(d.cliente+' (continuação)'); y = 20; }
+        doc.setFont('helvetica','bold'); doc.setFontSize(10);
+        setText(COL.purple);
+        doc.text('ANÁLISE EXECUTIVA · IA', cx, y+2);
+        setDraw(COL.purple); doc.setLineWidth(0.5);
+        doc.line(cx, y+3.5, cx+58, y+3.5);
+        y += 7;
+        var iaSections = [
+          {title:'PANORAMA DO CLIENTE', content:analise.panorama, color:COL.navy},
+          {title:'AVANÇOS IDENTIFICADOS', content:analise.avancos, color:COL.green},
+          {title:'PONTOS DE ATENÇÃO', content:analise.atencoes, color:COL.red},
+          {title:'PRÓXIMOS PASSOS', content:analise.proximos_passos, color:COL.purple},
+          {title:'QUALIDADE DO PREENCHIMENTO', content:analise.preenchimento, color:COL.sky}
+        ];
+        iaSections.forEach(function(s){
+          if (!s.content) return;
+          var lines = doc.splitTextToSize(String(s.content), cw-8);
+          var bH = 7.5 + lines.length*3.6 + 2;
+          if (y + bH > PH-8) {
+            doc.addPage(); pageHeader(d.cliente+' (continuação)'); y = 20;
+          }
+          rectBd(cx, y, cw, bH, COL.bgWhite, COL.border, 1.5);
+          rect(cx, y, 1.2, bH, s.color);
+          doc.setFont('helvetica','bold'); doc.setFontSize(7);
+          setText(s.color);
+          doc.text(s.title, cx+4, y+4);
+          doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+          setText(COL.txt);
+          doc.text(lines, cx+4, y+8);
+          y += bH + 2;
+        });
+      }
+    });
+
+    var nomeArquivo = 'Relatorio_Gerencial_Comercial_'+new Date().toISOString().substring(0,10)+'.pdf';
+    doc.save(nomeArquivo);
+  } catch(e) {
+    console.error('[RGC PDF]', e);
+    alert('Erro ao gerar PDF: '+(e.message||e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = oldTxt; }
   }
+}
+/* ════════ código antigo abaixo (removido inteiramente) ════════
+  // bloco dead-code apagado para evitar conflito de hoisting com pageHeader
 
   var analiseMap = {};
   if (_rgcAIAnalysis && Array.isArray(_rgcAIAnalysis.analises_por_cliente)) {
@@ -6596,12 +6973,11 @@ async function rgcDownloadPDF() {
     var nomeArquivo = 'Relatorio_Gerencial_Comercial_' + new Date().toISOString().substring(0,10) + '.pdf';
     pdf.save(nomeArquivo);
   } catch (e) {
-    console.error('[RGC] PDF erro', e);
-    alert('Erro ao gerar PDF: ' + (e.message || e));
+    console.error('[RGC] PDF erro antigo', e);
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = oldTxt; }
+    // fim do bloco dead-code
   }
-}
+*/
 
 // ═══════════════ PORTAL DO CLIENTE — Gerador de Portais Integrado ═══════════════
 
