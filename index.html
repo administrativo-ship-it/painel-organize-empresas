@@ -4420,12 +4420,20 @@ async function generateAnalysisWithAI() {
     'fat=Faturamento Bruto (R$, número), cmv=CMV (R$, número), dfixas=Despesas Fixas (R$), dvar=Despesas Variáveis (R$), impost=Impostos (R$), ll=Lucro Líquido (R$), cgiro=Capital de Giro (R$), inadim=Inadimplência (% sem o símbolo)' :
     'fat=Faturamento do Mês (R$, número), meta=Meta do Mês (R$, número), cresc=Crescimento vs. ano anterior (% sem símbolo)';
 
-  var sysPrompt = 'Você é um extrator determinístico de dados que responde APENAS com JSON válido. Suas regras absolutas:\n' +
-    '1. NUNCA invente, estime ou chute números. Use APENAS valores que aparecem literalmente nas FONTES DE DADOS fornecidas.\n' +
-    '2. Se um valor numérico não existir nas fontes para o período/filtro exato, retorne 0 (zero) — NUNCA invente.\n' +
-    '3. Para os mesmos dados de entrada, sua resposta DEVE ser sempre idêntica (determinística).\n' +
-    '4. Responda apenas com JSON, sem markdown, sem texto antes ou depois, sem comentários.\n' +
-    '5. Os filtros do usuário (cliente, programa, mês, ano) são a chave exata para buscar os dados — use SOMENTE registros que correspondam a esses filtros.';
+  var sysPrompt = 'Você é um CONSULTOR SÊNIOR E MENTOR EMPRESARIAL da Organize Empresas, com 20+ anos de experiência em gestão de pequenas e médias empresas. Sua expertise inclui:\n' +
+    '• Análise profunda de planilhas comerciais e financeiras (DRE, fluxo de caixa, indicadores, projeções)\n' +
+    '• Interpretação de KPIs (faturamento, meta, atingimento, ticket médio, conversão, crescimento mensal e anual)\n' +
+    '• Identificação de tendências, sazonalidades, padrões de desempenho e gargalos operacionais\n' +
+    '• Construção de análises executivas estratégicas, fundamentadas e acionáveis\n' +
+    '• Tradução de dados numéricos em recomendações concretas e mensuráveis para o empresário\n\n' +
+    'Antes de produzir qualquer análise, você examina TODOS os dados fornecidos em profundidade — mês a mês, comparativos com ano anterior, qualidade da execução — e só então sintetiza conclusões.\n\n' +
+    'REGRAS OBRIGATÓRIAS DE OUTPUT:\n' +
+    '1. NUNCA invente, estime ou chute números. Use APENAS valores que aparecem literalmente nas FONTES DE DADOS.\n' +
+    '2. Se um valor não existir para o período/filtro exato, retorne 0 — NUNCA fabrique.\n' +
+    '3. Para mesmos dados de entrada, sua resposta DEVE ser idêntica (determinística).\n' +
+    '4. Responda APENAS com JSON válido — sem markdown, sem texto antes/depois, sem comentários.\n' +
+    '5. Os filtros do usuário (cliente, programa, mês, ano) são a chave exata para os dados.\n' +
+    '6. Na "analise" e "proximos": use vocabulário de gestão, cite números reais, não generalize.';
 
   var prompt2 = '═══════════════════ FILTROS DO USUÁRIO ═══════════════════\n' +
     'CLIENTE: "' + cliente + '"\n' +
@@ -4640,13 +4648,21 @@ async function generateAnalysisEncerramento() {
     }
 
     // Análise baseada APENAS em Trello + FlowUp + Drive — sem indicadores financeiros
-    var sysPromptEnc = 'Você é um consultor de gestão que analisa o desempenho de clientes em programas de mentoria empresarial da Organize Empresas. Suas regras:\n' +
+    var sysPromptEnc = 'Você é um CONSULTOR SÊNIOR E MENTOR EMPRESARIAL da Organize Empresas, com 20+ anos analisando programas de mentoria para PMEs. Sua expertise:\n' +
+      '• Avaliação de desempenho de clientes em programas estruturados de mentoria\n' +
+      '• Interpretação de execução de tarefas, cumprimento de prazos e disciplina operacional\n' +
+      '• Identificação de gargalos comportamentais, lacunas de execução e padrões de comprometimento\n' +
+      '• Tradução de dados de FlowUp/Trello/Drive em diagnóstico executivo do cliente\n' +
+      '• Construção de planos de ação para o próximo módulo do programa\n\n' +
+      'Antes de qualquer análise, você examina TODAS as tarefas (concluídas, em andamento, atrasadas), cruza com a cadência do programa, e só então sintetiza conclusões.\n\n' +
+      'REGRAS OBRIGATÓRIAS:\n' +
       '1. Baseie a análise EXCLUSIVAMENTE em dados objetivos das tarefas no FlowUp, cards no Trello e materiais no Drive — fornecidos nas FONTES DE DADOS.\n' +
       '2. JAMAIS invente fatos, números ou eventos. Se algo não está nas fontes, NÃO mencione.\n' +
-      '3. NÃO faça nenhuma análise financeira (faturamento, lucro, margens, ROI etc.). Foco é OPERACIONAL: cumprimento de tarefas pelo cliente.\n' +
-      '4. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois.\n' +
+      '3. NÃO faça análise financeira (faturamento, lucro, margens, ROI). Foco é OPERACIONAL: comprometimento e cumprimento de tarefas pelo cliente.\n' +
+      '4. Responda APENAS com JSON válido, sem markdown.\n' +
       '5. Respeite ESTRITAMENTE o período informado (dtini..dtfim) — considere apenas eventos dentro desse intervalo.\n' +
-      '6. Use a ESTRUTURA OFICIAL do programa fornecida no contexto para identificar o próximo módulo e suas atividades previstas (não invente nomes de módulos).';
+      '6. Use a ESTRUTURA OFICIAL do programa para identificar o próximo módulo e atividades previstas (não invente nomes de módulos).\n' +
+      '7. Análises devem ser concretas — cite nomes de tarefas/cards/materiais específicos, não generalize.';
 
     var prompt_text = '═══════════════════ FILTROS DO USUÁRIO ═══════════════════\n' +
       'CLIENTE: "' + (_ref.cliente || 'N/A') + '"\n' +
@@ -5472,7 +5488,49 @@ function rgcParseFile(file) {
 }
 
 function rgcExtractFromWorkbook(wb, filename) {
-  // ── 1) Identificação do cliente ──
+  // ─────────────────────────────────────────────────────────────────────
+  // ESTRATÉGIA: ler dados RAW (inputs manuais do cliente) e CALCULAR
+  // tudo localmente. Não dependemos de cache de fórmulas — quando uma
+  // planilha é editada/exportada via Google Sheets, as fórmulas com
+  // referência cruzada perdem o cached value e voltam 0/null.
+  // Fontes consultadas, em ordem:
+  //   1. Dashboard!D2/K2 → nome + programa
+  //   2. Definição de Meta de Venda!D4:G15 → faturamento 2025, % cresc, meta calculada
+  //   3. Meta de Venda <Mês>!E7:E37, O7:O37, P7:P37 → vendas/abordados/fechadas diárias
+  //   4. Fallback: Base de Dados / Crescimento (cache se houver)
+  // ─────────────────────────────────────────────────────────────────────
+
+  function val(sheet, ref) {
+    if (!sheet || !sheet[ref]) return null;
+    var c = sheet[ref];
+    return c.v != null ? c.v : null;
+  }
+  function num(v) {
+    if (v === null || v === undefined || v === '') return 0;
+    if (typeof v === 'number') return v;
+    var s = String(v).replace(/R\$\s*/g, '').replace(/\./g, '').replace(',', '.').replace(/[^\d.\-]/g, '');
+    var n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  }
+  function sumRange(sheet, col, rowStart, rowEnd) {
+    if (!sheet) return 0;
+    var total = 0;
+    for (var r = rowStart; r <= rowEnd; r++) {
+      total += num(val(sheet, col + r));
+    }
+    return total;
+  }
+  function countNonZero(sheet, col, rowStart, rowEnd) {
+    if (!sheet) return 0;
+    var c = 0;
+    for (var r = rowStart; r <= rowEnd; r++) {
+      var v = num(val(sheet, col + r));
+      if (v > 0) c++;
+    }
+    return c;
+  }
+
+  // ── 1) IDENTIFICAÇÃO DO CLIENTE ──
   var dashSheet = wb.Sheets['Dashboard'];
   var cliente = '';
   var programa = '';
@@ -5480,124 +5538,161 @@ function rgcExtractFromWorkbook(wb, filename) {
     if (dashSheet['D2']) cliente = String(dashSheet['D2'].v || '').trim();
     if (dashSheet['K2']) programa = String(dashSheet['K2'].v || '').trim();
   }
-  // Fallback: nome do arquivo (remove prefixos comuns)
   if (!cliente) {
     cliente = filename
       .replace(/\.xlsx?$/i, '')
       .replace(/^INDICADORES[\s_]*COMERCIAIS[\s_]*[-–_][\s_]*/i, '')
+      .replace(/^ORGANIZE[\s_]*MENTORING[\s_]*[-–_][\s_]*/i, '')
       .replace(/[\s_]*[-–_][\s_]*ORGANIZE[\s_]*(MENTORING|MASTER|MARKETING|EMPRESAS|ESTRAT[ÉE]GICO)?$/i, '')
       .replace(/[_]+/g, ' ')
       .trim();
   }
   if (!programa) programa = 'Organize Mentoring';
 
-  // ── 2) KPIs anuais (Base de Dados linhas 4-16 + bloco 20-26) ──
+  // ── 2) FONTES ──
+  var defSheetName = wb.SheetNames.find(function(n){ return /Defini.+o de Meta/i.test(n); });
+  var defSheet = defSheetName ? wb.Sheets[defSheetName] : null;
   var baseSheet = wb.Sheets['Base de Dados'];
   var crescSheet = wb.Sheets['Crescimento da Empresa'];
-  var defSheet = wb.Sheets[wb.SheetNames.find(function(n){ return /Defini.+o de Meta/i.test(n); })];
 
-  function val(sheet, ref) {
-    if (!sheet || !sheet[ref]) return null;
-    var c = sheet[ref];
-    return c.v != null ? c.v : null;
+  // ── 3) MENSAL — calcula DIRETO das abas mensais (fonte mais confiável) ──
+  var mensal = [];
+  for (var i = 0; i < 12; i++) {
+    var mesNum = i + 1;
+    var nomeMes = MES_NOMES_FULL[i];
+    // Aba mensal — pode ter variações de nome (acento, "Meta de Venda " vs "Meta de venda ")
+    var abaName = wb.SheetNames.find(function(n){
+      var ne = n.toLowerCase();
+      return ne.indexOf('meta de venda') >= 0 && ne.indexOf(nomeMes.toLowerCase()) >= 0;
+    });
+    var abaM = abaName ? wb.Sheets[abaName] : null;
+
+    // Meta do mês — usa Definição de Meta, calculando se necessário
+    var rowDef = i + 4; // linhas 4..15
+    var fat25Mes = num(val(defSheet, 'D' + rowDef));
+    var pctCrescDesej = num(val(defSheet, 'F' + rowDef)); // já em decimal (0.10 = 10%)
+    var metaCalc = num(val(defSheet, 'G' + rowDef));
+    // Se G está vazio (sem cache), calcula
+    if (metaCalc === 0 && fat25Mes > 0) {
+      metaCalc = fat25Mes + (fat25Mes * pctCrescDesej);
+    }
+
+    // Realizado do mês — soma E7:E37 da aba mensal (mais confiável que E39 que é fórmula)
+    var realizadoMes = abaM ? sumRange(abaM, 'E', 7, 37) : 0;
+    // Tenta fallback E39 se zero
+    if (realizadoMes === 0 && abaM) {
+      realizadoMes = num(val(abaM, 'E39'));
+    }
+    // Outro fallback: Base de Dados E<row> (cached)
+    if (realizadoMes === 0 && baseSheet) {
+      realizadoMes = num(val(baseSheet, 'E' + (i + 4)));
+    }
+
+    // Funil — soma O7:O37 (abordados) e P7:P37 (fechadas)
+    var abordadosMes = abaM ? sumRange(abaM, 'O', 7, 37) : 0;
+    var fechadasMes = abaM ? sumRange(abaM, 'P', 7, 37) : 0;
+    var convMes = abordadosMes > 0 ? (fechadasMes / abordadosMes) : 0;
+    var ticketMes = fechadasMes > 0 ? (realizadoMes / fechadasMes) : 0;
+
+    // Atingimento e diferença
+    var diffMes = realizadoMes - metaCalc;
+    var pctAtingMes = metaCalc > 0 ? (realizadoMes / metaCalc) : 0;
+    var crescMes = fat25Mes > 0 ? ((realizadoMes - fat25Mes) / fat25Mes) : 0;
+
+    mensal.push({
+      mes: mesNum,
+      nome: nomeMes,
+      meta: metaCalc,
+      realizado: realizadoMes,
+      diff: diffMes,
+      pctAting: pctAtingMes,
+      status: pctAtingMes >= 1 ? '✅ Batida' : pctAtingMes >= 0.8 ? '⚠️ Perto' : '❌ Abaixo',
+      abordados: abordadosMes,
+      fechadas: fechadasMes,
+      conv: convMes,
+      ticket: ticketMes,
+      fat2025: fat25Mes,
+      cresc: crescMes
+    });
+  }
+
+  // ── 4) KPIs ANUAIS — calculados a partir dos meses ──
+  var totalMeta = mensal.reduce(function(s, m){ return s + m.meta; }, 0);
+  var totalRealizado = mensal.reduce(function(s, m){ return s + m.realizado; }, 0);
+  var totalFat25 = mensal.reduce(function(s, m){ return s + m.fat2025; }, 0);
+  var totalAbordados = mensal.reduce(function(s, m){ return s + m.abordados; }, 0);
+  var totalFechadas = mensal.reduce(function(s, m){ return s + m.fechadas; }, 0);
+  var metasBatidas = mensal.filter(function(m){ return m.pctAting >= 1; }).length;
+
+  // Melhor / pior mês (apenas considerando meses com realizado > 0)
+  var mesesComDados = mensal.filter(function(m){ return m.realizado > 0; });
+  var melhorMes = '', piorMes = '';
+  if (mesesComDados.length) {
+    var ord = mesesComDados.slice().sort(function(a,b){ return b.realizado - a.realizado; });
+    melhorMes = ord[0].nome;
+    piorMes = ord[ord.length - 1].nome;
   }
 
   var kpis = {
-    fatAnual:      val(baseSheet, 'E16') || 0,
-    metaAnual:     val(baseSheet, 'D16') || 0,
-    pctAtingAnual: val(baseSheet, 'G16') || 0,
-    metasBatidas:  val(baseSheet, 'E20') || 0,
-    convAnual:     val(baseSheet, 'L16') || 0,
-    ticketAnual:   val(baseSheet, 'M16') || 0,
-    melhorMes:     val(baseSheet, 'E21') || '',
-    piorMes:       val(baseSheet, 'E22') || '',
-    mediaMensal:   val(baseSheet, 'E23') || 0,
-    fat2025:       val(crescSheet, 'E23') || 0,
-    fat2026:       val(crescSheet, 'E24') || 0,
-    crescTotalPct: val(crescSheet, 'E25') || 0,
-    crescAcumul:   val(crescSheet, 'E20') || 0,
-    crescMedioPct: val(crescSheet, 'E21') || 0
+    fatAnual: totalRealizado,
+    metaAnual: totalMeta,
+    pctAtingAnual: totalMeta > 0 ? totalRealizado / totalMeta : 0,
+    metasBatidas: metasBatidas,
+    convAnual: totalAbordados > 0 ? totalFechadas / totalAbordados : 0,
+    ticketAnual: totalFechadas > 0 ? totalRealizado / totalFechadas : 0,
+    melhorMes: melhorMes,
+    piorMes: piorMes,
+    mediaMensal: mesesComDados.length > 0 ? totalRealizado / mesesComDados.length : 0,
+    fat2025: totalFat25,
+    fat2026: totalRealizado,
+    crescTotalPct: totalFat25 > 0 ? (totalRealizado - totalFat25) / totalFat25 : 0,
+    crescAcumul: totalRealizado - totalFat25,
+    crescMedioPct: mesesComDados.length > 0 ? (mesesComDados.reduce(function(s,m){return s+m.cresc;},0) / mesesComDados.length) : 0,
+    totalAbordados: totalAbordados,
+    totalFechadas: totalFechadas
   };
 
-  // ── 3) Mensal: 12 meses ──
-  var mensal = [];
-  for (var i = 0; i < 12; i++) {
-    var row = i + 4; // linhas 4..15
-    var m = {
-      mes: i + 1,
-      nome: MES_NOMES_FULL[i],
-      meta:    val(baseSheet, 'D'+row) || 0,
-      realizado: val(baseSheet, 'E'+row) || 0,
-      diff:    val(baseSheet, 'F'+row) || 0,
-      pctAting: val(baseSheet, 'G'+row) || 0,
-      status:  val(baseSheet, 'H'+row) || '',
-      abordados: val(baseSheet, 'J'+row) || 0,
-      fechadas:  val(baseSheet, 'K'+row) || 0,
-      conv:    val(baseSheet, 'L'+row) || 0,
-      ticket:  val(baseSheet, 'M'+row) || 0,
-      fat2025: val(crescSheet, 'D'+row) || 0,
-      cresc:   val(crescSheet, 'G'+row) || 0
-    };
-    mensal.push(m);
-  }
-
-  // ── 4) Avaliação de qualidade de preenchimento ──
-  // Para cada mês: se já passou ou é o mês atual e dia atual >= 5, verificar se há lançamentos
+  // ── 5) QUALIDADE DE PREENCHIMENTO ──
   var hoje = new Date();
   var anoAtual = hoje.getFullYear();
-  var mesAtual = hoje.getMonth() + 1; // 1-12
+  var mesAtual = hoje.getMonth() + 1;
   var diaAtual = hoje.getDate();
 
   var qualidade = {
-    mesesEsperados: 0,
-    mesesPreenchidos: 0,
-    diasEsperados: 0,
-    diasPreenchidos: 0,
-    metasDefinidas: 0,
-    fat2025Preenchido: 0,
+    mesesEsperados: 0, mesesPreenchidos: 0,
+    diasEsperados: 0, diasPreenchidos: 0,
+    metasDefinidas: 0, fat2025Preenchido: 0,
     detalhes: []
   };
-
-  // Metas anuais definidas?
   if (defSheet) {
     for (var mi = 0; mi < 12; mi++) {
       var rDef = mi + 4;
-      var fat25 = val(defSheet, 'D'+rDef);
-      var pct = val(defSheet, 'F'+rDef);
-      if (fat25 && Number(fat25) > 0) qualidade.fat2025Preenchido++;
+      if (num(val(defSheet, 'D' + rDef)) > 0) qualidade.fat2025Preenchido++;
+      var pct = val(defSheet, 'F' + rDef);
       if (pct != null && pct !== '') qualidade.metasDefinidas++;
     }
   }
-
-  // Preenchimento mensal — só conta meses até "agora"
   for (var mi2 = 0; mi2 < 12; mi2++) {
     var mNum = mi2 + 1;
     if (mNum > mesAtual) break;
     qualidade.mesesEsperados++;
-    var realizado = mensal[mi2].realizado;
-    if (realizado && Number(realizado) > 0) qualidade.mesesPreenchidos++;
+    if (mensal[mi2].realizado > 0) qualidade.mesesPreenchidos++;
     else qualidade.detalhes.push('Sem vendas registradas em ' + MES_NOMES_FULL[mi2]);
 
-    // Olha aba mensal específica para contar dias
-    var nomeAba = 'Meta de Venda ' + MES_NOMES_FULL[mi2];
-    var abaM = wb.Sheets[nomeAba];
+    var nomeAba = wb.SheetNames.find(function(n){
+      var ne = n.toLowerCase();
+      return ne.indexOf('meta de venda') >= 0 && ne.indexOf(MES_NOMES_FULL[mi2].toLowerCase()) >= 0;
+    });
+    var abaM = nomeAba ? wb.Sheets[nomeAba] : null;
     if (abaM) {
-      // E7:E37 = vendas diárias
       var diasNoMes = (mNum === mesAtual) ? diaAtual : new Date(anoAtual, mNum, 0).getDate();
       qualidade.diasEsperados += diasNoMes;
-      var diasOK = 0;
-      for (var d = 7; d <= 37 && (d-6) <= diasNoMes; d++) {
-        var c = abaM['E' + d];
-        if (c && c.v != null && Number(c.v) > 0) diasOK++;
-      }
-      qualidade.diasPreenchidos += diasOK;
+      qualidade.diasPreenchidos += countNonZero(abaM, 'E', 7, Math.min(37, 6 + diasNoMes));
     }
   }
-
   qualidade.pctMeses = qualidade.mesesEsperados > 0 ? Math.round(qualidade.mesesPreenchidos / qualidade.mesesEsperados * 100) : 0;
   qualidade.pctDias = qualidade.diasEsperados > 0 ? Math.round(qualidade.diasPreenchidos / qualidade.diasEsperados * 100) : 0;
   qualidade.pctMetas = Math.round((qualidade.metasDefinidas + qualidade.fat2025Preenchido) / 24 * 100);
-  // Score consolidado: 40% dias + 40% meses + 20% metas
   qualidade.score = Math.round(qualidade.pctDias * 0.4 + qualidade.pctMeses * 0.4 + qualidade.pctMetas * 0.2);
   qualidade.classificacao = (
     qualidade.score >= 85 ? 'Excelente' :
@@ -5605,6 +5700,12 @@ function rgcExtractFromWorkbook(wb, filename) {
     qualidade.score >= 40 ? 'Regular' :
     qualidade.score >= 15 ? 'Insuficiente' : 'Crítico'
   );
+
+  // Log para debug
+  console.log('[RGC] Parsed', cliente, {
+    fatAnual: kpis.fatAnual, metaAnual: kpis.metaAnual,
+    mensalComDados: mesesComDados.length, qualidade: qualidade.score+'%'
+  });
 
   return {
     filename: filename,
@@ -5779,12 +5880,26 @@ async function rgcRunAI() {
   try {
     // ANÁLISE INDIVIDUAL POR CLIENTE — uma chamada por empresa, em paralelo.
     // Não há consolidação financeira entre clientes.
-    var sysPrompt = 'Você é um consultor sênior de gestão comercial da Organize Empresas analisando os indicadores de UM cliente específico. Suas regras:\n' +
+    var sysPrompt = 'Você é um CONSULTOR SÊNIOR E MENTOR EMPRESARIAL da Organize Empresas, com 20+ anos analisando indicadores comerciais de pequenas e médias empresas. Sua expertise:\n' +
+      '• Análise profunda de planilhas comerciais — meta vs realizado, evolução mensal, sazonalidades\n' +
+      '• Interpretação estratégica de KPIs (faturamento, atingimento, ticket médio, conversão, funil)\n' +
+      '• Identificação de tendências, ciclos, picos, vales e pontos de inflexão\n' +
+      '• Diagnóstico de crescimento vs ano anterior — distinguir performance real de efeito sazonal\n' +
+      '• Avaliação de disciplina operacional (qualidade do preenchimento da planilha)\n' +
+      '• Construção de análises executivas acionáveis para o empresário\n\n' +
+      'METODOLOGIA OBRIGATÓRIA antes de cada análise:\n' +
+      '1. Examine PRIMEIRO os meses individuais — onde houve picos, vales, metas batidas/perdidas\n' +
+      '2. Cruze com a evolução vs ano anterior — empresa está crescendo, estável ou decrescendo?\n' +
+      '3. Avalie o atingimento médio e a CONSISTÊNCIA (variabilidade mensal)\n' +
+      '4. Considere a qualidade do preenchimento — se baixa, alerte que conclusões podem estar enviesadas\n' +
+      '5. SÓ ENTÃO sintetize a análise\n\n' +
+      'REGRAS OBRIGATÓRIAS:\n' +
       '1. Baseie-se EXCLUSIVAMENTE nos dados fornecidos do CLIENTE individual. Não invente.\n' +
       '2. NUNCA compare com outros clientes — a análise é exclusiva desta empresa.\n' +
-      '3. Responda APENAS com JSON válido, sem markdown.\n' +
-      '4. Seja factual, objetivo e direto. Sem floreios.\n' +
-      '5. Valores em moeda devem aparecer em formato brasileiro (R$ 12.345,67).';
+      '3. Cite NÚMEROS REAIS na análise (ex: "atingiu 87% em Junho com R$ 60.281,90") — sem generalizações.\n' +
+      '4. Responda APENAS com JSON válido, sem markdown.\n' +
+      '5. Valores em moeda em formato brasileiro (R$ 12.345,67).\n' +
+      '6. Recomendações devem ser ESPECÍFICAS e MENSURÁVEIS — não "melhorar conversão", mas "subir conversão de 24% para 35% até [mês]".';
 
     // Tarefa por cliente
     function montaContextoCliente(d) {
