@@ -486,6 +486,9 @@ tbody tr:hover{background:var(--off);}
       </div>
       <div id="oe-user-chip" style="display:none;align-items:center;gap:6px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--off);"></div>
       <span class="sync-info" id="sync-lbl">Não sincronizado</span>
+      <button id="force-sync-btn" onclick="forceLiveSync()" title="Dispara sync imediato do FlowUp (~3min)" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:#fff;border:none;padding:7px 13px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
+        ⚡ Sync ao vivo
+      </button>
       <button class="sync-btn" id="sync-btn" onclick="syncAll()">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         Sincronizar Tudo
@@ -1013,16 +1016,54 @@ const S = {
   _logoPending: null
 };
 
-// ═══════════════ FLOWUP (dados estáticos via JSON) ═══════════════
-var _flowupDataMeta = { fetchedAt: null, generatedAt: null };
+// ═══════════════ FLOWUP (dados via Cloudflare Worker — proxy do GitHub) ═══════════════
+// O Worker serve o JSON via cache de borda (latência <100ms globalmente) e expõe
+// endpoint POST /sync que dispara o GitHub Actions imediatamente (botão Sincronizar).
+var FLOWUP_WORKER_URL = 'https://morning-hat-c69eflowup-organize-live.administrativo-2a8.workers.dev';
+var _flowupDataMeta = { fetchedAt: null, generatedAt: null, source: null };
+
 async function loadFlowUpData() {
-  const r = await fetch('./flowup-data.json?t=' + Date.now());
+  // Tenta o Worker primeiro; se falhar, fallback para o JSON estático local
+  var data;
+  try {
+    var r = await fetch(FLOWUP_WORKER_URL + '/flowup-data.json?t=' + Math.floor(Date.now()/30000));
+    if (!r.ok) throw new Error('Worker HTTP ' + r.status);
+    data = await r.json();
+    _flowupDataMeta.source = 'worker';
+    _flowupDataMeta.cache = r.headers.get('x-cache') || '';
+  } catch (e) {
+    console.warn('[FlowUp] Worker indisponível, usando JSON estático:', e.message);
+    var rFallback = await fetch('./flowup-data.json?t=' + Date.now());
+    if (!rFallback.ok) throw new Error('FlowUp: arquivo de dados não encontrado');
+    data = await rFallback.json();
+    _flowupDataMeta.source = 'static-fallback';
+  }
   _flowupDataMeta.fetchedAt = new Date().toISOString();
-  _flowupDataMeta.lastModified = r.headers.get('last-modified') || null;
-  if (!r.ok) throw new Error('FlowUp: arquivo de dados não encontrado');
-  var data = await r.json();
   _flowupDataMeta.generatedAt = data.generatedAt || data.exported_at || data.timestamp || data._meta?.generated || null;
   return data;
+}
+
+// Dispara sync no Worker → GitHub Actions
+async function triggerFlowupSync() {
+  try {
+    var r = await fetch(FLOWUP_WORKER_URL + '/sync', { method: 'POST' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } catch (e) {
+    console.error('[FlowUp] triggerSync falhou:', e);
+    return { ok: false, error: e.message };
+  }
+}
+
+// Verifica status do último run do GitHub Actions
+async function getFlowupSyncStatus() {
+  try {
+    var r = await fetch(FLOWUP_WORKER_URL + '/sync-status?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
 }
 function isSameDay(d1, d2) {
   return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
@@ -1513,12 +1554,79 @@ async function syncAll() {
   const timeStr = `Atualizado ${now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}`;
   const lbl = document.getElementById('sync-lbl');
   lbl.dataset.lastSync = timeStr;
-  lbl.textContent = timeStr;
+  // Guarda a data de geração do JSON pra calcular idade
+  if (_flowupDataMeta.generatedAt) {
+    lbl.dataset.flowupGenerated = _flowupDataMeta.generatedAt;
+  }
+  updateSyncLabel();
 
   btn.classList.remove('loading');
   hideLoading();
 
   if (errors.length) alert('Erros na sincronização:\n\n' + errors.join('\n'));
+}
+
+// Atualiza o label da topbar mostrando "Atualizado XX:XX · FlowUp há Y min"
+function updateSyncLabel() {
+  var lbl = document.getElementById('sync-lbl');
+  if (!lbl) return;
+  var localStr = lbl.dataset.lastSync || 'Não sincronizado';
+  var genStr = lbl.dataset.flowupGenerated;
+  if (!genStr) { lbl.textContent = localStr; return; }
+  var gen = new Date(genStr);
+  if (isNaN(gen.getTime())) { lbl.textContent = localStr; return; }
+  var diffMin = Math.floor((Date.now() - gen.getTime()) / 60000);
+  var age;
+  if (diffMin < 1) age = 'agora';
+  else if (diffMin < 60) age = 'há ' + diffMin + ' min';
+  else if (diffMin < 1440) age = 'há ' + Math.floor(diffMin/60) + 'h';
+  else age = 'há ' + Math.floor(diffMin/1440) + 'd';
+  var color = diffMin < 10 ? '#16A34A' : diffMin < 30 ? '#F59E0B' : '#DC2626';
+  lbl.innerHTML = localStr + ' · <strong style="color:'+color+'">FlowUp ' + age + '</strong>';
+}
+
+// Atualiza a label a cada 30s
+setInterval(updateSyncLabel, 30000);
+
+// Dispara sync ao vivo no FlowUp (Worker → GitHub Actions)
+async function forceLiveSync() {
+  var btn = document.getElementById('force-sync-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Disparando…'; }
+  try {
+    var r = await triggerFlowupSync();
+    if (!r.ok) {
+      alert('Erro ao disparar sync: ' + (r.error || 'desconhecido'));
+      if (btn) { btn.disabled = false; btn.textContent = '⚡ Sync ao vivo'; }
+      return;
+    }
+    if (btn) btn.textContent = 'Sync iniciado — aguardando…';
+    // Polling a cada 15s até o run completar
+    var attempts = 0;
+    var maxAttempts = 60; // 15min
+    var interval = setInterval(async function(){
+      attempts++;
+      var st = await getFlowupSyncStatus();
+      if (st.ok && st.inProgress) {
+        if (btn) btn.textContent = 'Sincronizando… (' + (attempts*15) + 's)';
+      } else if (st.ok && st.lastCompleted && st.lastCompleted.conclusion === 'success' && !st.inProgress) {
+        clearInterval(interval);
+        if (btn) btn.textContent = '✓ Sync concluído — recarregando…';
+        // Recarrega dados frescos do Worker
+        await syncAll();
+        if (btn) { btn.disabled = false; btn.textContent = '⚡ Sync ao vivo'; }
+      } else if (st.ok && st.lastCompleted && st.lastCompleted.conclusion === 'failure' && !st.inProgress) {
+        clearInterval(interval);
+        if (btn) { btn.disabled = false; btn.textContent = '⚡ Sync ao vivo (falhou)'; }
+        alert('Sync no GitHub falhou. Veja: ' + st.lastCompleted.html_url);
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        if (btn) { btn.disabled = false; btn.textContent = '⚡ Sync ao vivo'; }
+      }
+    }, 15000);
+  } catch (e) {
+    alert('Erro: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Sync ao vivo'; }
+  }
 }
 
 function deriveMembers() {
