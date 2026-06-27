@@ -486,10 +486,7 @@ tbody tr:hover{background:var(--off);}
       </div>
       <div id="oe-user-chip" style="display:none;align-items:center;gap:6px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--off);"></div>
       <span class="sync-info" id="sync-lbl">Não sincronizado</span>
-      <button id="force-sync-btn" onclick="forceLiveSync()" title="Dispara sync imediato do FlowUp (~3min)" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:#fff;border:none;padding:7px 13px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
-        ⚡ Sync ao vivo
-      </button>
-      <button class="sync-btn" id="sync-btn" onclick="syncAll()">
+      <button class="sync-btn" id="sync-btn" onclick="syncAll(true)" title="Atualiza FlowUp ao vivo (~7min) + Trello + Drive">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         Sincronizar Tudo
       </button>
@@ -1459,7 +1456,7 @@ function abrirAuditAPIs() {
   bg.addEventListener('click', function(e){ if (e.target === bg) bg.remove(); });
 }
 
-async function syncAll() {
+async function syncAll(forceLive = false) {
   const hasFlowUp = S.config.fuKey && S.config.fuSubdomain;
   const hasTrello = S.config.trKey && S.config.trToken;
 
@@ -1467,7 +1464,45 @@ async function syncAll() {
 
   const btn = document.getElementById('sync-btn');
   btn.classList.add('loading');
-  showLoading('Sincronizando FlowUp e Trello...');
+
+  // ─── Se forceLive=true (clique no botão): dispara sync ao vivo no FlowUp e aguarda ─
+  // O cron roda a cada 10 min sozinho. forceLive serve quando o usuário quer dados AGORA.
+  if (forceLive) {
+    showLoading('Disparando sync ao vivo do FlowUp...');
+    try {
+      const dispatch = await triggerFlowupSync();
+      if (dispatch.ok) {
+        setLoadingText('Aguardando GitHub Actions sincronizar com FlowUp (até ~7min)...');
+        // Polling do status a cada 15s
+        let elapsed = 0;
+        const maxWait = 9 * 60; // 9 minutos máximo
+        let completed = false;
+        while (elapsed < maxWait && !completed) {
+          await new Promise(r => setTimeout(r, 15000));
+          elapsed += 15;
+          setLoadingText(`Sincronizando FlowUp ao vivo... (${elapsed}s)`);
+          const st = await getFlowupSyncStatus();
+          if (st.ok && !st.inProgress && st.lastCompleted) {
+            if (st.lastCompleted.conclusion === 'success') {
+              completed = true;
+              setLoadingText('Sync FlowUp concluído. Carregando dados frescos...');
+            } else if (st.lastCompleted.conclusion === 'failure') {
+              throw new Error('GitHub Actions falhou: ' + st.lastCompleted.html_url);
+            }
+          }
+        }
+        if (!completed) {
+          console.warn('[syncAll] timeout esperando sync — continuando com dados disponíveis');
+        }
+      } else {
+        console.warn('[syncAll] dispatch falhou:', dispatch.error);
+      }
+    } catch (e) {
+      console.warn('[syncAll] erro forceLive:', e);
+    }
+  }
+
+  showLoading('Carregando dados...');
 
   const errors = [];
 
