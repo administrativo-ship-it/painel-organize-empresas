@@ -29,8 +29,10 @@ EP_QUERY_TASKS = '/api/v1/public/task/querytasks'
 EP_LIST_USERS = '/api/v1/public/user/getactiveusers'
 
 MAX_PID = 30
-N_RECENT_FINISHED = 100      # quantas finalizadas mais recentes coletar por projeto
-MAX_WORKERS = 16             # threads simultaneas
+# OTIMIZACAO: nao coletar finalizadas detalhadas — somente Count. Reduz tempo de 8-10min para 2-3min.
+# Painel mostra apenas KPIs (abertas, atrasadas, hoje) — finalizadas detalhadas nao sao necessarias.
+N_RECENT_FINISHED = 0
+MAX_WORKERS = 32             # threads simultaneas (paralelismo agressivo)
 
 _token, _exp = None, 0
 _token_lock = Lock()
