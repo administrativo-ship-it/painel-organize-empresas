@@ -6441,25 +6441,22 @@ async function rgcDownloadPDF() {
       return H;
     }
 
-    // ═══════════════ CAPA ═══════════════
+    // ═══════════════ CAPA — fundo navy puro, logo direto sem badge ═══════════════
     rect(0,0,PW,PH,COL.navyDark);
     rect(0,0,PW,PH*0.62,COL.navy);
     if (logoImg) {
-      var capaLogoH = 32;
+      var capaLogoH = 42;
       var capaLogoW = capaLogoH * (logoImg.width/logoImg.height);
-      var badgeW = capaLogoW + 30, badgeH = capaLogoH + 16;
-      var badgeX = (PW-badgeW)/2, badgeY = 68;
-      rect(badgeX, badgeY, badgeW, badgeH, COL.bgWhite, 4);
-      drawLogo((PW-capaLogoW)/2, badgeY+8, capaLogoH);
+      drawLogo((PW-capaLogoW)/2, 76, capaLogoH);
     }
-    rect(PW/2-22, 130, 44, 1.6, COL.teal, 0.8);
+    rect(PW/2-22, 132, 44, 1.6, COL.teal, 0.8);
     doc.setFont('helvetica','bold'); doc.setFontSize(26);
     setText(COL.bgWhite);
-    doc.text('Relatório Gerencial', PW/2, 149, {align:'center'});
-    doc.text('de Indicadores Comerciais', PW/2, 160, {align:'center'});
+    doc.text('Relatório Gerencial', PW/2, 151, {align:'center'});
+    doc.text('de Indicadores Comerciais', PW/2, 162, {align:'center'});
     doc.setFont('helvetica','normal'); doc.setFontSize(12);
     setText([200,210,230]);
-    doc.text('Análise individual de '+ok.length+' cliente(s) · '+periodoLabel+'/'+anoAtual, PW/2, 174, {align:'center'});
+    doc.text('Análise individual de '+ok.length+' cliente(s) · '+periodoLabel+'/'+anoAtual, PW/2, 176, {align:'center'});
     var dateText = 'Emitido em '+dataHoje+' às '+horaHoje;
     doc.setFontSize(10);
     var pillW = doc.getTextWidth(dateText) + 16;
@@ -6532,12 +6529,24 @@ async function rgcDownloadPDF() {
       y += 7.5;
     });
 
-    // ═══════════════ POR CLIENTE ═══════════════
+    // ═══════════════ POR CLIENTE — fluxo contínuo, sem quebra forçada ═══════════════
+    var currentY = y;  // continua de onde o sumário parou
     ok.forEach(function(d, idx) {
-      doc.addPage();
-      setFill(COL.bgWhite); doc.rect(0,0,PW,PH,'F');
-      var hHc = pageHeader(d.cliente);
-      var y = hHc + 6;
+      // Espaço mínimo para iniciar bloco do cliente: ~95mm (nome + KPIs + gráfico)
+      var spaceNeeded = 95;
+      if (currentY + spaceNeeded > PH - 8) {
+        doc.addPage();
+        setFill(COL.bgWhite); doc.rect(0,0,PW,PH,'F');
+        var hHc = pageHeader(d.cliente);
+        currentY = hHc + 6;
+      } else if (idx > 0) {
+        // Separador entre clientes na mesma página
+        currentY += 6;
+        setDraw([200,208,220]); doc.setLineWidth(0.4);
+        doc.line(12, currentY, PW-12, currentY);
+        currentY += 6;
+      }
+      var y = currentY;
       var k = d.kpis, q = d.qualidade;
       var pct = k.metaAnual>0 ? k.fatAnual/k.metaAnual : 0;
       var pctColor = pct>=0.85?COL.green:pct>=0.5?COL.amber:COL.red;
@@ -6705,6 +6714,8 @@ async function rgcDownloadPDF() {
           y += bH + 2;
         });
       }
+      // Atualiza currentY para o próximo cliente continuar a partir daqui
+      currentY = y;
     });
 
     var nomeArquivo = 'Relatorio_Gerencial_Comercial_'+new Date().toISOString().substring(0,10)+'.pdf';
