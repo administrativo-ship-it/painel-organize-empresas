@@ -678,7 +678,10 @@ tbody tr:hover{background:var(--off);}
       <input type="file" id="rgc-upload-input" accept=".xlsx" multiple style="display:none;" onchange="rgcHandleFiles(event.target.files)">
     </div>
 
-    <!-- Status / lista de uploads -->
+    <!-- Lista de planilhas já carregadas (com botao remover por arquivo) -->
+    <div id="rgc-file-list" style="display:none;margin-bottom:14px;"></div>
+
+    <!-- Status -->
     <div id="rgc-status" style="display:none;background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:14px 16px;margin-bottom:18px;font-size:12.5px;color:#41546A;"></div>
 
     <!-- Resumo executivo (cards no topo) -->
@@ -5334,35 +5337,55 @@ async function rgcHandleFiles(fileList) {
   if (!files.length) { rgcStatus('Nenhum arquivo .xlsx selecionado.', 'err'); return; }
   if (typeof XLSX === 'undefined') { rgcStatus('Biblioteca XLSX não carregada.', 'err'); return; }
 
-  rgcStatus('Lendo ' + files.length + ' planilha(s)...', 'info');
-  // Limpa dados anteriores
-  _rgcData = [];
+  // Análise da IA fica invalidada quando há mudança nos dados
   _rgcAIAnalysis = null;
-  document.getElementById('rgc-clients-grid').innerHTML = '';
-  document.getElementById('rgc-summary').style.display = 'none';
-  document.getElementById('rgc-ranking').style.display = 'none';
   document.getElementById('rgc-ai-analysis').style.display = 'none';
 
+  // Dedup por nome de arquivo — se já existe, substitui (re-leitura)
+  var nomesExistentes = new Set(_rgcData.map(function(d){ return d.filename; }));
+
+  rgcStatus('Lendo ' + files.length + ' planilha(s)...', 'info');
+
+  var novos = 0, atualizados = 0;
   for (var i = 0; i < files.length; i++) {
     var f = files[i];
+    var jaExiste = nomesExistentes.has(f.name);
     try {
       var data = await rgcParseFile(f);
-      _rgcData.push(data);
+      if (jaExiste) {
+        var idx = _rgcData.findIndex(function(d){ return d.filename === f.name; });
+        if (idx >= 0) _rgcData[idx] = data;
+        atualizados++;
+      } else {
+        _rgcData.push(data);
+        novos++;
+      }
     } catch(e) {
-      _rgcData.push({ filename: f.name, error: e.message || String(e) });
+      var errEntry = { filename: f.name, error: e.message || String(e) };
+      if (jaExiste) {
+        var idxE = _rgcData.findIndex(function(d){ return d.filename === f.name; });
+        if (idxE >= 0) _rgcData[idxE] = errEntry;
+      } else {
+        _rgcData.push(errEntry);
+      }
       console.error('[RGC] erro lendo ' + f.name, e);
     }
   }
 
+  // Reset do input (permite selecionar o mesmo arquivo de novo)
+  var inputEl = document.getElementById('rgc-upload-input');
+  if (inputEl) inputEl.value = '';
+
   rgcRenderAll();
+  rgcRenderFileList();
   var okCount = _rgcData.filter(function(d){ return !d.error; }).length;
   var errCount = _rgcData.length - okCount;
-  rgcStatus(
-    '<strong>' + okCount + '</strong> planilha(s) processada(s) com sucesso' +
-    (errCount > 0 ? ' · <strong style="color:#991B1B">' + errCount + ' falha(s)</strong>' : '') +
-    ' · Pronto para gerar análise IA e PDF.',
-    okCount > 0 ? 'ok' : 'err'
-  );
+  var msg = '<strong>' + okCount + '</strong> planilha(s) carregada(s)';
+  if (novos > 0 && atualizados > 0) msg += ' (' + novos + ' novas, ' + atualizados + ' atualizadas)';
+  else if (atualizados > 0) msg += ' (' + atualizados + ' atualizadas)';
+  if (errCount > 0) msg += ' · <strong style="color:#991B1B">' + errCount + ' falha(s)</strong>';
+  msg += ' · Você pode adicionar mais arquivos a qualquer momento.';
+  rgcStatus(msg, okCount > 0 ? 'ok' : 'err');
 
   // Habilita botões
   var btnAI = document.getElementById('rgc-btn-ai');
@@ -5370,7 +5393,67 @@ async function rgcHandleFiles(fileList) {
   if (okCount > 0) {
     btnAI.disabled = false; btnAI.style.opacity = '1';
     btnPDF.disabled = false; btnPDF.style.opacity = '1';
+  } else {
+    btnAI.disabled = true; btnAI.style.opacity = '.55';
+    btnPDF.disabled = true; btnPDF.style.opacity = '.55';
   }
+}
+
+function rgcRemoveFile(filename) {
+  _rgcData = _rgcData.filter(function(d){ return d.filename !== filename; });
+  _rgcAIAnalysis = null;
+  document.getElementById('rgc-ai-analysis').style.display = 'none';
+  rgcRenderAll();
+  rgcRenderFileList();
+  if (!_rgcData.length) {
+    document.getElementById('rgc-summary').style.display = 'none';
+    document.getElementById('rgc-ranking').style.display = 'none';
+    var btnAI = document.getElementById('rgc-btn-ai');
+    var btnPDF = document.getElementById('rgc-btn-pdf');
+    btnAI.disabled = true; btnAI.style.opacity = '.55';
+    btnPDF.disabled = true; btnPDF.style.opacity = '.55';
+    rgcStatus('Todos os arquivos foram removidos. Anexe planilhas novamente para gerar o relatório.', 'info');
+  } else {
+    var okCount = _rgcData.filter(function(d){ return !d.error; }).length;
+    rgcStatus('<strong>' + okCount + '</strong> planilha(s) carregada(s) · Você pode adicionar mais arquivos a qualquer momento.', 'ok');
+  }
+}
+
+function rgcClearAll() {
+  if (!_rgcData.length) return;
+  if (!confirm('Remover TODAS as ' + _rgcData.length + ' planilha(s) carregada(s)?')) return;
+  _rgcData = [];
+  rgcRemoveFile('__noop__'); // reaproveita a lógica de UI reset
+}
+
+function rgcRenderFileList() {
+  var listEl = document.getElementById('rgc-file-list');
+  if (!listEl) return;
+  if (!_rgcData.length) { listEl.style.display = 'none'; listEl.innerHTML = ''; return; }
+  listEl.style.display = 'block';
+  var items = _rgcData.map(function(d){
+    var ok = !d.error;
+    var icon = ok
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>';
+    var label = ok ? (d.cliente || '(sem nome)') : d.error;
+    var sublabel = ok ? d.programa : 'Erro ao processar';
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border:1px solid #E0E5EE;border-radius:8px;margin-bottom:6px;">'
+      + icon
+      + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:13px;font-weight:700;color:#1B2B6B;line-height:1.3;">'+label+'</div>'
+        + '<div style="font-size:11px;color:#6B7A99;">'+sublabel+' · '+d.filename+'</div>'
+      + '</div>'
+      + '<button onclick="rgcRemoveFile(\''+d.filename.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" '
+      + 'style="background:transparent;border:1px solid #E0E5EE;color:#6B7A99;border-radius:6px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Remover">'
+      + '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>'
+      + '</button>'
+      + '</div>';
+  }).join('');
+  listEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+    + '<div style="font-size:11px;font-weight:700;color:#6B7A99;text-transform:uppercase;letter-spacing:.6px;">Planilhas carregadas (' + _rgcData.length + ')</div>'
+    + '<button onclick="rgcClearAll()" style="background:transparent;border:none;color:#DC2626;font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline;">Limpar todas</button>'
+    + '</div>' + items;
 }
 
 function rgcParseFile(file) {
