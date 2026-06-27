@@ -2,7 +2,7 @@ name: Sync FlowUp Data
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '*/5 * * * *'   # A cada 5 minutos
   workflow_dispatch:
   push:
     paths:
@@ -12,29 +12,37 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: sync-flowup
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Sincronizar FlowUp
         env:
           FLOWUP_API_KEY: ${{ secrets.FLOWUP_API_KEY }}
           FLOWUP_SUBDOMAIN: ${{ secrets.FLOWUP_SUBDOMAIN }}
         run: python scripts/sync_flowup.py
-      - name: Commit
+
+      - name: Commit alterações (se houver)
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add flowup-data.json
           if git diff --cached --quiet; then
-            echo "Sem alterações"
+            echo "Sem alterações em flowup-data.json — nada a commitar."
           else
             git commit -m "chore: auto-sync flowup-data.json [skip ci]"
             git push
           fi
-          
