@@ -152,29 +152,23 @@ def main():
             valid_pids.append(pid)
             print(f'  pid={pid}: total={total} abertas={total_open}')
 
-    # FASE 2: TODOS OS PROJETOS EM PARALELO (cada um faz seu fetch_pages_parallel internamente)
-    # Antes: serial (8-10min). Agora: paralelo (tempo total = tempo do projeto mais lento, ~1min).
-    print(f'\n[2] Coletando tarefas EM PARALELO ({len(valid_pids)} projetos)')
-
-    def fetch_one_project(pid):
-        t0 = time.time()
+    # FASE 2: Projetos serial (paralelismo INTERNO por projeto = MAX_WORKERS threads)
+    # Tentativa anterior (4 projetos paralelos = 128 conexoes) quebrou — provavelmente rate-limit
+    # do FlowUp. Voltando ao formato serial que funcionava (7min total, mas estavel).
+    print(f'\n[2] Coletando tarefas ({len(valid_pids)} projetos serial, paralelismo interno {MAX_WORKERS})')
+    for pid in valid_pids:
+        t_start = time.time()
         n_open = project_counts[pid]['open']
-        if n_open == 0:
-            return pid, [], 0.0
+        sys.stdout.flush()  # garante que log aparece em tempo real no GitHub Actions
+
         tks = fetch_pages_parallel(
             {'Projects': [pid], 'ShowFinished': False, 'ShowArchived': False},
             0, n_open - 1
-        )
-        return pid, tks, time.time() - t0
+        ) if n_open > 0 else []
 
-    # Limita o paralelismo entre projetos (cada um usa ate MAX_WORKERS threads internas)
-    # 4 projetos paralelos x 32 workers = 128 conexoes simultaneas no FlowUp — bom equilibrio
-    with ThreadPoolExecutor(max_workers=4) as exproj:
-        futures = {exproj.submit(fetch_one_project, pid): pid for pid in valid_pids}
-        for fut in as_completed(futures):
-            pid, tks, dur = fut.result()
-            merge_into(all_tasks, tks)
-            print(f'  pid={pid}: open={len(tks)}/{project_counts[pid]["open"]} | {dur:.1f}s | acumulado={len(all_tasks)}')
+        merge_into(all_tasks, tks)
+        dur = time.time() - t_start
+        print(f'  pid={pid}: open={len(tks)}/{n_open} | {dur:.1f}s | acumulado={len(all_tasks)}', flush=True)
 
     tasks_list = list(all_tasks.values())
     projects = derive_projects(tasks_list, project_counts)
