@@ -6057,6 +6057,24 @@ async function rgcRunAI() {
   btn.disabled = true; var oldTxt = btn.innerHTML; btn.innerHTML = 'Analisando...';
 
   try {
+    // Contexto temporal — fundamental para a IA não confundir mês futuro com paralisação
+    // DEVE ser declarado ANTES do sysPrompt, pois sysPrompt usa contextoTemporal.mes_atual
+    var hojeRef = new Date();
+    var mesAtualRef = hojeRef.getMonth() + 1;
+    var anoAtualRef = hojeRef.getFullYear();
+    var diaAtualRef = hojeRef.getDate();
+    var MES_LBL_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    var contextoTemporal = {
+      data_de_geracao: hojeRef.toLocaleDateString('pt-BR'),
+      mes_atual: MES_LBL_FULL[mesAtualRef - 1] + '/' + anoAtualRef,
+      mes_atual_numero: mesAtualRef,
+      ano_atual: anoAtualRef,
+      dia_atual: diaAtualRef,
+      meses_ja_decorridos: mesAtualRef - 1,
+      mes_em_andamento: MES_LBL_FULL[mesAtualRef - 1],
+      meses_futuros_no_ano: 12 - mesAtualRef
+    };
+
     // ANÁLISE INDIVIDUAL POR CLIENTE — uma chamada por empresa, em paralelo.
     // Não há consolidação financeira entre clientes.
     var sysPrompt = 'Você é um CONSULTOR SÊNIOR E MENTOR EMPRESARIAL da Organize Empresas, com 20+ anos analisando indicadores comerciais de pequenas e médias empresas. Sua expertise:\n' +
@@ -6087,23 +6105,6 @@ async function rgcRunAI() {
       '5. Valores em moeda em formato brasileiro (R$ 12.345,67).\n' +
       '6. Recomendações ESPECÍFICAS e MENSURÁVEIS — não "melhorar conversão", mas "subir conversão de 24% para 35% até [mês futuro]".\n' +
       '7. JAMAIS mencione meses FUTURO_NAO_DECORRIDO como problema, gap ou paralisação.';
-
-    // Contexto temporal — fundamental para a IA não confundir mês futuro com paralisação
-    var hojeRef = new Date();
-    var mesAtualRef = hojeRef.getMonth() + 1;
-    var anoAtualRef = hojeRef.getFullYear();
-    var diaAtualRef = hojeRef.getDate();
-    var MES_LBL_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    var contextoTemporal = {
-      data_de_geracao: hojeRef.toLocaleDateString('pt-BR'),
-      mes_atual: MES_LBL_FULL[mesAtualRef - 1] + '/' + anoAtualRef,
-      mes_atual_numero: mesAtualRef,
-      ano_atual: anoAtualRef,
-      dia_atual: diaAtualRef,
-      meses_ja_decorridos: mesAtualRef - 1, // meses anteriores ao atual
-      mes_em_andamento: MES_LBL_FULL[mesAtualRef - 1],
-      meses_futuros_no_ano: 12 - mesAtualRef
-    };
 
     // Tarefa por cliente
     function montaContextoCliente(d) {
@@ -6267,77 +6268,183 @@ function rgcRenderAIAnalysis() {
   el.style.display = 'block';
 }
 
+// Gráfico SVG estilo painel — barras agrupadas Meta vs Realizado por mês (mais visual para PDF)
+function rgcPdfChart(mensal) {
+  var MES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var hoje = new Date();
+  var mesAtual = hoje.getMonth() + 1;
+  var months = (mensal || []).filter(function(m){ return m.mes <= mesAtual && (m.meta > 0 || m.realizado > 0); });
+  if (!months.length) return '<div style="font-size:11px;color:#8A94A8;text-align:center;padding:20px;font-style:italic;background:#F5F7FA;border-radius:8px;">Sem dados mensais</div>';
+  var maxV = 0;
+  months.forEach(function(m){ if (m.meta > maxV) maxV = m.meta; if (m.realizado > maxV) maxV = m.realizado; });
+  if (!maxV) maxV = 1;
+  // Arredonda topo do eixo
+  var pow = Math.pow(10, Math.floor(Math.log10(maxV)));
+  maxV = Math.ceil(maxV * 1.15 / pow) * pow;
+
+  var W = 1200, H = 320;
+  var padL = 70, padR = 20, padT = 30, padB = 56;
+  var chartW = W - padL - padR;
+  var chartH = H - padT - padB;
+  var groupW = chartW / months.length;
+  var barW = Math.max(12, Math.min(40, groupW / 3));
+  var sc = function(v){ return padT + chartH - (v / maxV * chartH); };
+
+  // Grid + Y labels
+  var grid = '';
+  for (var yi = 0; yi <= 5; yi++) {
+    var yv = maxV * yi / 5;
+    var yy = sc(yv);
+    var lbl = yv >= 1000 ? 'R$ ' + (yv/1000).toFixed(0) + 'k' : 'R$ ' + yv.toFixed(0);
+    grid += '<line x1="'+padL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yy.toFixed(1)+'" stroke="#E5E9F0" stroke-width="1"'+(yi===0?'':' stroke-dasharray="3,4"')+'/>';
+    grid += '<text x="'+(padL-8)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="#7A8499" font-weight="600">'+lbl+'</text>';
+  }
+
+  // Barras Meta (cinza claro) + Realizado (navy) + valores em cima do realizado
+  var bars = '';
+  var xlabels = '';
+  months.forEach(function(m, i){
+    var gx = padL + groupW * i + groupW/2;
+    var bxMeta = gx - barW - 2;
+    var bxReal = gx + 2;
+    var hMeta = m.meta > 0 ? (m.meta / maxV * chartH) : 0;
+    var hReal = m.realizado > 0 ? (m.realizado / maxV * chartH) : 0;
+    var yMeta = padT + chartH - hMeta;
+    var yReal = padT + chartH - hReal;
+    if (m.meta > 0) bars += '<rect x="'+bxMeta.toFixed(1)+'" y="'+yMeta.toFixed(1)+'" width="'+barW+'" height="'+hMeta.toFixed(1)+'" rx="3" fill="#C7D2DC"/>';
+    if (m.realizado > 0) {
+      bars += '<rect x="'+bxReal.toFixed(1)+'" y="'+yReal.toFixed(1)+'" width="'+barW+'" height="'+hReal.toFixed(1)+'" rx="3" fill="#1B2B6B"/>';
+      // Valor em cima da barra
+      var vt = m.realizado >= 1000 ? 'R$ '+(m.realizado/1000).toFixed(1)+'k' : 'R$ '+m.realizado.toFixed(0);
+      bars += '<text x="'+(bxReal + barW/2).toFixed(1)+'" y="'+(yReal - 6).toFixed(1)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#1B2B6B">'+vt+'</text>';
+    }
+    xlabels += '<text x="'+gx.toFixed(1)+'" y="'+(padT+chartH+18).toFixed(1)+'" text-anchor="middle" font-size="11" fill="#3E4A5E" font-weight="700">'+MES_ABR[m.mes-1]+'</text>';
+  });
+
+  // Legenda
+  var lgY = H - 16;
+  var legend = '<rect x="'+padL+'" y="'+(lgY-9)+'" width="14" height="14" rx="3" fill="#C7D2DC"/>'
+    + '<text x="'+(padL+20)+'" y="'+(lgY+2)+'" font-size="11" fill="#2C3E50" font-weight="600">Meta</text>'
+    + '<rect x="'+(padL+80)+'" y="'+(lgY-9)+'" width="14" height="14" rx="3" fill="#1B2B6B"/>'
+    + '<text x="'+(padL+100)+'" y="'+(lgY+2)+'" font-size="11" fill="#2C3E50" font-weight="600">Realizado</text>';
+
+  return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">'
+    + '<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="#FAFBFD" rx="8"/>'
+    + grid + bars + xlabels + legend + '</svg>';
+}
+
 function rgcDownloadPDF() {
   var ok = _rgcData.filter(function(d){ return !d.error; });
   if (!ok.length) { alert('Nenhum dado para gerar PDF.'); return; }
   if (typeof html2pdf === 'undefined') { alert('Biblioteca html2pdf não carregada.'); return; }
 
-  // Mapa cliente -> análise IA (se existir)
   var analiseMap = {};
   if (_rgcAIAnalysis && Array.isArray(_rgcAIAnalysis.analises_por_cliente)) {
     _rgcAIAnalysis.analises_por_cliente.forEach(function(r){ analiseMap[r.cliente] = r.analise; });
   }
 
+  var MES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var hoje = new Date();
+  var mesAtual = hoje.getMonth() + 1;
+  var mesAtualNome = MES_ABR[mesAtual - 1];
+  var anoAtual = hoje.getFullYear();
+  var periodoLabel = 'Jan a ' + mesAtualNome;
+
   var data = new Date().toLocaleDateString('pt-BR');
   var hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   var qualidadeMedia = Math.round(ok.reduce(function(a,d){ return a + d.qualidade.score; }, 0) / ok.length);
+  var logoSrc = (typeof S !== 'undefined' && S.logoConfig && S.logoConfig.img) ? S.logoConfig.img : (typeof LOGO_ORGANIZE_B64 !== 'undefined' ? LOGO_ORGANIZE_B64 : '');
 
-  // ─── CAPA ───
-  var capa = '<div style="height:100vh;background:linear-gradient(135deg,#1B2B6B,#0F1A45);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:40px;page-break-after:always;">'
-    + '<div style="font-size:14px;font-weight:700;letter-spacing:4px;text-transform:uppercase;opacity:.7;margin-bottom:12px;">Organize Empresas</div>'
-    + '<h1 style="font-size:38px;font-weight:800;margin:0 0 20px;line-height:1.2;">Relatório Gerencial<br>de Indicadores Comerciais</h1>'
-    + '<div style="font-size:16px;opacity:.85;margin-bottom:40px;">Análise individual de '+ok.length+' cliente(s)</div>'
-    + '<div style="background:rgba(255,255,255,.08);padding:16px 30px;border-radius:8px;font-size:13px;">Emitido em '+data+' às '+hora+'</div>'
+  // ═════════════════════════════════════════════════════════════
+  // CAPA — logo gigante centralizada + título + data
+  // ═════════════════════════════════════════════════════════════
+  var capa = '<div style="width:794px;height:1080px;background:linear-gradient(135deg,#1B2B6B 0%,#0F1A45 100%);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:60px;page-break-after:always;box-sizing:border-box;">'
+    + (logoSrc ? '<img src="'+logoSrc+'" alt="Organize Empresas" style="height:130px;width:auto;margin-bottom:40px;filter:brightness(0) invert(1);">' : '<div style="font-size:32px;font-weight:800;letter-spacing:3px;margin-bottom:40px;">ORGANIZE EMPRESAS</div>')
+    + '<div style="width:80px;height:4px;background:#5CC8D4;margin-bottom:36px;border-radius:2px;"></div>'
+    + '<h1 style="font-size:46px;font-weight:800;margin:0 0 18px;line-height:1.1;letter-spacing:-1px;">Relatório Gerencial<br>de Indicadores Comerciais</h1>'
+    + '<div style="font-size:18px;opacity:.85;margin-bottom:50px;font-weight:500;">Análise individual de '+ok.length+' cliente(s) · '+periodoLabel+'/'+anoAtual+'</div>'
+    + '<div style="background:rgba(255,255,255,.10);padding:16px 32px;border-radius:8px;font-size:13px;letter-spacing:.5px;border:1px solid rgba(255,255,255,.15);">Emitido em '+data+' às '+hora+'</div>'
     + '</div>';
 
-  // ─── SUMÁRIO (apenas dados de processamento — SEM consolidação financeira) ───
-  var sumario = '<div style="padding:30px;page-break-after:always;">'
-    + '<h2 style="font-size:22px;color:#1B2B6B;border-bottom:3px solid #1B2B6B;padding-bottom:8px;margin-bottom:20px;">Sumário de Processamento</h2>'
-    + '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:12.5px;color:#1E3A8A;line-height:1.55;">'
-      + '<strong>Estrutura do relatório:</strong> cada empresa abaixo possui análise, indicadores e gráficos próprios. Não há consolidação dos indicadores financeiros entre clientes — todos os valores apresentados são individuais.'
-    + '</div>'
-    + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:24px;">'
-      + '<div style="background:#F5F7FA;padding:16px;border-radius:8px;">'
-        + '<div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Clientes Analisados</div>'
-        + '<div style="font-size:26px;font-weight:800;color:#1B2B6B;margin-top:4px;">'+ok.length+'</div>'
-        + '<div style="font-size:11px;color:#6B7A99;margin-top:4px;">Empresas com planilha processada</div>'
+  // ═════════════════════════════════════════════════════════════
+  // HEADER reutilizável — aparece no TOPO de cada página interna
+  // ═════════════════════════════════════════════════════════════
+  function pageHeader(title) {
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 30px;background:#1B2B6B;color:#fff;">'
+      + '<div style="display:flex;align-items:center;gap:12px;">'
+        + (logoSrc ? '<img src="'+logoSrc+'" alt="Organize" style="height:36px;width:auto;filter:brightness(0) invert(1);">' : '')
+        + '<div style="border-left:2px solid rgba(255,255,255,.25);padding-left:12px;">'
+          + '<div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;opacity:.75;">Organize Empresas</div>'
+          + '<div style="font-size:14px;font-weight:700;letter-spacing:.3px;">'+title+'</div>'
+        + '</div>'
       + '</div>'
-      + '<div style="background:#F5F7FA;padding:16px;border-radius:8px;">'
-        + '<div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Qualidade Média de Preenchimento</div>'
-        + '<div style="font-size:26px;font-weight:800;color:'+(qualidadeMedia>=65?'#16A34A':qualidadeMedia>=40?'#F59E0B':'#DC2626')+';margin-top:4px;">'+qualidadeMedia+'%</div>'
-        + '<div style="font-size:11px;color:#6B7A99;margin-top:4px;">Atualização das planilhas pelos clientes</div>'
+      + '<div style="font-size:11px;opacity:.75;text-align:right;">'+periodoLabel+'/'+anoAtual+'</div>'
+    + '</div>';
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // SUMÁRIO
+  // ═════════════════════════════════════════════════════════════
+  var sumario = '<div style="page-break-after:always;">'
+    + pageHeader('Sumário do Relatório')
+    + '<div style="padding:28px 36px;">'
+      + '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 18px;margin-bottom:22px;font-size:12.5px;color:#1E3A8A;line-height:1.55;">'
+      + '<strong>Estrutura:</strong> cada empresa abaixo possui página própria com dashboard, gráfico Meta × Realizado, indicadores acumulados e análise individualizada da IA. Não há consolidação financeira entre clientes.'
       + '</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:24px;">'
+        + '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:10px;padding:18px 20px;">'
+          + '<div style="font-size:10.5px;color:#6B7A99;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Clientes Analisados</div>'
+          + '<div style="font-size:32px;font-weight:800;color:#1B2B6B;line-height:1;">'+ok.length+'</div>'
+          + '<div style="font-size:11px;color:#6B7A99;margin-top:6px;">Empresas com planilha processada</div>'
+        + '</div>'
+        + '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:10px;padding:18px 20px;">'
+          + '<div style="font-size:10.5px;color:#6B7A99;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Qualidade Média de Preenchimento</div>'
+          + '<div style="font-size:32px;font-weight:800;color:'+(qualidadeMedia>=65?'#16A34A':qualidadeMedia>=40?'#F59E0B':'#DC2626')+';line-height:1;">'+qualidadeMedia+'%</div>'
+          + '<div style="font-size:11px;color:#6B7A99;margin-top:6px;">Atualização das planilhas pelos clientes</div>'
+        + '</div>'
+      + '</div>'
+      + '<div style="font-size:13px;color:#1B2B6B;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:6px 0 10px;">Empresas neste relatório</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid #E0E5EE;border-radius:8px;overflow:hidden;">'
+        + '<thead><tr style="background:#F5F7FA;"><th style="padding:8px 12px;text-align:left;font-size:10.5px;color:#6B7A99;text-transform:uppercase;letter-spacing:.5px;">#</th><th style="padding:8px 12px;text-align:left;font-size:10.5px;color:#6B7A99;text-transform:uppercase;letter-spacing:.5px;">Cliente</th><th style="padding:8px 12px;text-align:left;font-size:10.5px;color:#6B7A99;text-transform:uppercase;letter-spacing:.5px;">Programa</th><th style="padding:8px 12px;text-align:right;font-size:10.5px;color:#6B7A99;text-transform:uppercase;letter-spacing:.5px;">Qualidade</th></tr></thead>'
+        + '<tbody>'
+        + ok.map(function(d, i){
+            return '<tr style="border-top:1px solid #E0E5EE;">'
+              + '<td style="padding:8px 12px;color:#6B7A99;font-weight:600;">'+(i+1)+'</td>'
+              + '<td style="padding:8px 12px;color:#1B2B6B;font-weight:700;">'+d.cliente+'</td>'
+              + '<td style="padding:8px 12px;color:#6B7A99;">'+d.programa+'</td>'
+              + '<td style="padding:8px 12px;text-align:right;">'+rgcQualBadge(d.qualidade)+'</td>'
+            + '</tr>';
+          }).join('')
+        + '</tbody>'
+      + '</table>'
     + '</div>'
-    // Lista simples de clientes incluídos (sem comparação financeira)
-    + '<h3 style="font-size:14px;color:#1B2B6B;margin:24px 0 10px;text-transform:uppercase;letter-spacing:.5px;">Empresas Analisadas</h3>'
-    + '<ul style="list-style:none;padding:0;margin:0;">'
-      + ok.map(function(d, i){
-          return '<li style="padding:8px 12px;border-bottom:1px solid #E0E5EE;font-size:12px;color:#2C3E50;display:flex;justify-content:space-between;">'
-            + '<span><strong>'+(i+1)+'.</strong> '+d.cliente+'</span>'
-            + '<span style="color:#6B7A99;">'+d.programa+'</span>'
-            + '</li>';
-        }).join('')
-    + '</ul>'
     + '</div>';
 
-  // ─── UMA PÁGINA POR CLIENTE — com análise IA individual incorporada ───
+  // ═════════════════════════════════════════════════════════════
+  // PÁGINA POR EMPRESA — REPLICA o card do painel
+  // ═════════════════════════════════════════════════════════════
   var clientesHTML = ok.map(function(d, idx){
     var k = d.kpis, q = d.qualidade;
     var pct = k.metaAnual > 0 ? (k.fatAnual/k.metaAnual) : 0;
     var analise = analiseMap[d.cliente] || null;
-    var pageBreak = idx === 0 ? 'page-break-before:always;' : 'page-break-before:always;';
+    var atingColor = pct >= 0.85 ? '#16A34A' : pct >= 0.5 ? '#F59E0B' : '#DC2626';
+    var crescColor = k.crescTotalPct >= 0 ? '#16A34A' : '#DC2626';
 
+    // Análise IA — caixas estilo painel
     var iaBlock = '';
     if (analise) {
       var iaBox = function(t, c, color){
         if (!c) return '';
-        return '<div style="background:#fff;border:1px solid #E0E5EE;border-left:3px solid '+color+';border-radius:6px;padding:11px 14px;margin-bottom:8px;page-break-inside:avoid;">'
-          + '<div style="font-size:9.5px;font-weight:800;color:'+color+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">'+t+'</div>'
+        return '<div style="background:#fff;border:1px solid #E0E5EE;border-left:4px solid '+color+';border-radius:8px;padding:11px 14px;margin-bottom:8px;">'
+          + '<div style="font-size:10px;font-weight:800;color:'+color+';text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;">'+t+'</div>'
           + '<div style="font-size:11.5px;color:#2C3E50;line-height:1.5;white-space:pre-line;">'+c+'</div>'
           + '</div>';
       };
-      iaBlock = '<div style="margin-top:18px;page-break-inside:avoid;">'
-        + '<h3 style="font-size:14px;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px;margin:0 0 10px;border-bottom:2px solid #7C3AED;padding-bottom:5px;">Análise Executiva — IA</h3>'
+      iaBlock = '<div style="margin-top:16px;background:#FAFAFD;border:1px solid #E5E5F0;border-radius:10px;padding:14px 16px;">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #7C3AED;">'
+          + '<div style="width:6px;height:18px;background:#7C3AED;border-radius:3px;"></div>'
+          + '<div style="font-size:12px;font-weight:800;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px;">Análise Executiva · IA</div>'
+        + '</div>'
         + iaBox('Panorama do Cliente', analise.panorama, '#1B2B6B')
         + iaBox('Avanços Identificados', analise.avancos, '#16A34A')
         + iaBox('Pontos de Atenção', analise.atencoes, '#DC2626')
@@ -6346,40 +6453,65 @@ function rgcDownloadPDF() {
         + '</div>';
     }
 
-    return '<div style="padding:30px;'+pageBreak+'">'
-      + '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1B2B6B;padding-bottom:10px;margin-bottom:18px;">'
-        + '<div><div style="font-size:11px;color:#6B7A99;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">'+(d.programa||'')+'</div>'
-        + '<h2 style="font-size:22px;color:#1B2B6B;margin:4px 0 0;">'+(d.cliente||'(sem nome)')+'</h2></div>'
-        + '<div style="text-align:right;">'+rgcQualBadge(q)+'<div style="font-size:10px;color:#6B7A99;margin-top:4px;">Preenchimento '+q.diasPreenchidos+'/'+q.diasEsperados+' dias</div></div>'
+    return '<div style="page-break-before:always;">'
+      // HEADER colorido com logo
+      + pageHeader(d.cliente + ' · ' + (d.programa||''))
+      // CONTEÚDO do cliente
+      + '<div style="padding:24px 30px;">'
+        // BLOCO PRINCIPAL — card estilo painel
+        + '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:14px;padding:22px 24px;box-shadow:0 2px 8px rgba(27,43,107,.06);">'
+          // Top: nome + qualidade badge
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:12px;">'
+            + '<div style="flex:1;min-width:0;">'
+              + '<div style="font-weight:800;color:#1B2B6B;font-size:22px;margin-bottom:3px;line-height:1.2;">'+(d.cliente||'(sem nome)')+'</div>'
+              + '<div style="font-size:11px;color:#6B7A99;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">'+(d.programa||'—')+'</div>'
+            + '</div>'
+            + '<div>'+rgcQualBadge(q)+'</div>'
+          + '</div>'
+          // Pill roxa Acumulado
+          + '<div style="font-size:11px;color:#7C3AED;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 16px;padding:6px 12px;background:#F5F3FF;border-radius:6px;display:inline-block;">Acumulado · '+periodoLabel+'/'+anoAtual+'</div>'
+          // KPIs 2x2 (igual ao painel)
+          + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">'
+            + '<div style="padding:4px 0;"><div style="font-size:10.5px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:4px;">Faturamento '+periodoLabel+'</div>'
+              + '<div style="font-size:20px;font-weight:800;color:#1B2B6B;line-height:1.1;">'+rgcFmtBRL(k.fatAnual)+'</div>'
+              + '<div style="font-size:11px;color:#6B7A99;margin-top:3px;">Meta acumulada: '+rgcFmtBRL(k.metaAnual)+'</div></div>'
+            + '<div style="padding:4px 0;"><div style="font-size:10.5px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:4px;">Atingimento</div>'
+              + '<div style="font-size:20px;font-weight:800;color:'+atingColor+';line-height:1.1;">'+rgcFmtPct(pct)+'</div>'
+              + '<div style="font-size:11px;color:#6B7A99;margin-top:3px;">'+(k.metasBatidas||0)+' de '+(k.metasBatidasDe||0)+' metas batidas</div></div>'
+            + '<div style="padding:4px 0;"><div style="font-size:10.5px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:4px;">Crescimento vs '+periodoLabel+'/anterior</div>'
+              + '<div style="font-size:20px;font-weight:800;color:'+crescColor+';line-height:1.1;">'+(k.crescTotalPct>=0?'+':'')+rgcFmtPct(k.crescTotalPct)+'</div>'
+              + '<div style="font-size:11px;color:#6B7A99;margin-top:3px;">'+rgcFmtBRL(k.fat2025)+' → '+rgcFmtBRL(k.fat2026)+'</div></div>'
+            + '<div style="padding:4px 0;"><div style="font-size:10.5px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:4px;">Ticket Médio</div>'
+              + '<div style="font-size:20px;font-weight:800;color:#1B2B6B;line-height:1.1;">'+rgcFmtBRL(k.ticketAnual)+'</div>'
+              + '<div style="font-size:11px;color:#6B7A99;margin-top:3px;">Conv: '+rgcFmtPct(k.convAnual)+'</div></div>'
+          + '</div>'
+          // GRÁFICO
+          + '<div style="margin-bottom:14px;">'
+            + '<div style="font-size:11px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:8px;">Meta vs Realizado por Mês <span style="color:#94A3B8;text-transform:none;font-weight:500;">(meses futuros não exibidos)</span></div>'
+            + rgcPdfChart(d.mensal)
+          + '</div>'
+          // Card Preenchimento (igual ao painel)
+          + '<div style="background:#F5F7FA;border-radius:10px;padding:12px 16px;font-size:11.5px;color:#41546A;">'
+            + '<div style="font-weight:800;color:#1B2B6B;margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Preenchimento da Planilha</div>'
+            + '<div style="display:flex;gap:24px;flex-wrap:wrap;">'
+              + '<span style="font-size:12.5px;"><strong style="color:#1B2B6B;">'+q.diasPreenchidos+'</strong>/<span style="color:#6B7A99;">'+q.diasEsperados+'</span> dias úteis</span>'
+              + '<span style="font-size:12.5px;"><strong style="color:#1B2B6B;">'+q.mesesPreenchidos+'</strong>/<span style="color:#6B7A99;">'+q.mesesEsperados+'</span> meses com vendas</span>'
+              + '<span style="font-size:12.5px;"><strong style="color:#1B2B6B;">'+q.metasDefinidas+'</strong>/<span style="color:#6B7A99;">12</span> metas definidas</span>'
+            + '</div>'
+          + '</div>'
+        + '</div>'
+        // ANÁLISE IA na mesma página
+        + iaBlock
       + '</div>'
-      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;">'
-        + '<div style="background:#F5F7FA;padding:12px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Faturamento</div><div style="font-size:15px;font-weight:800;color:#1B2B6B;">'+rgcFmtBRL(k.fatAnual)+'</div></div>'
-        + '<div style="background:#F5F7FA;padding:12px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Meta</div><div style="font-size:15px;font-weight:800;color:#1B2B6B;">'+rgcFmtBRL(k.metaAnual)+'</div></div>'
-        + '<div style="background:#F5F7FA;padding:12px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Atingimento</div><div style="font-size:15px;font-weight:800;color:'+(pct>=0.85?'#16A34A':pct>=0.5?'#F59E0B':'#DC2626')+';">'+rgcFmtPct(pct)+'</div></div>'
-        + '<div style="background:#F5F7FA;padding:12px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Crescimento</div><div style="font-size:15px;font-weight:800;color:'+(k.crescTotalPct>=0?'#16A34A':'#DC2626')+';">'+(k.crescTotalPct>=0?'+':'')+rgcFmtPct(k.crescTotalPct)+'</div></div>'
-      + '</div>'
-      + '<div style="margin-bottom:18px;"><div style="font-size:11px;color:#6B7A99;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Evolução Mensal: Meta vs Realizado</div>'
-        + rgcMiniChart(d.mensal)+'</div>'
-      + '<table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:14px;">'
-        + '<thead><tr style="background:#1B2B6B;color:#fff;"><th style="padding:6px 8px;text-align:left;">Mês</th><th style="padding:6px 8px;text-align:right;">Meta</th><th style="padding:6px 8px;text-align:right;">Realizado</th><th style="padding:6px 8px;text-align:right;">Atingimento</th><th style="padding:6px 8px;text-align:right;">Conversão</th><th style="padding:6px 8px;text-align:right;">Ticket Médio</th></tr></thead><tbody>'
-        + d.mensal.filter(function(m){return m.meta>0||m.realizado>0;}).map(function(m){
-            var p = m.meta>0?m.realizado/m.meta:0;
-            return '<tr style="border-bottom:1px solid #E0E5EE;"><td style="padding:5px 8px;">'+m.nome+'</td>'
-              + '<td style="padding:5px 8px;text-align:right;">'+rgcFmtBRL(m.meta)+'</td>'
-              + '<td style="padding:5px 8px;text-align:right;font-weight:600;">'+rgcFmtBRL(m.realizado)+'</td>'
-              + '<td style="padding:5px 8px;text-align:right;color:'+(p>=0.85?'#16A34A':p>=0.5?'#F59E0B':'#DC2626')+';font-weight:600;">'+rgcFmtPct(p)+'</td>'
-              + '<td style="padding:5px 8px;text-align:right;">'+rgcFmtPct(m.conv)+'</td>'
-              + '<td style="padding:5px 8px;text-align:right;">'+rgcFmtBRL(m.ticket)+'</td></tr>';
-          }).join('')
-        + '</tbody></table>'
-      + iaBlock
       + '</div>';
   }).join('');
 
-  var fullHTML = '<div style="font-family:Inter,Arial,sans-serif;color:#2C3E50;">'
+  var fullHTML = '<div style="font-family:Inter,Arial,sans-serif;color:#2C3E50;line-height:1.4;background:#fff;">'
     + capa + sumario + clientesHTML + '</div>';
 
   var wrapper = document.createElement('div');
+  wrapper.style.width = '794px';
+  wrapper.style.background = '#ffffff';
   wrapper.innerHTML = fullHTML;
   document.body.appendChild(wrapper);
 
@@ -6387,9 +6519,17 @@ function rgcDownloadPDF() {
   html2pdf().set({
     margin: 0,
     filename: nomeArquivo,
-    image: { type:'jpeg', quality: 0.95 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    image: { type: 'png', quality: 1.0 },
+    html2canvas: {
+      scale: 3,
+      useCORS: true,
+      allowTaint: true,
+      letterRendering: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: 794
+    },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: false },
     pagebreak: { mode: ['css','legacy'] }
   }).from(wrapper).save().then(function(){
     document.body.removeChild(wrapper);
