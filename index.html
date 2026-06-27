@@ -4420,6 +4420,11 @@ async function generateAnalysisWithAI() {
     'fat=Faturamento Bruto (R$, número), cmv=CMV (R$, número), dfixas=Despesas Fixas (R$), dvar=Despesas Variáveis (R$), impost=Impostos (R$), ll=Lucro Líquido (R$), cgiro=Capital de Giro (R$), inadim=Inadimplência (% sem o símbolo)' :
     'fat=Faturamento do Mês (R$, número), meta=Meta do Mês (R$, número), cresc=Crescimento vs. ano anterior (% sem símbolo)';
 
+  var __hojeRm = new Date();
+  var __mesRm = __hojeRm.getMonth() + 1;
+  var __anoRm = __hojeRm.getFullYear();
+  var __MESES_RM = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
   var sysPrompt = 'Você é um CONSULTOR SÊNIOR E MENTOR EMPRESARIAL da Organize Empresas, com 20+ anos de experiência em gestão de pequenas e médias empresas. Sua expertise inclui:\n' +
     '• Análise profunda de planilhas comerciais e financeiras (DRE, fluxo de caixa, indicadores, projeções)\n' +
     '• Interpretação de KPIs (faturamento, meta, atingimento, ticket médio, conversão, crescimento mensal e anual)\n' +
@@ -4427,13 +4432,18 @@ async function generateAnalysisWithAI() {
     '• Construção de análises executivas estratégicas, fundamentadas e acionáveis\n' +
     '• Tradução de dados numéricos em recomendações concretas e mensuráveis para o empresário\n\n' +
     'Antes de produzir qualquer análise, você examina TODOS os dados fornecidos em profundidade — mês a mês, comparativos com ano anterior, qualidade da execução — e só então sintetiza conclusões.\n\n' +
+    '═══ REGRA TEMPORAL CRÍTICA ═══\n' +
+    'Esta análise está sendo gerada em ' + __MESES_RM[__mesRm-1] + '/' + __anoRm + '. Meses no FUTURO (' + (__mesRm < 12 ? __MESES_RM[__mesRm] + '/' + __anoRm + ' em diante' : 'nenhum') + ') AINDA NÃO ACONTECERAM.\n' +
+    'PROIBIDO chamar mês futuro de "paralisação", "queda", "estagnação", "sem operação" ou "sem dados". Esses meses ainda não decorreram — naturalmente estão zerados.\n' +
+    'Análise vale APENAS para o mês de referência (' + (function(){ try { return __MESES_RM[(parseInt(_rmf.mes) || __mesRm) - 1] + '/' + (_rmf.ano || __anoRm); } catch(e){ return __MESES_RM[__mesRm-1] + '/' + __anoRm; } })() + ') e meses já decorridos no histórico.\n\n' +
     'REGRAS OBRIGATÓRIAS DE OUTPUT:\n' +
     '1. NUNCA invente, estime ou chute números. Use APENAS valores que aparecem literalmente nas FONTES DE DADOS.\n' +
     '2. Se um valor não existir para o período/filtro exato, retorne 0 — NUNCA fabrique.\n' +
     '3. Para mesmos dados de entrada, sua resposta DEVE ser idêntica (determinística).\n' +
     '4. Responda APENAS com JSON válido — sem markdown, sem texto antes/depois, sem comentários.\n' +
     '5. Os filtros do usuário (cliente, programa, mês, ano) são a chave exata para os dados.\n' +
-    '6. Na "analise" e "proximos": use vocabulário de gestão, cite números reais, não generalize.';
+    '6. Na "analise" e "proximos": use vocabulário de gestão, cite números reais, não generalize.\n' +
+    '7. NUNCA mencione meses futuros como problema na análise.';
 
   var prompt2 = '═══════════════════ FILTROS DO USUÁRIO ═══════════════════\n' +
     'CLIENTE: "' + cliente + '"\n' +
@@ -5616,16 +5626,27 @@ function rgcExtractFromWorkbook(wb, filename) {
     });
   }
 
-  // ── 4) KPIs ANUAIS — calculados a partir dos meses ──
-  var totalMeta = mensal.reduce(function(s, m){ return s + m.meta; }, 0);
-  var totalRealizado = mensal.reduce(function(s, m){ return s + m.realizado; }, 0);
-  var totalFat25 = mensal.reduce(function(s, m){ return s + m.fat2025; }, 0);
-  var totalAbordados = mensal.reduce(function(s, m){ return s + m.abordados; }, 0);
-  var totalFechadas = mensal.reduce(function(s, m){ return s + m.fechadas; }, 0);
-  var metasBatidas = mensal.filter(function(m){ return m.pctAting >= 1; }).length;
+  // ── 4) KPIs — contexto temporal: meses já decorridos vs futuros ──
+  var hojeKpi = new Date();
+  var mesAtualKpi = hojeKpi.getMonth() + 1; // 1-12
+  var mesesDecorridos = mensal.filter(function(m){ return m.mes <= mesAtualKpi; });
+  var mesesFuturos = mensal.filter(function(m){ return m.mes > mesAtualKpi; });
 
-  // Melhor / pior mês (apenas considerando meses com realizado > 0)
-  var mesesComDados = mensal.filter(function(m){ return m.realizado > 0; });
+  // Totais ANO COMPLETO (planejamento - inclui meta de meses futuros)
+  var totalMetaAnual = mensal.reduce(function(s, m){ return s + m.meta; }, 0);
+  var totalFat25Anual = mensal.reduce(function(s, m){ return s + m.fat2025; }, 0);
+
+  // ACUMULADO ATÉ O MÊS ATUAL (comparação justa para indicadores de "agora")
+  var realizadoAteAgora = mesesDecorridos.reduce(function(s, m){ return s + m.realizado; }, 0);
+  var metaAteAgora = mesesDecorridos.reduce(function(s, m){ return s + m.meta; }, 0);
+  var fat25AteAgora = mesesDecorridos.reduce(function(s, m){ return s + m.fat2025; }, 0);
+  var abordadosAteAgora = mesesDecorridos.reduce(function(s, m){ return s + m.abordados; }, 0);
+  var fechadasAteAgora = mesesDecorridos.reduce(function(s, m){ return s + m.fechadas; }, 0);
+
+  var metasBatidas = mesesDecorridos.filter(function(m){ return m.pctAting >= 1; }).length;
+
+  // Melhor / pior mês — apenas meses já decorridos COM dados
+  var mesesComDados = mesesDecorridos.filter(function(m){ return m.realizado > 0; });
   var melhorMes = '', piorMes = '';
   if (mesesComDados.length) {
     var ord = mesesComDados.slice().sort(function(a,b){ return b.realizado - a.realizado; });
@@ -5634,22 +5655,30 @@ function rgcExtractFromWorkbook(wb, filename) {
   }
 
   var kpis = {
-    fatAnual: totalRealizado,
-    metaAnual: totalMeta,
-    pctAtingAnual: totalMeta > 0 ? totalRealizado / totalMeta : 0,
+    // Cards do painel mostram ATÉ AGORA (comparação justa)
+    fatAnual: realizadoAteAgora,                                  // faturamento acumulado até o mês atual
+    metaAnual: metaAteAgora,                                       // meta acumulada até o mês atual
+    pctAtingAnual: metaAteAgora > 0 ? realizadoAteAgora / metaAteAgora : 0,
     metasBatidas: metasBatidas,
-    convAnual: totalAbordados > 0 ? totalFechadas / totalAbordados : 0,
-    ticketAnual: totalFechadas > 0 ? totalRealizado / totalFechadas : 0,
+    metasBatidasDe: mesesDecorridos.length,                       // total de meses considerados na contagem
+    convAnual: abordadosAteAgora > 0 ? fechadasAteAgora / abordadosAteAgora : 0,
+    ticketAnual: fechadasAteAgora > 0 ? realizadoAteAgora / fechadasAteAgora : 0,
     melhorMes: melhorMes,
     piorMes: piorMes,
-    mediaMensal: mesesComDados.length > 0 ? totalRealizado / mesesComDados.length : 0,
-    fat2025: totalFat25,
-    fat2026: totalRealizado,
-    crescTotalPct: totalFat25 > 0 ? (totalRealizado - totalFat25) / totalFat25 : 0,
-    crescAcumul: totalRealizado - totalFat25,
+    mediaMensal: mesesComDados.length > 0 ? realizadoAteAgora / mesesComDados.length : 0,
+    // Comparativo justo: acumulado mesmo período do ano anterior
+    fat2025: fat25AteAgora,
+    fat2026: realizadoAteAgora,
+    crescTotalPct: fat25AteAgora > 0 ? (realizadoAteAgora - fat25AteAgora) / fat25AteAgora : 0,
+    crescAcumul: realizadoAteAgora - fat25AteAgora,
     crescMedioPct: mesesComDados.length > 0 ? (mesesComDados.reduce(function(s,m){return s+m.cresc;},0) / mesesComDados.length) : 0,
-    totalAbordados: totalAbordados,
-    totalFechadas: totalFechadas
+    totalAbordados: abordadosAteAgora,
+    totalFechadas: fechadasAteAgora,
+    // Projeção do ano completo (para referência apenas)
+    metaAnualCompleta: totalMetaAnual,
+    fat2025AnoCompleto: totalFat25Anual,
+    mesesDecorridos: mesesDecorridos.length,
+    mesesFuturos: mesesFuturos.length
   };
 
   // ── 5) QUALIDADE DE PREENCHIMENTO ──
@@ -5806,6 +5835,12 @@ function rgcMiniChart(mensal) {
 }
 
 function rgcRenderClientCards() {
+  var MES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var hojeC = new Date();
+  var mesAtualC = hojeC.getMonth() + 1;
+  var mesAtualNome = MES_ABR[mesAtualC - 1];
+  var periodoLabel = 'Jan a ' + mesAtualNome;
+
   var grid = document.getElementById('rgc-clients-grid');
   grid.innerHTML = _rgcData.map(function(d, idx) {
     if (d.error) {
@@ -5821,27 +5856,28 @@ function rgcRenderClientCards() {
     var crescColor = k.crescTotalPct >= 0 ? '#16A34A' : '#DC2626';
 
     return '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04);">'
-      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;">'
         + '<div style="flex:1;min-width:0;"><div style="font-weight:800;color:#1B2B6B;font-size:14px;margin-bottom:2px;line-height:1.3;">'+(d.cliente||'(sem nome)')+'</div>'
         + '<div style="font-size:10.5px;color:#6B7A99;text-transform:uppercase;letter-spacing:.5px;font-weight:600;">'+(d.programa||'—')+'</div></div>'
         + rgcQualBadge(q)
       + '</div>'
+      + '<div style="font-size:10.5px;color:#7C3AED;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding:5px 9px;background:#F5F3FF;border-radius:6px;display:inline-block;">Acumulado · '+periodoLabel+'/'+hojeC.getFullYear()+'</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">'
-        + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Faturamento</div>'
+        + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Faturamento '+periodoLabel+'</div>'
         + '<div style="font-size:15px;font-weight:800;color:#1B2B6B;">'+rgcFmtBRL(k.fatAnual)+'</div>'
-        + '<div style="font-size:10.5px;color:#6B7A99;">Meta: '+rgcFmtBRL(k.metaAnual)+'</div></div>'
+        + '<div style="font-size:10.5px;color:#6B7A99;">Meta acumulada: '+rgcFmtBRL(k.metaAnual)+'</div></div>'
         + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Atingimento</div>'
         + '<div style="font-size:15px;font-weight:800;color:'+atingColor+';">'+rgcFmtPct(pctAting)+'</div>'
-        + '<div style="font-size:10.5px;color:#6B7A99;">'+(k.metasBatidas||0)+' metas batidas</div></div>'
-        + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Crescimento vs Ano Anterior</div>'
+        + '<div style="font-size:10.5px;color:#6B7A99;">'+(k.metasBatidas||0)+' de '+(k.metasBatidasDe||0)+' metas batidas</div></div>'
+        + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Crescimento vs '+periodoLabel+'/anterior</div>'
         + '<div style="font-size:15px;font-weight:800;color:'+crescColor+';">'+(k.crescTotalPct >= 0 ? '+':'')+rgcFmtPct(k.crescTotalPct)+'</div>'
         + '<div style="font-size:10.5px;color:#6B7A99;">'+rgcFmtBRL(k.fat2025)+' → '+rgcFmtBRL(k.fat2026)+'</div></div>'
         + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Ticket Médio</div>'
         + '<div style="font-size:15px;font-weight:800;color:#1B2B6B;">'+rgcFmtBRL(k.ticketAnual)+'</div>'
         + '<div style="font-size:10.5px;color:#6B7A99;">Conv: '+rgcFmtPct(k.convAnual)+'</div></div>'
       + '</div>'
-      + '<div style="margin-bottom:10px;"><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:4px;">Meta vs Realizado por Mês</div>'
-        + rgcMiniChart(d.mensal)
+      + '<div style="margin-bottom:10px;"><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:4px;">Meta vs Realizado por Mês <span style="color:#94A3B8;text-transform:none;font-weight:500;">(meses futuros não exibidos)</span></div>'
+        + rgcMiniChart(d.mensal.filter(function(m){ return m.mes <= mesAtualC; }))
       + '</div>'
       + '<div style="background:#F5F7FA;border-radius:8px;padding:10px 12px;font-size:11px;color:#41546A;">'
         + '<div style="font-weight:700;color:#1B2B6B;margin-bottom:3px;">Preenchimento da planilha</div>'
@@ -5887,61 +5923,127 @@ async function rgcRunAI() {
       '• Diagnóstico de crescimento vs ano anterior — distinguir performance real de efeito sazonal\n' +
       '• Avaliação de disciplina operacional (qualidade do preenchimento da planilha)\n' +
       '• Construção de análises executivas acionáveis para o empresário\n\n' +
+      '═══ REGRA TEMPORAL CRÍTICA ═══\n' +
+      'Esta análise está sendo gerada em ' + contextoTemporal.mes_atual + '. Os campos do JSON do cliente trazem CADA MÊS marcado com "status_temporal":\n' +
+      '• "REALIZADO" → mês decorrido, dados completos, ANALISE NORMALMENTE\n' +
+      '• "EM_ANDAMENTO" → mês corrente, dados parciais — analise com a ressalva "até o momento"\n' +
+      '• "FUTURO_NAO_DECORRIDO" → mês não aconteceu. PROIBIDO chamar de "paralisação", "queda", "sem operação", "dados não registrados". NÃO inclua em análise de gap, tendência ou comparação com meta. Pode no máximo dizer "restam X meses no ano".\n\n' +
+      'Use o campo "kpis_acumulado_ate_o_mes_atual" para % atingimento — NUNCA compare faturamento acumulado parcial com meta anual COMPLETA.\n\n' +
       'METODOLOGIA OBRIGATÓRIA antes de cada análise:\n' +
-      '1. Examine PRIMEIRO os meses individuais — onde houve picos, vales, metas batidas/perdidas\n' +
-      '2. Cruze com a evolução vs ano anterior — empresa está crescendo, estável ou decrescendo?\n' +
-      '3. Avalie o atingimento médio e a CONSISTÊNCIA (variabilidade mensal)\n' +
-      '4. Considere a qualidade do preenchimento — se baixa, alerte que conclusões podem estar enviesadas\n' +
-      '5. SÓ ENTÃO sintetize a análise\n\n' +
+      '1. Identifique quais meses são REALIZADOS — só estes contam para conclusões\n' +
+      '2. Examine picos, vales, metas batidas/perdidas APENAS nos meses já decorridos\n' +
+      '3. Cruze com evolução vs ano anterior (mesmo período) — crescendo, estável ou decrescendo?\n' +
+      '4. Avalie atingimento médio + CONSISTÊNCIA mensal\n' +
+      '5. Considere a qualidade do preenchimento — se baixa, alerte que conclusões podem estar enviesadas\n' +
+      '6. SÓ ENTÃO sintetize\n\n' +
       'REGRAS OBRIGATÓRIAS:\n' +
       '1. Baseie-se EXCLUSIVAMENTE nos dados fornecidos do CLIENTE individual. Não invente.\n' +
       '2. NUNCA compare com outros clientes — a análise é exclusiva desta empresa.\n' +
-      '3. Cite NÚMEROS REAIS na análise (ex: "atingiu 87% em Junho com R$ 60.281,90") — sem generalizações.\n' +
+      '3. Cite NÚMEROS REAIS (ex: "atingiu 87% em Junho com R$ 60.281,90") — sem generalizações.\n' +
       '4. Responda APENAS com JSON válido, sem markdown.\n' +
       '5. Valores em moeda em formato brasileiro (R$ 12.345,67).\n' +
-      '6. Recomendações devem ser ESPECÍFICAS e MENSURÁVEIS — não "melhorar conversão", mas "subir conversão de 24% para 35% até [mês]".';
+      '6. Recomendações ESPECÍFICAS e MENSURÁVEIS — não "melhorar conversão", mas "subir conversão de 24% para 35% até [mês futuro]".\n' +
+      '7. JAMAIS mencione meses FUTURO_NAO_DECORRIDO como problema, gap ou paralisação.';
+
+    // Contexto temporal — fundamental para a IA não confundir mês futuro com paralisação
+    var hojeRef = new Date();
+    var mesAtualRef = hojeRef.getMonth() + 1;
+    var anoAtualRef = hojeRef.getFullYear();
+    var diaAtualRef = hojeRef.getDate();
+    var MES_LBL_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    var contextoTemporal = {
+      data_de_geracao: hojeRef.toLocaleDateString('pt-BR'),
+      mes_atual: MES_LBL_FULL[mesAtualRef - 1] + '/' + anoAtualRef,
+      mes_atual_numero: mesAtualRef,
+      ano_atual: anoAtualRef,
+      dia_atual: diaAtualRef,
+      meses_ja_decorridos: mesAtualRef - 1, // meses anteriores ao atual
+      mes_em_andamento: MES_LBL_FULL[mesAtualRef - 1],
+      meses_futuros_no_ano: 12 - mesAtualRef
+    };
 
     // Tarefa por cliente
     function montaContextoCliente(d) {
+      // KPIs anuais — só considerar meses já realizados ou em andamento
+      var mesesRelevantes = d.mensal.filter(function(m){ return m.mes <= mesAtualRef; });
+      var totalRelMesesPassados = mesesRelevantes.reduce(function(s,m){return s + m.realizado;}, 0);
+      var totalMetaMesesPassados = mesesRelevantes.reduce(function(s,m){return s + m.meta;}, 0);
+      var atingMesesPassadosPct = totalMetaMesesPassados > 0 ? (totalRelMesesPassados / totalMetaMesesPassados) : 0;
+
       return {
         cliente: d.cliente,
         programa: d.programa,
-        kpis: {
-          faturamento_anual: d.kpis.fatAnual,
-          meta_anual: d.kpis.metaAnual,
-          atingimento_pct: d.kpis.metaAnual > 0 ? (d.kpis.fatAnual/d.kpis.metaAnual*100).toFixed(1)+'%' : '—',
-          metas_batidas: d.kpis.metasBatidas,
-          crescimento_total_pct: (Number(d.kpis.crescTotalPct)*100).toFixed(1) + '%',
-          faturamento_ano_anterior: d.kpis.fat2025,
-          ticket_medio: d.kpis.ticketAnual,
-          taxa_conversao_pct: (Number(d.kpis.convAnual)*100).toFixed(1) + '%',
-          melhor_mes: d.kpis.melhorMes,
-          pior_mes: d.kpis.piorMes,
-          media_mensal_realizada: d.kpis.mediaMensal
+        contexto_temporal: contextoTemporal,
+        kpis_acumulado_ate_o_mes_atual: {
+          faturamento_realizado_ate_agora: totalRelMesesPassados,
+          meta_acumulada_ate_agora: totalMetaMesesPassados,
+          atingimento_acumulado_pct: (atingMesesPassadosPct*100).toFixed(1)+'%',
+          meses_considerados: mesesRelevantes.length + ' (Janeiro até ' + MES_LBL_FULL[mesAtualRef - 1] + ')'
         },
-        mensal: d.mensal.filter(function(m){return m.realizado>0||m.meta>0;}).map(function(m){
-          return { mes: m.nome, meta: m.meta, realizado: m.realizado, atingimento_pct: Math.round((m.pctAting||0)*100)+'%', crescimento_vs_ano_anterior_pct: Math.round((m.cresc||0)*100)+'%' };
+        kpis_projecao_ano_completo: {
+          // Apenas se houver meses futuros — projeta com base na meta do ano
+          meta_anual: d.kpis.metaAnual,
+          ticket_medio_ate_agora: d.kpis.ticketAnual,
+          taxa_conversao_ate_agora_pct: (Number(d.kpis.convAnual)*100).toFixed(1) + '%',
+          metas_batidas_ate_agora: d.kpis.metasBatidas + ' de ' + mesesRelevantes.length + ' meses já decorridos',
+          melhor_mes: d.kpis.melhorMes,
+          pior_mes: d.kpis.piorMes
+        },
+        crescimento_vs_ano_anterior: {
+          faturamento_acumulado_ano_anterior: d.kpis.fat2025,
+          faturamento_acumulado_ano_atual: d.kpis.fat2026,
+          variacao_total_pct: (Number(d.kpis.crescTotalPct)*100).toFixed(1) + '%',
+          observacao: 'Comparação considera todos os meses lançados — em ambos os anos.'
+        },
+        // CADA mês marcado com status temporal explícito
+        mensal_com_status_temporal: d.mensal.map(function(m){
+          var status;
+          if (m.mes < mesAtualRef) status = 'REALIZADO (mês já decorreu)';
+          else if (m.mes === mesAtualRef) status = 'EM_ANDAMENTO (mês corrente, dados parciais)';
+          else status = 'FUTURO_NAO_DECORRIDO (NÃO ANALISAR — mês ainda não aconteceu)';
+          return {
+            mes: m.nome,
+            mes_numero: m.mes,
+            status_temporal: status,
+            meta: m.meta,
+            realizado: m.realizado,
+            atingimento_pct: Math.round((m.pctAting||0)*100)+'%',
+            faturamento_ano_anterior: m.fat2025,
+            crescimento_vs_ano_anterior_pct: m.fat2025 > 0 ? Math.round((m.cresc||0)*100)+'%' : '—'
+          };
         }),
         qualidade_preenchimento: {
           score: d.qualidade.score + '%',
           classificacao: d.qualidade.classificacao,
-          dias_preenchidos: d.qualidade.diasPreenchidos + ' de ' + d.qualidade.diasEsperados,
-          meses_com_vendas: d.qualidade.mesesPreenchidos + ' de ' + d.qualidade.mesesEsperados,
-          metas_definidas: d.qualidade.metasDefinidas + ' de 12'
+          dias_preenchidos: d.qualidade.diasPreenchidos + ' de ' + d.qualidade.diasEsperados + ' dias úteis decorridos',
+          meses_com_vendas: d.qualidade.mesesPreenchidos + ' de ' + d.qualidade.mesesEsperados + ' meses decorridos',
+          metas_definidas: d.qualidade.metasDefinidas + ' de 12 (planejamento anual)'
         }
       };
     }
 
     var promptIndividual = function(ctxCliente) {
-      return '═══════ DADOS DO CLIENTE ═══════\n' +
+      return '═══════════════════ REGRA TEMPORAL OBRIGATÓRIA ═══════════════════\n' +
+        'A análise está sendo gerada em ' + contextoTemporal.mes_atual + ' (dia ' + contextoTemporal.dia_atual + ').\n' +
+        'Cada mês no array "mensal_com_status_temporal" tem um campo "status_temporal" que você DEVE respeitar ESTRITAMENTE:\n\n' +
+        '• "REALIZADO" → mês já decorreu por completo. ANALISE NORMALMENTE.\n' +
+        '• "EM_ANDAMENTO" → é o mês corrente. Dados são PARCIAIS. Use com ressalva ("até o dia X de ' + contextoTemporal.mes_em_andamento + '").\n' +
+        '• "FUTURO_NAO_DECORRIDO" → AINDA NÃO ACONTECEU. PROIBIDO:\n' +
+        '   - Chamar de "paralisação", "queda", "estagnação", "empresa não operou", "dados não registrados"\n' +
+        '   - Incluir em cálculos de gap, tendência, comparação com meta\n' +
+        '   - Contar como "mês sem dados"\n' +
+        '   - Citar valores R$ 0 desses meses como evidência de algo\n' +
+        '   - Apenas IGNORAR esses meses — você pode no máximo dizer "restam ' + contextoTemporal.meses_futuros_no_ano + ' meses no ano para atingir a meta anual"\n\n' +
+        'KPIs de atingimento devem usar APENAS meses REALIZADOS ou EM_ANDAMENTO (campo "kpis_acumulado_ate_o_mes_atual"). NUNCA use "meta_anual completa" como base de comparação para o que foi realizado até agora — isso seria injusto.\n\n' +
+        '═══════════════════ DADOS DO CLIENTE ═══════════════════\n' +
         JSON.stringify(ctxCliente, null, 2) + '\n\n' +
-        '═══════ ENTREGUE (apenas este cliente — sem comparações) ═══════\n' +
+        '═══════════════════ ENTREGUE (análise exclusiva deste cliente) ═══════════════════\n' +
         '{\n' +
-        '  "panorama": "2-3 parágrafos curtos sobre o DESEMPENHO da empresa: atingimento, evolução mensal, ponto da curva (cresceu/estagnou/caiu). Use os números reais.",\n' +
-        '  "avancos": "2-4 pontos positivos identificados (meses com meta batida, crescimento vs ano anterior, ticket médio, picos de vendas). Bullets com \\"• \\". Se não houver avanços, dizer.",\n' +
-        '  "atencoes": "2-4 pontos críticos (meses abaixo da meta, queda de crescimento, conversão baixa, gap atual da meta). Bullets com \\"• \\".",\n' +
-        '  "proximos_passos": "3-5 ações concretas e específicas para ESTE cliente. Bullets com \\"• \\". Recomendações operacionais — não financeiras genéricas.",\n' +
-        '  "preenchimento": "1 parágrafo curto avaliando a qualidade do preenchimento da planilha. Se score < 65, recomendar reforço de disciplina; se >= 65, parabenizar."\n' +
+        '  "panorama": "2-3 parágrafos sobre o desempenho ATÉ ' + contextoTemporal.mes_em_andamento + '/' + contextoTemporal.ano_atual + '. Cite números reais dos meses já decorridos. NÃO mencione meses futuros como problema.",\n' +
+        '  "avancos": "2-4 pontos positivos dos meses já realizados (meta batida, crescimento vs ano anterior, picos, evolução). Bullets com \\"• \\". Cite o nome do mês.",\n' +
+        '  "atencoes": "2-4 pontos críticos dos meses já realizados (gap, queda vs ano anterior, conversão baixa em mês específico). NUNCA cite meses futuros aqui. Bullets com \\"• \\".",\n' +
+        '  "proximos_passos": "3-5 ações concretas para ESTE cliente nos PRÓXIMOS MESES (' + contextoTemporal.meses_futuros_no_ano + ' meses restantes no ano). Bullets com \\"• \\". Específicas e mensuráveis.",\n' +
+        '  "preenchimento": "1 parágrafo avaliando a qualidade do preenchimento. Se score < 65, recomendar reforço; se >= 65, parabenizar."\n' +
         '}';
     };
 
