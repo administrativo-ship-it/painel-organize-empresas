@@ -152,33 +152,29 @@ def main():
             valid_pids.append(pid)
             print(f'  pid={pid}: total={total} abertas={total_open}')
 
-    # FASE 2: Para cada projeto, todas as ABERTAS (criticas) + N finalizadas recentes
-    print(f'\n[2] Coletando tarefas ({len(valid_pids)} projetos)')
-    for pid in valid_pids:
-        t_start = time.time()
-        n_open = project_counts[pid]['open']
-        n_recent = min(project_counts[pid]['finished'], N_RECENT_FINISHED)
+    # FASE 2: TODOS OS PROJETOS EM PARALELO (cada um faz seu fetch_pages_parallel internamente)
+    # Antes: serial (8-10min). Agora: paralelo (tempo total = tempo do projeto mais lento, ~1min).
+    print(f'\n[2] Coletando tarefas EM PARALELO ({len(valid_pids)} projetos)')
 
-        # ABERTAS — 100% das tarefas em aberto (atrasadas, hoje, futuras)
-        # API e 0-indexed: page 0 = primeira, page N-1 = ultima
-        open_tks = fetch_pages_parallel(
+    def fetch_one_project(pid):
+        t0 = time.time()
+        n_open = project_counts[pid]['open']
+        if n_open == 0:
+            return pid, [], 0.0
+        tks = fetch_pages_parallel(
             {'Projects': [pid], 'ShowFinished': False, 'ShowArchived': False},
             0, n_open - 1
-        ) if n_open > 0 else []
+        )
+        return pid, tks, time.time() - t0
 
-        # FINALIZADAS RECENTES — primeiras N (ordenadas mais recentes pelo backend)
-        recent_tks = fetch_pages_parallel(
-            {'Projects': [pid], 'ShowFinished': True, 'ShowArchived': False},
-            0, n_recent - 1
-        ) if n_recent > 0 else []
-        # Filtra so finalizadas (a query 'true' inclui abertas)
-        open_ids = {t.get('Id') for t in open_tks}
-        recent_finished = [t for t in recent_tks if t.get('Id') not in open_ids]
-
-        merge_into(all_tasks, open_tks)
-        merge_into(all_tasks, recent_finished)
-        dur = time.time() - t_start
-        print(f'  pid={pid}: open={len(open_tks)}/{n_open} fin_recent={len(recent_finished)} | {dur:.1f}s | acumulado={len(all_tasks)}')
+    # Limita o paralelismo entre projetos (cada um usa ate MAX_WORKERS threads internas)
+    # 4 projetos paralelos x 32 workers = 128 conexoes simultaneas no FlowUp — bom equilibrio
+    with ThreadPoolExecutor(max_workers=4) as exproj:
+        futures = {exproj.submit(fetch_one_project, pid): pid for pid in valid_pids}
+        for fut in as_completed(futures):
+            pid, tks, dur = fut.result()
+            merge_into(all_tasks, tks)
+            print(f'  pid={pid}: open={len(tks)}/{project_counts[pid]["open"]} | {dur:.1f}s | acumulado={len(all_tasks)}')
 
     tasks_list = list(all_tasks.values())
     projects = derive_projects(tasks_list, project_counts)
