@@ -14,15 +14,17 @@ permissions:
 
 concurrency:
   group: sync-flowup
-  cancel-in-progress: false
+  cancel-in-progress: true   # MUDOU: cancela run anterior se um novo vier
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8         # Era 15 — agora sync demora 2-3min
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0       # Histórico completo para pull --rebase
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -35,14 +37,25 @@ jobs:
           FLOWUP_SUBDOMAIN: ${{ secrets.FLOWUP_SUBDOMAIN }}
         run: python scripts/sync_flowup.py
 
-      - name: Commit alterações (se houver)
+      - name: Commit alterações (com retry no push)
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add flowup-data.json
           if git diff --cached --quiet; then
             echo "Sem alterações em flowup-data.json — nada a commitar."
-          else
-            git commit -m "chore: auto-sync flowup-data.json [skip ci]"
-            git push
+            exit 0
           fi
+          git commit -m "chore: auto-sync flowup-data.json [skip ci]"
+          # Retry com pull --rebase até 3 vezes (resolve conflitos com runs paralelos)
+          for i in 1 2 3; do
+            git pull --rebase origin main || true
+            if git push origin main; then
+              echo "Push OK na tentativa $i"
+              exit 0
+            fi
+            echo "Push falhou na tentativa $i, tentando novamente..."
+            sleep 5
+          done
+          echo "ERRO: push falhou 3 vezes"
+          exit 1
