@@ -6333,10 +6333,12 @@ function rgcPdfChart(mensal) {
     + grid + bars + xlabels + legend + '</svg>';
 }
 
-function rgcDownloadPDF() {
+async function rgcDownloadPDF() {
   var ok = _rgcData.filter(function(d){ return !d.error; });
   if (!ok.length) { alert('Nenhum dado para gerar PDF.'); return; }
-  if (typeof html2pdf === 'undefined') { alert('Biblioteca html2pdf não carregada.'); return; }
+  if (typeof html2canvas === 'undefined' || !window.jspdf || !window.jspdf.jsPDF) {
+    alert('Bibliotecas de PDF não carregadas.'); return;
+  }
 
   var analiseMap = {};
   if (_rgcAIAnalysis && Array.isArray(_rgcAIAnalysis.analises_por_cliente)) {
@@ -6423,7 +6425,7 @@ function rgcDownloadPDF() {
   // ═════════════════════════════════════════════════════════════
   // PÁGINA POR EMPRESA — REPLICA o card do painel
   // ═════════════════════════════════════════════════════════════
-  var clientesHTML = ok.map(function(d, idx){
+  var clientesHTML_per = ok.map(function(d, idx){
     var k = d.kpis, q = d.qualidade;
     var pct = k.metaAnual > 0 ? (k.fatAnual/k.metaAnual) : 0;
     var analise = analiseMap[d.cliente] || null;
@@ -6453,7 +6455,7 @@ function rgcDownloadPDF() {
         + '</div>';
     }
 
-    return '<div style="page-break-before:always;">'
+    return '<div>'
       // HEADER colorido com logo
       + pageHeader(d.cliente + ' · ' + (d.programa||''))
       // CONTEÚDO do cliente
@@ -6506,38 +6508,97 @@ function rgcDownloadPDF() {
       + '</div>';
   }).join('');
 
-  var fullHTML = '<div style="font-family:Inter,Arial,sans-serif;color:#2C3E50;line-height:1.4;background:#fff;">'
-    + capa + sumario + clientesHTML + '</div>';
+  // ═══════════════════════════════════════════════════════════════════
+  // RENDERIZAÇÃO: jsPDF nativo + html2canvas POR SEÇÃO (1 bloco por vez)
+  // Cada seção vira UMA OU MAIS páginas A4, sem multiplicar contagem.
+  // ═══════════════════════════════════════════════════════════════════
+  var btn = document.getElementById('rgc-btn-pdf');
+  var oldTxt = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Gerando PDF...'; }
 
-  var wrapper = document.createElement('div');
-  wrapper.style.width = '794px';
-  wrapper.style.background = '#ffffff';
-  wrapper.innerHTML = fullHTML;
-  document.body.appendChild(wrapper);
+  try {
+    var A4_W_MM = 210, A4_H_MM = 297;
+    var RENDER_W_PX = 794; // largura A4 em px @ 96dpi
 
-  var nomeArquivo = 'Relatorio_Gerencial_Comercial_' + new Date().toISOString().substring(0,10) + '.pdf';
-  html2pdf().set({
-    margin: 0,
-    filename: nomeArquivo,
-    image: { type: 'png', quality: 1.0 },
-    html2canvas: {
-      scale: 3,
-      useCORS: true,
-      allowTaint: true,
-      letterRendering: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      windowWidth: 794
-    },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: false },
-    pagebreak: { mode: ['css','legacy'] }
-  }).from(wrapper).save().then(function(){
-    document.body.removeChild(wrapper);
-  }).catch(function(e){
+    // Lista de seções a renderizar (capa = 1 página fixa; sumário e clientes = fluxo)
+    var sections = [
+      { html: capa, fixedPage: true, label: 'Capa' },
+      { html: sumario, fixedPage: false, label: 'Sumário' }
+    ];
+    ok.forEach(function(d, i){
+      sections.push({ html: '<div>'+clientesHTML_per[i]+'</div>', fixedPage: false, label: 'Cliente: '+d.cliente });
+    });
+
+    // Wrapper para renderização off-screen (não no body visível)
+    var stage = document.createElement('div');
+    stage.style.position = 'fixed';
+    stage.style.left = '-99999px';
+    stage.style.top = '0';
+    stage.style.width = RENDER_W_PX + 'px';
+    stage.style.background = '#ffffff';
+    stage.style.fontFamily = 'Inter, Arial, sans-serif';
+    stage.style.color = '#2C3E50';
+    stage.style.lineHeight = '1.4';
+    document.body.appendChild(stage);
+
+    var jsPDF = window.jspdf.jsPDF;
+    var pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+    var isFirst = true;
+
+    for (var si = 0; si < sections.length; si++) {
+      var s = sections[si];
+      if (btn) btn.innerHTML = 'Gerando ('+ (si+1) +'/'+ sections.length +')...';
+
+      stage.innerHTML = s.html;
+      // Aguarda imagens carregarem (logo base64 é instantâneo, mas garante)
+      await new Promise(function(r){ setTimeout(r, 50); });
+
+      var canvas = await html2canvas(stage.firstChild, {
+        scale: 2,                  // 2x = ~192 DPI (bom equilíbrio qualidade/tamanho)
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: RENDER_W_PX
+      });
+
+      var imgData = canvas.toDataURL('image/jpeg', 0.85); // JPEG 85% — peso 5-10x menor que PNG
+      var imgW_mm = A4_W_MM;
+      var imgH_mm = (canvas.height * A4_W_MM) / canvas.width;
+
+      if (s.fixedPage) {
+        // Capa: força 1 página exata (escala para caber)
+        if (!isFirst) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, 0, A4_W_MM, A4_H_MM);
+        isFirst = false;
+      } else if (imgH_mm <= A4_H_MM) {
+        // Cabe em 1 página
+        if (!isFirst) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, 0, imgW_mm, imgH_mm);
+        isFirst = false;
+      } else {
+        // Conteúdo maior que A4: divide em fatias verticais
+        var totalH = imgH_mm;
+        var posY = 0;
+        while (posY < totalH) {
+          if (!isFirst) pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, -posY, imgW_mm, imgH_mm);
+          posY += A4_H_MM;
+          isFirst = false;
+        }
+      }
+    }
+
+    document.body.removeChild(stage);
+
+    var nomeArquivo = 'Relatorio_Gerencial_Comercial_' + new Date().toISOString().substring(0,10) + '.pdf';
+    pdf.save(nomeArquivo);
+  } catch (e) {
     console.error('[RGC] PDF erro', e);
-    document.body.removeChild(wrapper);
-    alert('Erro ao gerar PDF: '+e.message);
-  });
+    alert('Erro ao gerar PDF: ' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = oldTxt; }
+  }
 }
 
 // ═══════════════ PORTAL DO CLIENTE — Gerador de Portais Integrado ═══════════════
