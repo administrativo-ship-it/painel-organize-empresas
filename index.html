@@ -449,6 +449,10 @@ tbody tr:hover{background:var(--off);}
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
     Emitir Relatórios
   </div>
+  <div class="nav-item" onclick="showPage('rgc',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19V6a1 1 0 00-1-1H4a1 1 0 00-1 1v13m6 0h6m-6 0V10a1 1 0 011-1h4a1 1 0 011 1v9m0 0h6V13a1 1 0 00-1-1h-4a1 1 0 00-1 1v6z"/></svg>
+    Relatório Gerencial Comercial
+  </div>
 
   <div class="nav-label">Clientes</div>
   <div class="nav-item" onclick="showPage('portal',this)">
@@ -637,6 +641,57 @@ tbody tr:hover{background:var(--off);}
         <tbody id="trello-over-body"></tbody>
       </table>
     </div>
+  </div>
+
+
+  <!-- RELATÓRIO GERENCIAL COMERCIAL -->
+  <div class="page" id="page-rgc">
+    <div style="padding:24px 28px;background:linear-gradient(135deg,#1B2B6B,#2A3F8F);color:#fff;border-radius:12px;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.75;margin-bottom:4px;">Organize Empresas — Indicadores Comerciais</div>
+          <h1 style="font-size:22px;font-weight:800;margin:0;">Relatório Gerencial Comercial</h1>
+          <div style="font-size:12.5px;opacity:.85;margin-top:6px;line-height:1.5;">Faça upload das planilhas <strong>Indicadores Comerciais</strong> de cada cliente. O sistema identifica automaticamente a empresa e consolida os indicadores em um relatório único.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="rgc-btn-ai" disabled onclick="rgcRunAI()" style="background:#7C3AED;color:#fff;border:none;padding:11px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;opacity:.55;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3-3 3 3M12 14V8M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Gerar Análise com IA
+          </button>
+          <button id="rgc-btn-pdf" disabled onclick="rgcDownloadPDF()" style="background:#fff;color:#1B2B6B;border:none;padding:11px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;opacity:.55;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+            Baixar PDF Único
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zona de upload em lote -->
+    <div id="rgc-upload-zone" style="border:2px dashed #1B2B6B;border-radius:12px;padding:32px 24px;text-align:center;cursor:pointer;background:#fafbfd;transition:all .15s;margin-bottom:18px;"
+      onclick="document.getElementById('rgc-upload-input').click()"
+      ondragover="event.preventDefault();this.style.background='#eef2fb';this.style.borderColor='#7C3AED';"
+      ondragleave="this.style.background='#fafbfd';this.style.borderColor='#1B2B6B';"
+      ondrop="rgcHandleDrop(event)">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1B2B6B" stroke-width="1.5" style="margin-bottom:8px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      <div style="font-size:15px;font-weight:700;color:#1B2B6B;">Arraste todas as planilhas .xlsx dos clientes aqui</div>
+      <div style="font-size:12px;color:#6B7A99;margin-top:4px;">ou clique para selecionar múltiplos arquivos · O sistema identifica cada cliente automaticamente</div>
+      <input type="file" id="rgc-upload-input" accept=".xlsx" multiple style="display:none;" onchange="rgcHandleFiles(event.target.files)">
+    </div>
+
+    <!-- Status / lista de uploads -->
+    <div id="rgc-status" style="display:none;background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:14px 16px;margin-bottom:18px;font-size:12.5px;color:#41546A;"></div>
+
+    <!-- Resumo executivo (cards no topo) -->
+    <div id="rgc-summary" style="display:none;margin-bottom:18px;"></div>
+
+    <!-- Dashboard agregado (cards por cliente) -->
+    <div id="rgc-clients-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:18px;"></div>
+
+    <!-- Ranking / tabela comparativa -->
+    <div id="rgc-ranking" style="display:none;background:#fff;border:1px solid #E0E5EE;border-radius:10px;padding:20px;margin-bottom:18px;"></div>
+
+    <!-- Análise IA -->
+    <div id="rgc-ai-analysis" style="display:none;"></div>
   </div>
 
 
@@ -5243,6 +5298,617 @@ function selectReportType(type, el) {
   renderReports();
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// ═══════════════ RELATÓRIO GERENCIAL COMERCIAL (RGC) ═══════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// Upload em lote de planilhas Indicadores Comerciais. Sistema identifica
+// cliente automaticamente (Dashboard!D2 ou nome do arquivo), extrai KPIs
+// anuais/mensais, avalia qualidade do preenchimento, e gera análise via
+// IA + PDF único consolidado.
+
+var _rgcData = [];      // [{ filename, cliente, programa, kpis, mensal, crescimento, qualidade, rawData, error }]
+var _rgcAIAnalysis = null;
+var MES_NOMES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function rgcStatus(msg, type) {
+  var el = document.getElementById('rgc-status');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.borderColor = type === 'err' ? '#FCA5A5' : (type === 'ok' ? '#86EFAC' : '#E0E5EE');
+  el.style.background = type === 'err' ? '#FEF2F2' : (type === 'ok' ? '#F0FDF4' : '#F5F7FA');
+  el.style.color = type === 'err' ? '#991B1B' : (type === 'ok' ? '#166534' : '#41546A');
+  el.innerHTML = msg;
+}
+
+function rgcHandleDrop(e) {
+  e.preventDefault();
+  var zone = document.getElementById('rgc-upload-zone');
+  zone.style.background = '#fafbfd';
+  zone.style.borderColor = '#1B2B6B';
+  if (e.dataTransfer && e.dataTransfer.files) rgcHandleFiles(e.dataTransfer.files);
+}
+
+async function rgcHandleFiles(fileList) {
+  if (!fileList || !fileList.length) return;
+  var files = Array.from(fileList).filter(function(f){ return /\.xlsx?$/i.test(f.name); });
+  if (!files.length) { rgcStatus('Nenhum arquivo .xlsx selecionado.', 'err'); return; }
+  if (typeof XLSX === 'undefined') { rgcStatus('Biblioteca XLSX não carregada.', 'err'); return; }
+
+  rgcStatus('Lendo ' + files.length + ' planilha(s)...', 'info');
+  // Limpa dados anteriores
+  _rgcData = [];
+  _rgcAIAnalysis = null;
+  document.getElementById('rgc-clients-grid').innerHTML = '';
+  document.getElementById('rgc-summary').style.display = 'none';
+  document.getElementById('rgc-ranking').style.display = 'none';
+  document.getElementById('rgc-ai-analysis').style.display = 'none';
+
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    try {
+      var data = await rgcParseFile(f);
+      _rgcData.push(data);
+    } catch(e) {
+      _rgcData.push({ filename: f.name, error: e.message || String(e) });
+      console.error('[RGC] erro lendo ' + f.name, e);
+    }
+  }
+
+  rgcRenderAll();
+  var okCount = _rgcData.filter(function(d){ return !d.error; }).length;
+  var errCount = _rgcData.length - okCount;
+  rgcStatus(
+    '<strong>' + okCount + '</strong> planilha(s) processada(s) com sucesso' +
+    (errCount > 0 ? ' · <strong style="color:#991B1B">' + errCount + ' falha(s)</strong>' : '') +
+    ' · Pronto para gerar análise IA e PDF.',
+    okCount > 0 ? 'ok' : 'err'
+  );
+
+  // Habilita botões
+  var btnAI = document.getElementById('rgc-btn-ai');
+  var btnPDF = document.getElementById('rgc-btn-pdf');
+  if (okCount > 0) {
+    btnAI.disabled = false; btnAI.style.opacity = '1';
+    btnPDF.disabled = false; btnPDF.style.opacity = '1';
+  }
+}
+
+function rgcParseFile(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+        var data = rgcExtractFromWorkbook(wb, file.name);
+        resolve(data);
+      } catch(e) { reject(e); }
+    };
+    reader.onerror = function(){ reject(new Error('Falha ao ler arquivo')); };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function rgcExtractFromWorkbook(wb, filename) {
+  // ── 1) Identificação do cliente ──
+  var dashSheet = wb.Sheets['Dashboard'];
+  var cliente = '';
+  var programa = '';
+  if (dashSheet) {
+    if (dashSheet['D2']) cliente = String(dashSheet['D2'].v || '').trim();
+    if (dashSheet['K2']) programa = String(dashSheet['K2'].v || '').trim();
+  }
+  // Fallback: nome do arquivo (remove prefixos comuns)
+  if (!cliente) {
+    cliente = filename
+      .replace(/\.xlsx?$/i, '')
+      .replace(/^INDICADORES[\s_]*COMERCIAIS[\s_]*[-–_][\s_]*/i, '')
+      .replace(/[\s_]*[-–_][\s_]*ORGANIZE[\s_]*(MENTORING|MASTER|MARKETING|EMPRESAS|ESTRAT[ÉE]GICO)?$/i, '')
+      .replace(/[_]+/g, ' ')
+      .trim();
+  }
+  if (!programa) programa = 'Organize Mentoring';
+
+  // ── 2) KPIs anuais (Base de Dados linhas 4-16 + bloco 20-26) ──
+  var baseSheet = wb.Sheets['Base de Dados'];
+  var crescSheet = wb.Sheets['Crescimento da Empresa'];
+  var defSheet = wb.Sheets[wb.SheetNames.find(function(n){ return /Defini.+o de Meta/i.test(n); })];
+
+  function val(sheet, ref) {
+    if (!sheet || !sheet[ref]) return null;
+    var c = sheet[ref];
+    return c.v != null ? c.v : null;
+  }
+
+  var kpis = {
+    fatAnual:      val(baseSheet, 'E16') || 0,
+    metaAnual:     val(baseSheet, 'D16') || 0,
+    pctAtingAnual: val(baseSheet, 'G16') || 0,
+    metasBatidas:  val(baseSheet, 'E20') || 0,
+    convAnual:     val(baseSheet, 'L16') || 0,
+    ticketAnual:   val(baseSheet, 'M16') || 0,
+    melhorMes:     val(baseSheet, 'E21') || '',
+    piorMes:       val(baseSheet, 'E22') || '',
+    mediaMensal:   val(baseSheet, 'E23') || 0,
+    fat2025:       val(crescSheet, 'E23') || 0,
+    fat2026:       val(crescSheet, 'E24') || 0,
+    crescTotalPct: val(crescSheet, 'E25') || 0,
+    crescAcumul:   val(crescSheet, 'E20') || 0,
+    crescMedioPct: val(crescSheet, 'E21') || 0
+  };
+
+  // ── 3) Mensal: 12 meses ──
+  var mensal = [];
+  for (var i = 0; i < 12; i++) {
+    var row = i + 4; // linhas 4..15
+    var m = {
+      mes: i + 1,
+      nome: MES_NOMES_FULL[i],
+      meta:    val(baseSheet, 'D'+row) || 0,
+      realizado: val(baseSheet, 'E'+row) || 0,
+      diff:    val(baseSheet, 'F'+row) || 0,
+      pctAting: val(baseSheet, 'G'+row) || 0,
+      status:  val(baseSheet, 'H'+row) || '',
+      abordados: val(baseSheet, 'J'+row) || 0,
+      fechadas:  val(baseSheet, 'K'+row) || 0,
+      conv:    val(baseSheet, 'L'+row) || 0,
+      ticket:  val(baseSheet, 'M'+row) || 0,
+      fat2025: val(crescSheet, 'D'+row) || 0,
+      cresc:   val(crescSheet, 'G'+row) || 0
+    };
+    mensal.push(m);
+  }
+
+  // ── 4) Avaliação de qualidade de preenchimento ──
+  // Para cada mês: se já passou ou é o mês atual e dia atual >= 5, verificar se há lançamentos
+  var hoje = new Date();
+  var anoAtual = hoje.getFullYear();
+  var mesAtual = hoje.getMonth() + 1; // 1-12
+  var diaAtual = hoje.getDate();
+
+  var qualidade = {
+    mesesEsperados: 0,
+    mesesPreenchidos: 0,
+    diasEsperados: 0,
+    diasPreenchidos: 0,
+    metasDefinidas: 0,
+    fat2025Preenchido: 0,
+    detalhes: []
+  };
+
+  // Metas anuais definidas?
+  if (defSheet) {
+    for (var mi = 0; mi < 12; mi++) {
+      var rDef = mi + 4;
+      var fat25 = val(defSheet, 'D'+rDef);
+      var pct = val(defSheet, 'F'+rDef);
+      if (fat25 && Number(fat25) > 0) qualidade.fat2025Preenchido++;
+      if (pct != null && pct !== '') qualidade.metasDefinidas++;
+    }
+  }
+
+  // Preenchimento mensal — só conta meses até "agora"
+  for (var mi2 = 0; mi2 < 12; mi2++) {
+    var mNum = mi2 + 1;
+    if (mNum > mesAtual) break;
+    qualidade.mesesEsperados++;
+    var realizado = mensal[mi2].realizado;
+    if (realizado && Number(realizado) > 0) qualidade.mesesPreenchidos++;
+    else qualidade.detalhes.push('Sem vendas registradas em ' + MES_NOMES_FULL[mi2]);
+
+    // Olha aba mensal específica para contar dias
+    var nomeAba = 'Meta de Venda ' + MES_NOMES_FULL[mi2];
+    var abaM = wb.Sheets[nomeAba];
+    if (abaM) {
+      // E7:E37 = vendas diárias
+      var diasNoMes = (mNum === mesAtual) ? diaAtual : new Date(anoAtual, mNum, 0).getDate();
+      qualidade.diasEsperados += diasNoMes;
+      var diasOK = 0;
+      for (var d = 7; d <= 37 && (d-6) <= diasNoMes; d++) {
+        var c = abaM['E' + d];
+        if (c && c.v != null && Number(c.v) > 0) diasOK++;
+      }
+      qualidade.diasPreenchidos += diasOK;
+    }
+  }
+
+  qualidade.pctMeses = qualidade.mesesEsperados > 0 ? Math.round(qualidade.mesesPreenchidos / qualidade.mesesEsperados * 100) : 0;
+  qualidade.pctDias = qualidade.diasEsperados > 0 ? Math.round(qualidade.diasPreenchidos / qualidade.diasEsperados * 100) : 0;
+  qualidade.pctMetas = Math.round((qualidade.metasDefinidas + qualidade.fat2025Preenchido) / 24 * 100);
+  // Score consolidado: 40% dias + 40% meses + 20% metas
+  qualidade.score = Math.round(qualidade.pctDias * 0.4 + qualidade.pctMeses * 0.4 + qualidade.pctMetas * 0.2);
+  qualidade.classificacao = (
+    qualidade.score >= 85 ? 'Excelente' :
+    qualidade.score >= 65 ? 'Bom' :
+    qualidade.score >= 40 ? 'Regular' :
+    qualidade.score >= 15 ? 'Insuficiente' : 'Crítico'
+  );
+
+  return {
+    filename: filename,
+    cliente: cliente,
+    programa: programa,
+    kpis: kpis,
+    mensal: mensal,
+    qualidade: qualidade
+  };
+}
+
+function rgcFmtBRL(v) {
+  var n = Number(v) || 0;
+  return 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+function rgcFmtBRLShort(v) {
+  var n = Number(v) || 0;
+  if (n >= 1000) return 'R$ ' + (n/1000).toFixed(1) + 'k';
+  return 'R$ ' + n.toFixed(0);
+}
+function rgcFmtPct(v) {
+  var n = Number(v) || 0;
+  // Se vier como decimal (0.85) converte para 85; se já é %, mantém
+  if (Math.abs(n) <= 1) n = n * 100;
+  return n.toLocaleString('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1}) + '%';
+}
+
+function rgcRenderAll() {
+  rgcRenderSummary();
+  rgcRenderClientCards();
+  rgcRenderRanking();
+}
+
+function rgcRenderSummary() {
+  var ok = _rgcData.filter(function(d){ return !d.error; });
+  if (!ok.length) return;
+  var totalFat = ok.reduce(function(a,d){ return a + (d.kpis.fatAnual || 0); }, 0);
+  var totalMeta = ok.reduce(function(a,d){ return a + (d.kpis.metaAnual || 0); }, 0);
+  var pctMedio = totalMeta > 0 ? (totalFat / totalMeta) : 0;
+  var crescMedio = ok.reduce(function(a,d){ return a + (Number(d.kpis.crescTotalPct) || 0); }, 0) / ok.length;
+  var qualidadeMedia = Math.round(ok.reduce(function(a,d){ return a + d.qualidade.score; }, 0) / ok.length);
+
+  var card = function(label, val, color){
+    return '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:10px;padding:16px 18px;flex:1;min-width:180px;">'
+      + '<div style="font-size:10.5px;color:#6B7A99;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">'+label+'</div>'
+      + '<div style="font-size:22px;font-weight:800;color:'+(color||'#1B2B6B')+';">'+val+'</div>'
+      + '</div>';
+  };
+
+  var html = '<div style="display:flex;gap:14px;flex-wrap:wrap;">' +
+    card('Clientes Analisados', ok.length, '#1B2B6B') +
+    card('Faturamento Total', rgcFmtBRL(totalFat), '#16A34A') +
+    card('Meta Consolidada', rgcFmtBRL(totalMeta), '#1B2B6B') +
+    card('Atingimento Médio', rgcFmtPct(pctMedio), pctMedio >= 0.85 ? '#16A34A' : (pctMedio >= 0.5 ? '#F59E0B' : '#DC2626')) +
+    card('Crescimento Médio', rgcFmtPct(crescMedio/100), crescMedio >= 0 ? '#16A34A' : '#DC2626') +
+    card('Qualidade Preench. Média', qualidadeMedia + '%', qualidadeMedia >= 65 ? '#16A34A' : (qualidadeMedia >= 40 ? '#F59E0B' : '#DC2626')) +
+    '</div>';
+  var el = document.getElementById('rgc-summary');
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+function rgcQualBadge(q) {
+  var c, bg;
+  if (q.score >= 85)      { c = '#166534'; bg = '#DCFCE7'; }
+  else if (q.score >= 65) { c = '#075985'; bg = '#E0F2FE'; }
+  else if (q.score >= 40) { c = '#92400E'; bg = '#FEF3C7'; }
+  else                    { c = '#991B1B'; bg = '#FEE2E2'; }
+  return '<span style="padding:3px 10px;border-radius:99px;background:'+bg+';color:'+c+';font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;">'+q.classificacao+' · '+q.score+'%</span>';
+}
+
+function rgcMiniChart(mensal) {
+  // Mini gráfico SVG: barras meta vs realizado, só meses com dados
+  var months = mensal.filter(function(m){ return (m.meta||0) > 0 || (m.realizado||0) > 0; });
+  if (!months.length) return '<div style="font-size:11px;color:#8A94A8;text-align:center;padding:14px;font-style:italic;">Sem dados mensais</div>';
+  var maxV = 0;
+  months.forEach(function(m){ if ((m.meta||0) > maxV) maxV = m.meta; if ((m.realizado||0) > maxV) maxV = m.realizado; });
+  if (!maxV) maxV = 1;
+  var W = 320, H = 100, padL = 4, padR = 4, padT = 6, padB = 18;
+  var step = (W - padL - padR) / months.length;
+  var bw = Math.max(4, step / 2.5);
+  var svg = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:110px;">';
+  months.forEach(function(m, i){
+    var cx = padL + step * i + step/2;
+    var hMeta = (m.meta||0) / maxV * (H - padT - padB);
+    var hReal = (m.realizado||0) / maxV * (H - padT - padB);
+    var yMeta = H - padB - hMeta;
+    var yReal = H - padB - hReal;
+    svg += '<rect x="'+(cx - bw - 1).toFixed(1)+'" y="'+yMeta.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hMeta.toFixed(1)+'" rx="1.5" fill="#94A3B8" opacity="0.6"/>';
+    svg += '<rect x="'+(cx + 1).toFixed(1)+'" y="'+yReal.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hReal.toFixed(1)+'" rx="1.5" fill="#1B2B6B"/>';
+    svg += '<text x="'+cx.toFixed(1)+'" y="'+(H-4)+'" text-anchor="middle" font-size="9" fill="#6B7A99" font-weight="600">'+m.nome.substring(0,3)+'</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+function rgcRenderClientCards() {
+  var grid = document.getElementById('rgc-clients-grid');
+  grid.innerHTML = _rgcData.map(function(d, idx) {
+    if (d.error) {
+      return '<div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;padding:16px;">'
+        + '<div style="font-weight:700;color:#991B1B;font-size:13px;margin-bottom:4px;">Erro ao ler arquivo</div>'
+        + '<div style="font-size:11px;color:#7F1D1D;">'+d.filename+'</div>'
+        + '<div style="font-size:11px;color:#991B1B;margin-top:6px;">'+d.error+'</div>'
+        + '</div>';
+    }
+    var k = d.kpis, q = d.qualidade;
+    var pctAting = k.metaAnual > 0 ? (k.fatAnual / k.metaAnual) : 0;
+    var atingColor = pctAting >= 0.85 ? '#16A34A' : (pctAting >= 0.5 ? '#F59E0B' : '#DC2626');
+    var crescColor = k.crescTotalPct >= 0 ? '#16A34A' : '#DC2626';
+
+    return '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px;">'
+        + '<div style="flex:1;min-width:0;"><div style="font-weight:800;color:#1B2B6B;font-size:14px;margin-bottom:2px;line-height:1.3;">'+(d.cliente||'(sem nome)')+'</div>'
+        + '<div style="font-size:10.5px;color:#6B7A99;text-transform:uppercase;letter-spacing:.5px;font-weight:600;">'+(d.programa||'—')+'</div></div>'
+        + rgcQualBadge(q)
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">'
+        + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Faturamento</div>'
+        + '<div style="font-size:15px;font-weight:800;color:#1B2B6B;">'+rgcFmtBRL(k.fatAnual)+'</div>'
+        + '<div style="font-size:10.5px;color:#6B7A99;">Meta: '+rgcFmtBRL(k.metaAnual)+'</div></div>'
+        + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Atingimento</div>'
+        + '<div style="font-size:15px;font-weight:800;color:'+atingColor+';">'+rgcFmtPct(pctAting)+'</div>'
+        + '<div style="font-size:10.5px;color:#6B7A99;">'+(k.metasBatidas||0)+' metas batidas</div></div>'
+        + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Crescimento vs Ano Anterior</div>'
+        + '<div style="font-size:15px;font-weight:800;color:'+crescColor+';">'+(k.crescTotalPct >= 0 ? '+':'')+rgcFmtPct(k.crescTotalPct)+'</div>'
+        + '<div style="font-size:10.5px;color:#6B7A99;">'+rgcFmtBRL(k.fat2025)+' → '+rgcFmtBRL(k.fat2026)+'</div></div>'
+        + '<div><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:2px;">Ticket Médio</div>'
+        + '<div style="font-size:15px;font-weight:800;color:#1B2B6B;">'+rgcFmtBRL(k.ticketAnual)+'</div>'
+        + '<div style="font-size:10.5px;color:#6B7A99;">Conv: '+rgcFmtPct(k.convAnual)+'</div></div>'
+      + '</div>'
+      + '<div style="margin-bottom:10px;"><div style="font-size:10px;color:#6B7A99;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:4px;">Meta vs Realizado por Mês</div>'
+        + rgcMiniChart(d.mensal)
+      + '</div>'
+      + '<div style="background:#F5F7FA;border-radius:8px;padding:10px 12px;font-size:11px;color:#41546A;">'
+        + '<div style="font-weight:700;color:#1B2B6B;margin-bottom:3px;">Preenchimento da planilha</div>'
+        + '<div style="display:flex;gap:14px;flex-wrap:wrap;">'
+        + '<span><strong>'+q.diasPreenchidos+'</strong>/'+q.diasEsperados+' dias</span>'
+        + '<span><strong>'+q.mesesPreenchidos+'</strong>/'+q.mesesEsperados+' meses</span>'
+        + '<span><strong>'+q.metasDefinidas+'</strong>/12 metas</span>'
+        + '</div></div>'
+      + '</div>';
+  }).join('');
+}
+
+function rgcRenderRanking() {
+  var ok = _rgcData.filter(function(d){ return !d.error; });
+  if (ok.length < 2) { document.getElementById('rgc-ranking').style.display = 'none'; return; }
+  var sorted = ok.slice().sort(function(a,b){
+    var paA = a.kpis.metaAnual > 0 ? a.kpis.fatAnual / a.kpis.metaAnual : 0;
+    var paB = b.kpis.metaAnual > 0 ? b.kpis.fatAnual / b.kpis.metaAnual : 0;
+    return paB - paA;
+  });
+  var rows = sorted.map(function(d, i){
+    var k = d.kpis;
+    var pct = k.metaAnual > 0 ? (k.fatAnual / k.metaAnual) : 0;
+    var col = pct >= 0.85 ? '#16A34A' : (pct >= 0.5 ? '#F59E0B' : '#DC2626');
+    var crescCol = k.crescTotalPct >= 0 ? '#16A34A' : '#DC2626';
+    return '<tr style="border-bottom:1px solid #F1F4F8;">'
+      + '<td style="padding:9px 8px;font-weight:700;color:#1B2B6B;">'+(i+1)+'º</td>'
+      + '<td style="padding:9px 8px;font-weight:600;color:#1B2B6B;">'+d.cliente+'</td>'
+      + '<td style="padding:9px 8px;text-align:right;">'+rgcFmtBRL(k.fatAnual)+'</td>'
+      + '<td style="padding:9px 8px;text-align:right;color:#6B7A99;">'+rgcFmtBRL(k.metaAnual)+'</td>'
+      + '<td style="padding:9px 8px;text-align:right;font-weight:700;color:'+col+';">'+rgcFmtPct(pct)+'</td>'
+      + '<td style="padding:9px 8px;text-align:right;font-weight:700;color:'+crescCol+';">'+(k.crescTotalPct >= 0 ? '+':'')+rgcFmtPct(k.crescTotalPct)+'</td>'
+      + '<td style="padding:9px 8px;text-align:center;">'+rgcQualBadge(d.qualidade)+'</td>'
+      + '</tr>';
+  }).join('');
+  var html = '<div style="font-size:14px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Ranking de Desempenho — Atingimento da Meta Anual</div>'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12px;">'
+    + '<thead><tr style="background:#F5F7FA;color:#41546A;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;">'
+    + '<th style="padding:9px 8px;text-align:left;">#</th>'
+    + '<th style="padding:9px 8px;text-align:left;">Cliente</th>'
+    + '<th style="padding:9px 8px;text-align:right;">Faturamento</th>'
+    + '<th style="padding:9px 8px;text-align:right;">Meta</th>'
+    + '<th style="padding:9px 8px;text-align:right;">Atingimento</th>'
+    + '<th style="padding:9px 8px;text-align:right;">Crescimento</th>'
+    + '<th style="padding:9px 8px;text-align:center;">Preench.</th>'
+    + '</tr></thead><tbody>'+rows+'</tbody></table>';
+  var el = document.getElementById('rgc-ranking');
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+async function rgcRunAI() {
+  var ok = _rgcData.filter(function(d){ return !d.error; });
+  if (!ok.length) { alert('Nenhuma planilha processada com sucesso.'); return; }
+
+  var apiKey = _anthropicKey;
+  if (!apiKey) {
+    apiKey = prompt('Cole sua chave Anthropic (Claude):');
+    if (!apiKey) return;
+    _anthropicKey = apiKey;
+    try { localStorage.setItem('organize_anthropic_key', apiKey); } catch(e) {}
+  }
+
+  var btn = document.getElementById('rgc-btn-ai');
+  btn.disabled = true; var oldTxt = btn.innerHTML; btn.innerHTML = 'Analisando...';
+
+  try {
+    // Constrói contexto compacto para a IA
+    var ctx = ok.map(function(d){
+      return {
+        cliente: d.cliente,
+        programa: d.programa,
+        kpis: {
+          faturamento_anual: d.kpis.fatAnual,
+          meta_anual: d.kpis.metaAnual,
+          atingimento_pct: d.kpis.metaAnual > 0 ? (d.kpis.fatAnual/d.kpis.metaAnual*100).toFixed(1)+'%' : '—',
+          metas_batidas: d.kpis.metasBatidas,
+          crescimento_pct: (Number(d.kpis.crescTotalPct)*100).toFixed(1) + '%',
+          fat_ano_anterior: d.kpis.fat2025,
+          ticket_medio: d.kpis.ticketAnual,
+          taxa_conversao_pct: (Number(d.kpis.convAnual)*100).toFixed(1) + '%',
+          melhor_mes: d.kpis.melhorMes,
+          pior_mes: d.kpis.piorMes
+        },
+        mensal: d.mensal.filter(function(m){return m.realizado>0||m.meta>0;}).map(function(m){
+          return { mes: m.nome, meta: m.meta, realizado: m.realizado, pct: Math.round((m.pctAting||0)*100)+'%' };
+        }),
+        qualidade_preenchimento: {
+          score: d.qualidade.score + '%',
+          classificacao: d.qualidade.classificacao,
+          dias: d.qualidade.diasPreenchidos + '/' + d.qualidade.diasEsperados,
+          meses: d.qualidade.mesesPreenchidos + '/' + d.qualidade.mesesEsperados,
+          metas: d.qualidade.metasDefinidas + '/12'
+        }
+      };
+    });
+
+    var sysPrompt = 'Você é um consultor sênior de gestão comercial que analisa indicadores de clientes em mentoria. Suas regras:\n' +
+      '1. Baseie-se EXCLUSIVAMENTE nos dados fornecidos. Não invente.\n' +
+      '2. Responda APENAS com JSON válido, sem markdown.\n' +
+      '3. Seja factual, objetivo e direto. Sem floreios.';
+
+    var prompt = '═══════ DADOS DOS CLIENTES (' + ctx.length + ' empresas) ═══════\n' +
+      JSON.stringify(ctx, null, 2) + '\n\n' +
+      '═══════ ENTREGUE ═══════\n' +
+      'Produza um relatório executivo consolidado em JSON:\n\n' +
+      '{\n' +
+      '  "panorama": "3 parágrafos curtos: (a) visão geral consolidada (total clientes, soma faturamento, atingimento médio); (b) destaques positivos com nomes dos clientes; (c) alertas — clientes com desempenho abaixo de 50% atingimento ou qualidade de preenchimento baixa.",\n' +
+      '  "tendencias": "2 parágrafos: tendências observadas no conjunto + crescimento médio do período.",\n' +
+      '  "clientes_destaque": [{"cliente":"NOME","ponto":"TEXTO_CURTO"}],  // 2-3 melhores\n' +
+      '  "clientes_atencao": [{"cliente":"NOME","ponto":"TEXTO_CURTO_COM_RECOMENDACAO"}],  // 2-3 piores ou com pior preenchimento\n' +
+      '  "recomendacoes": "3-5 ações concretas para Wagner/Wmadson, uma por linha com bullet \\"• \\""\n' +
+      '}';
+
+    var text = await callClaude(apiKey, prompt, 3500, sysPrompt, true);
+    var parsed = extractJSON(text);
+    _rgcAIAnalysis = parsed;
+
+    rgcRenderAIAnalysis();
+    btn.innerHTML = '✔ Análise gerada';
+    setTimeout(function(){ btn.innerHTML = oldTxt; btn.disabled = false; }, 2000);
+  } catch(e) {
+    console.error('[RGC] erro IA', e);
+    alert('Erro ao gerar análise: ' + e.message);
+    btn.innerHTML = oldTxt; btn.disabled = false;
+  }
+}
+
+function rgcRenderAIAnalysis() {
+  if (!_rgcAIAnalysis) return;
+  var a = _rgcAIAnalysis;
+  var box = function(titulo, conteudo, color) {
+    return '<div style="background:#fff;border:1px solid #E0E5EE;border-left:4px solid '+(color||'#7C3AED')+';border-radius:10px;padding:16px 20px;margin-bottom:14px;">'
+      + '<div style="font-size:11px;font-weight:800;color:'+(color||'#7C3AED')+';text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">'+titulo+'</div>'
+      + '<div style="font-size:13px;color:#2C3E50;line-height:1.6;white-space:pre-line;">'+(conteudo||'—')+'</div>'
+      + '</div>';
+  };
+  var listBox = function(titulo, items, color) {
+    if (!items || !items.length) return '';
+    var html = '<div style="background:#fff;border:1px solid #E0E5EE;border-left:4px solid '+color+';border-radius:10px;padding:16px 20px;margin-bottom:14px;">'
+      + '<div style="font-size:11px;font-weight:800;color:'+color+';text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">'+titulo+'</div>';
+    items.forEach(function(it){
+      html += '<div style="margin-bottom:8px;font-size:13px;line-height:1.5;"><strong style="color:#1B2B6B;">'+(it.cliente||'')+':</strong> <span style="color:#2C3E50;">'+(it.ponto||'')+'</span></div>';
+    });
+    html += '</div>';
+    return html;
+  };
+
+  var html = '<div style="font-size:18px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Análise Executiva (IA)</div>'
+    + box('Panorama Consolidado', a.panorama, '#1B2B6B')
+    + box('Tendências do Período', a.tendencias, '#0EA5E9')
+    + listBox('Clientes em Destaque', a.clientes_destaque, '#16A34A')
+    + listBox('Clientes que Requerem Atenção', a.clientes_atencao, '#DC2626')
+    + box('Recomendações de Ação', a.recomendacoes, '#7C3AED');
+
+  var el = document.getElementById('rgc-ai-analysis');
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+function rgcDownloadPDF() {
+  var ok = _rgcData.filter(function(d){ return !d.error; });
+  if (!ok.length) { alert('Nenhum dado para gerar PDF.'); return; }
+  if (typeof html2pdf === 'undefined') { alert('Biblioteca html2pdf não carregada.'); return; }
+
+  // Monta conteúdo do PDF (capa + sumário + cards + ranking + IA)
+  var data = new Date().toLocaleDateString('pt-BR');
+  var hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  var totalFat = ok.reduce(function(a,d){ return a + (d.kpis.fatAnual || 0); }, 0);
+  var totalMeta = ok.reduce(function(a,d){ return a + (d.kpis.metaAnual || 0); }, 0);
+
+  var capa = '<div style="height:100vh;background:linear-gradient(135deg,#1B2B6B,#0F1A45);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:40px;page-break-after:always;">'
+    + '<div style="font-size:14px;font-weight:700;letter-spacing:4px;text-transform:uppercase;opacity:.7;margin-bottom:12px;">Organize Empresas</div>'
+    + '<h1 style="font-size:38px;font-weight:800;margin:0 0 20px;line-height:1.2;">Relatório Gerencial<br>de Indicadores Comerciais</h1>'
+    + '<div style="font-size:16px;opacity:.85;margin-bottom:40px;">Consolidado de '+ok.length+' clientes</div>'
+    + '<div style="background:rgba(255,255,255,.08);padding:16px 30px;border-radius:8px;font-size:13px;">Emitido em '+data+' às '+hora+'</div>'
+    + '</div>';
+
+  var sumario = '<div style="padding:30px;">'
+    + '<h2 style="font-size:22px;color:#1B2B6B;border-bottom:3px solid #1B2B6B;padding-bottom:8px;margin-bottom:20px;">Sumário Executivo</h2>'
+    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;">'
+      + '<div style="background:#F5F7FA;padding:14px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Clientes</div><div style="font-size:22px;font-weight:800;color:#1B2B6B;">'+ok.length+'</div></div>'
+      + '<div style="background:#F5F7FA;padding:14px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Faturamento Total</div><div style="font-size:18px;font-weight:800;color:#16A34A;">'+rgcFmtBRL(totalFat)+'</div></div>'
+      + '<div style="background:#F5F7FA;padding:14px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Meta Consolidada</div><div style="font-size:18px;font-weight:800;color:#1B2B6B;">'+rgcFmtBRL(totalMeta)+'</div></div>'
+    + '</div>';
+
+  var rankingHTML = document.getElementById('rgc-ranking').innerHTML || '';
+  if (rankingHTML) sumario += '<div style="margin-top:10px;">'+rankingHTML+'</div>';
+  sumario += '</div>';
+
+  // Página por cliente
+  var clientesHTML = ok.map(function(d){
+    var k = d.kpis, q = d.qualidade;
+    var pct = k.metaAnual > 0 ? (k.fatAnual/k.metaAnual) : 0;
+    return '<div style="padding:30px;page-break-before:always;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1B2B6B;padding-bottom:10px;margin-bottom:20px;">'
+        + '<div><div style="font-size:11px;color:#6B7A99;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">'+(d.programa||'')+'</div>'
+        + '<h2 style="font-size:22px;color:#1B2B6B;margin:4px 0 0;">'+(d.cliente||'(sem nome)')+'</h2></div>'
+        + '<div style="text-align:right;">'+rgcQualBadge(q)+'<div style="font-size:10px;color:#6B7A99;margin-top:4px;">Preenchimento '+q.diasPreenchidos+'/'+q.diasEsperados+' dias</div></div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">'
+        + '<div style="background:#F5F7FA;padding:12px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Faturamento</div><div style="font-size:15px;font-weight:800;color:#1B2B6B;">'+rgcFmtBRL(k.fatAnual)+'</div></div>'
+        + '<div style="background:#F5F7FA;padding:12px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Meta</div><div style="font-size:15px;font-weight:800;color:#1B2B6B;">'+rgcFmtBRL(k.metaAnual)+'</div></div>'
+        + '<div style="background:#F5F7FA;padding:12px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Atingimento</div><div style="font-size:15px;font-weight:800;color:'+(pct>=0.85?'#16A34A':pct>=0.5?'#F59E0B':'#DC2626')+';">'+rgcFmtPct(pct)+'</div></div>'
+        + '<div style="background:#F5F7FA;padding:12px;border-radius:8px;"><div style="font-size:10px;color:#6B7A99;font-weight:700;text-transform:uppercase;">Crescimento</div><div style="font-size:15px;font-weight:800;color:'+(k.crescTotalPct>=0?'#16A34A':'#DC2626')+';">'+(k.crescTotalPct>=0?'+':'')+rgcFmtPct(k.crescTotalPct)+'</div></div>'
+      + '</div>'
+      + '<div style="margin-bottom:20px;"><div style="font-size:11px;color:#6B7A99;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Evolução Mensal: Meta vs Realizado</div>'
+        + rgcMiniChart(d.mensal)+'</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;">'
+        + '<thead><tr style="background:#1B2B6B;color:#fff;"><th style="padding:6px 8px;text-align:left;">Mês</th><th style="padding:6px 8px;text-align:right;">Meta</th><th style="padding:6px 8px;text-align:right;">Realizado</th><th style="padding:6px 8px;text-align:right;">Atingimento</th><th style="padding:6px 8px;text-align:right;">Conversão</th><th style="padding:6px 8px;text-align:right;">Ticket Médio</th></tr></thead><tbody>'
+        + d.mensal.filter(function(m){return m.meta>0||m.realizado>0;}).map(function(m){
+            var p = m.meta>0?m.realizado/m.meta:0;
+            return '<tr style="border-bottom:1px solid #E0E5EE;"><td style="padding:5px 8px;">'+m.nome+'</td>'
+              + '<td style="padding:5px 8px;text-align:right;">'+rgcFmtBRL(m.meta)+'</td>'
+              + '<td style="padding:5px 8px;text-align:right;font-weight:600;">'+rgcFmtBRL(m.realizado)+'</td>'
+              + '<td style="padding:5px 8px;text-align:right;color:'+(p>=0.85?'#16A34A':p>=0.5?'#F59E0B':'#DC2626')+';font-weight:600;">'+rgcFmtPct(p)+'</td>'
+              + '<td style="padding:5px 8px;text-align:right;">'+rgcFmtPct(m.conv)+'</td>'
+              + '<td style="padding:5px 8px;text-align:right;">'+rgcFmtBRL(m.ticket)+'</td></tr>';
+          }).join('')
+        + '</tbody></table>'
+      + '</div>';
+  }).join('');
+
+  var iaSection = '';
+  if (_rgcAIAnalysis) {
+    iaSection = '<div style="padding:30px;page-break-before:always;">'
+      + (document.getElementById('rgc-ai-analysis').innerHTML || '')
+      + '</div>';
+  }
+
+  var fullHTML = '<div style="font-family:Inter,Arial,sans-serif;color:#2C3E50;">'
+    + capa + sumario + clientesHTML + iaSection + '</div>';
+
+  var wrapper = document.createElement('div');
+  wrapper.innerHTML = fullHTML;
+  document.body.appendChild(wrapper);
+
+  var nomeArquivo = 'Relatorio_Gerencial_Comercial_' + new Date().toISOString().substring(0,10) + '.pdf';
+  html2pdf().set({
+    margin: 0,
+    filename: nomeArquivo,
+    image: { type:'jpeg', quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['css','legacy'] }
+  }).from(wrapper).save().then(function(){
+    document.body.removeChild(wrapper);
+  }).catch(function(e){
+    console.error('[RGC] PDF erro', e);
+    document.body.removeChild(wrapper);
+    alert('Erro ao gerar PDF: '+e.message);
+  });
+}
+
 // ═══════════════ PORTAL DO CLIENTE — Gerador de Portais Integrado ═══════════════
 
 var _portalLogoData = '';
@@ -5813,7 +6479,7 @@ function rptTrello() {
     boardsHtml +
     rptFooter();
 }
-const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Quadros do Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', portal:'Portal do Cliente', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
+const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Quadros do Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', rgc:'Relatório Gerencial Comercial', portal:'Portal do Cliente', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
 function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
