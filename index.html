@@ -7891,7 +7891,7 @@ async function cvCallClaudeDoc(apiKey, file, fileText, perfil) {
   var prompt = '╔╗ PERFIL DA VAGA ╔╗\n' + perfil + '\n\n'
     + (isPDF ? '' : '╔╗ CURRÍCULO (texto extraído) ╔╗\n' + fileText + '\n\n')
     + 'Retorne este JSON exato (sem markdown):\n'
-    + '{"nome":"Nome completo","email":"email ou null","telefone":"telefone ou null","score":0,"nivel_aderencia":"ALTA|MEDIA|BAIXA","descartar":false,"resumo":"1-2 frases","formacao":"formação principal","experiencia_relevante":"experiências relevantes (bullets com \\u2022)","competencias":"competências identificadas","pontos_fortes":"2-3 pontos fortes (bullets com \\u2022)","justificativa":"por que convocar (1-2 frases)","limitacoes":"principal gap ou null"}';
+    + '{"nome":"Nome completo","email":"email ou null","telefone":"numero de telefone/celular COMPLETO exatamente como aparece no curriculo, sem nenhum truncamento (ex: (69) 99999-9999 ou 69 98765-4321)","score":0,"nivel_aderencia":"ALTA|MEDIA|BAIXA","descartar":false,"resumo":"1-2 frases objetivas","formacao":"formacao academica completa sem abreviacao","experiencia_relevante":"cada experiencia profissional em uma linha separada por \\n, formato: Cargo na Empresa (periodo): principal atividade","competencias":"competencias identificadas","pontos_fortes":"cada ponto forte em uma linha separada por \\n","justificativa":"por que convocar (1-2 frases)","limitacoes":"principal gap ou null"}';
 
   var content;
   if (isPDF) {
@@ -8053,10 +8053,10 @@ function cvRenderResults() {
             +'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;background:'+nbBg+';color:'+nbTxt+';white-space:nowrap;flex-shrink:0;">'+nb+'</span>'
           +'</div>'
         +'</td>'
-        +'<td style="padding:10px;font-size:12px;color:#41546A;word-break:break-word;">'+(r.formacao||'—')+'</td>'
+        +'<td style="padding:10px;font-size:12px;color:#41546A;word-break:break-word;overflow-wrap:break-word;white-space:normal;">'+(r.formacao||'—')+'</td>'
         +'<td style="padding:10px;font-size:11.5px;">'
-          +(r.email?'<div style="color:#6B7A99;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.email+'</div>':'')
-          +(r.telefone?'<div style="color:#1B2B6B;font-weight:600;margin-top:2px;">'+r.telefone+'</div>':'')
+          +(r.telefone?'<div style="color:#1B2B6B;font-weight:700;font-size:13px;white-space:nowrap;">'+r.telefone+'</div>':'')
+          +(r.email?'<div style="color:#6B7A99;font-size:10.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.email+'</div>':'')
           +(!r.email&&!r.telefone?'<span style="color:#9CA3AF;">—</span>':'')
         +'</td>'
         +'</tr>';
@@ -8075,7 +8075,8 @@ function cvRenderResults() {
           +'<div style="flex:1;min-width:0;">'
             +'<div style="font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">#'+(i+1)+' de '+top.length+'</div>'
             +'<div style="font-size:15px;font-weight:800;color:#fff;line-height:1.2;">'+(r.nome||'—')+'</div>'
-            +(r.email?'<div style="font-size:10.5px;color:rgba(255,255,255,.7);margin-top:3px;">'+r.email+'</div>':'')
+            +(r.telefone?'<div style="font-size:11px;color:rgba(255,255,255,.9);font-weight:700;margin-top:3px;">'+r.telefone+'</div>':'')
+            +(r.email?'<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:1px;">'+r.email+'</div>':'')
           +'</div>'
           +'<div style="text-align:right;flex-shrink:0;margin-left:12px;">'
             +'<div style="font-size:28px;font-weight:900;color:#fff;line-height:1;">'+sc+'%</div>'
@@ -8086,10 +8087,10 @@ function cvRenderResults() {
         +'<div style="padding:14px 18px;">'
           +(r.resumo?'<div style="font-size:12.5px;color:#41546A;line-height:1.5;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #F0F4F8;font-style:italic;">'+r.resumo+'</div>':'')
           +(r.formacao?'<div style="margin-bottom:9px;"><span style="font-size:9.5px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;">Formação</span><div style="font-size:12.5px;color:#1B2B6B;">'+r.formacao+'</div></div>':'')
-          +(r.experiencia_relevante?'<div style="margin-bottom:9px;"><span style="font-size:9.5px;font-weight:700;color:#2980B9;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;">Experiência Relevante</span><div style="font-size:12px;color:#41546A;line-height:1.45;white-space:pre-line;">'+r.experiencia_relevante.substring(0,220)+'</div></div>':'')
-          +(r.pontos_fortes?'<div style="margin-bottom:9px;"><span style="font-size:9.5px;font-weight:700;color:#16A34A;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;">Pontos Fortes</span><div style="font-size:12px;color:#41546A;line-height:1.45;white-space:pre-line;">'+r.pontos_fortes+'</div></div>':'')
-          +(r.justificativa?'<div style="background:#EEF2FF;border-left:3px solid #7C3AED;border-radius:0 6px 6px 0;padding:9px 13px;margin-top:4px;"><span style="font-size:9.5px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;">Por que convocar</span><div style="font-size:12.5px;color:#3730A3;line-height:1.45;">'+r.justificativa+'</div></div>':'')
-          +(r.limitacoes?'<div style="margin-top:8px;background:#FEF2F2;border-left:3px solid #C0392B;border-radius:0 5px 5px 0;padding:7px 12px;"><span style="font-size:9.5px;font-weight:700;color:#C0392B;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;">Limitações</span><div style="font-size:11.5px;color:#7F1D1D;">'+r.limitacoes+'</div></div>':'')
+          +(r.experiencia_relevante?'<div style="margin-bottom:9px;"><span style="font-size:9.5px;font-weight:700;color:#2980B9;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Experiência Relevante</span><ul style="margin:0;padding-left:15px;font-size:12px;color:#41546A;line-height:1.55;">'+r.experiencia_relevante.split(/[\n•·]/).filter(function(s){return s.trim().length>3;}).map(function(s){return '<li style="margin-bottom:5px;word-break:break-word;overflow-wrap:break-word;">'+s.trim()+'</li>';}).join('')+'</ul></div>':'')
+          +(r.pontos_fortes?'<div style="margin-bottom:9px;"><span style="font-size:9.5px;font-weight:700;color:#16A34A;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Pontos Fortes</span><ul style="margin:0;padding-left:15px;font-size:12px;color:#41546A;line-height:1.55;">'+r.pontos_fortes.split(/[\n•·]/).filter(function(s){return s.trim().length>2;}).map(function(s){return '<li style="margin-bottom:4px;word-break:break-word;overflow-wrap:break-word;">'+s.trim()+'</li>';}).join('')+'</ul></div>':'')
+          +(r.justificativa?'<div style="background:#EEF2FF;border-left:3px solid #7C3AED;border-radius:0 6px 6px 0;padding:9px 13px;margin-top:4px;word-break:break-word;overflow-wrap:break-word;"><span style="font-size:9.5px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;">Por que convocar</span><div style="font-size:12.5px;color:#3730A3;line-height:1.5;">'+r.justificativa+'</div></div>':'')
+          +(r.limitacoes?'<div style="margin-top:8px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;padding:9px 13px;word-break:break-word;overflow-wrap:break-word;"><span style="font-size:9.5px;font-weight:700;color:#C0392B;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;">Limitações</span><div style="font-size:11.5px;color:#7F1D1D;line-height:1.5;">'+r.limitacoes+'</div></div>':'')
         +'</div></div>';
     });
     html += '</div>';
