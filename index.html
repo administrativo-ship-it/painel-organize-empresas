@@ -8100,15 +8100,15 @@ function cvRenderResults() {
   el.innerHTML = html;
 }
 
-// ── PDF — jsPDF vetorial, padrão visual Organize ──
+// ── PDF — landscape A4, estilo apresentação (1 slide por candidato) ──
 async function cvDownloadPDF() {
   if (!_cvResults.length) { alert('Gere a análise primeiro.'); return; }
   var btn = document.getElementById('cv-btn-pdf');
   var oldTxt = btn.innerHTML; btn.innerHTML = 'Gerando PDF...'; btn.disabled = true;
   try {
     var JsPDF = window.jspdf.jsPDF;
-    var doc = new JsPDF({ unit:'mm', format:'a4', orientation:'portrait', compress:true });
-    var PW=210, PH=297, M=15;
+    var doc = new JsPDF({ unit:'mm', format:'a4', orientation:'landscape', compress:true });
+    var PW=297, PH=210;
     var logoB64 = (typeof S!=='undefined'&&S.logoConfig&&S.logoConfig.img)?S.logoConfig.img:(typeof LOGO_ORGANIZE_B64!=='undefined'?LOGO_ORGANIZE_B64:'');
     var logoMime = (logoB64&&logoB64.indexOf('image/jpeg')!==-1)?'JPEG':'PNG';
     var qual = _cvResults.filter(function(r){return !r.descartar&&!r.error;});
@@ -8124,122 +8124,170 @@ async function cvDownloadPDF() {
     function sd(c){doc.setDrawColor(c[0],c[1],c[2]);}
     function b(sz){doc.setFont('helvetica','bold');doc.setFontSize(sz);}
     function n(sz){doc.setFont('helvetica','normal');doc.setFontSize(sz);}
+    function scc(sc){return sc>=75?GREEN:sc>=55?AMBER:NAVY;}
 
-    // CAPA
-    sf(NAVY);doc.rect(0,0,PW,PH,'F');
-    sf(TEAL);doc.rect(0,0,PW,3,'F');
-    if(logoB64){try{doc.addImage(logoB64,logoMime,M,18,44,17,'','FAST');}catch(e){}}
-    b(9);st(TEAL);doc.text('ORGANIZE EMPRESAS - RECRUTAMENTO & SELECAO',M,50);
-    b(26);st(WHITE);doc.text('Relatorio de Triagem',M,63);doc.text('de Candidatos',M,75);
-    sd(TEAL);doc.setLineWidth(0.6);doc.line(M,83,PW-M,83);
-    n(9);st([160,190,230]);
-    var pv = _cvPerfil.substring(0,150)+(_cvPerfil.length>150?'...':'');
-    doc.text(doc.splitTextToSize(pv,PW-M*2-8).slice(0,3),M,91);
-    var kpis=[{l:'ANALISADOS',v:String(_cvResults.length)},{l:'QUALIFICADOS',v:String(qual.length)},{l:'ALTA ADERENCIA',v:String(alta)},{l:'COMPAT. MEDIA',v:avg+'%'}];
-    var kw=(PW-M*2-9)/4;
+    // ══ SLIDE 1: CAPA (navy esq + branco dir) ══
+    sf(NAVY); doc.rect(0,0,PW,PH,'F');
+    sf(TEAL); doc.rect(0,0,PW,3,'F');
+    sf(WHITE); doc.rect(150,3,PW-150,PH-3,'F');
+    // Logo esq
+    if(logoB64){try{doc.addImage(logoB64,logoMime,14,13,54,22,'','FAST');}catch(e){}}
+    // Título esq
+    b(8); st(TEAL); doc.text('ORGANIZE EMPRESAS - RECRUTAMENTO & SELECAO',14,50);
+    b(28); st(WHITE); doc.text('Relatorio de',14,66);
+    b(28); st(WHITE); doc.text('Triagem de',14,81);
+    b(28); st(WHITE); doc.text('Candidatos',14,96);
+    sd(TEAL); doc.setLineWidth(0.6); doc.line(14,106,136,106);
+    var pv=(_cvPerfil||'').substring(0,135)+(_cvPerfil.length>135?'...':'');
+    n(8.5); st([155,200,230]);
+    doc.text(doc.splitTextToSize(pv,126).slice(0,3),14,115);
+    sf([38,58,140]); doc.roundedRect(14,PH-18,90,11,4,4,'F');
+    b(8.5); st(TEAL); doc.text('Gerado em '+hoje,59,PH-11,{align:'center'});
+    // KPI dir 2×2
+    b(12); st(NAVY); doc.text('Resultados da Analise',162,23);
+    n(8.5); st(MUTED); doc.text('Resumo da triagem inteligente',162,30);
+    var kpis=[
+      {l:'ANALISADOS',    v:String(_cvResults.length), c:NAVY},
+      {l:'QUALIFICADOS',  v:String(qual.length),        c:GREEN},
+      {l:'ALTA ADERENCIA',v:String(alta),               c:PURPLE},
+      {l:'COMPAT. MEDIA', v:avg+'%',                    c:AMBER}
+    ];
+    var kw=60,kh=66,kg=5;
     kpis.forEach(function(k,i){
-      var kx=M+i*(kw+3),ky=118;
-      doc.setFillColor(255,255,255);doc.roundedRect(kx,ky,kw,26,4,4,'F');
-      doc.setFillColor(27,43,107);
-      b(18);st(TEAL);doc.text(k.v,kx+kw/2,ky+14,{align:'center'});
-      b(7);st([160,190,230]);doc.text(k.l,kx+kw/2,ky+21.5,{align:'center'});
+      var kx=162+(i%2)*(kw+kg), ky=37+Math.floor(i/2)*(kh+kg);
+      sf([244,247,252]); doc.roundedRect(kx,ky,kw,kh,5,5,'F');
+      sf(k.c); doc.roundedRect(kx,ky,kw,5,3,3,'F'); doc.rect(kx,ky+2,kw,3,'F');
+      b(33); st(k.c); doc.text(k.v,kx+kw/2,ky+38,{align:'center'});
+      b(7); st(MUTED); doc.text(k.l,kx+kw/2,ky+50,{align:'center'});
     });
-    doc.setFillColor(255,255,255);doc.roundedRect(M,PH-28,90,12,4,4,'F');
-    b(8);st(TEAL);doc.text('Gerado em '+hoje,M+45,PH-20,{align:'center'});
 
-    // RANKING
+    // ══ SLIDE 2: RANKING (full-width, landscape) ══
     doc.addPage();
-    sf(NAVY);doc.rect(0,0,PW,16,'F');
-    if(logoB64){try{doc.addImage(logoB64,logoMime,M,3,18,7,'','FAST');}catch(e){}}
-    b(8);st(WHITE);doc.text('RANKING - TOP '+top.length+' CANDIDATOS',M+22,10);
-    n(7);st(TEAL);doc.text(hoje,PW-M,10,{align:'right'});
-    sf(TEAL);doc.rect(0,16,PW,1.5,'F');
-    var cy=26;
-    b(12);st(NAVY);doc.text('Candidatos Selecionados pela IA',M,cy);cy+=7;
-    n(8.5);st(MUTED);doc.text('Ordenados por compatibilidade com a vaga',M,cy);cy+=11;
-    sf([245,247,250]);doc.rect(M,cy,PW-M*2,8,'F');
-    b(7.5);st([65,84,106]);
-    doc.text('#',M+2,cy+5.5);doc.text('CANDIDATO',M+12,cy+5.5);doc.text('SCORE',M+83,cy+5.5);doc.text('FORMACAO',M+112,cy+5.5);doc.text('CONTATO',M+162,cy+5.5);
+    sf(NAVY); doc.rect(0,0,PW,16,'F');
+    if(logoB64){try{doc.addImage(logoB64,logoMime,12,3.5,22,8,'','FAST');}catch(e){}}
+    b(9); st(WHITE); doc.text('RANKING - TOP '+top.length+' CANDIDATOS SELECIONADOS',38,11);
+    n(7.5); st(TEAL); doc.text(hoje,PW-13,11,{align:'right'});
+    sf(TEAL); doc.rect(0,16,PW,1.5,'F');
+    var cy=26; var MC=13;
+    b(13); st(NAVY); doc.text('Candidatos Selecionados pela IA',MC,cy); cy+=7;
+    n(8.5); st(MUTED); doc.text('Ordenados por compatibilidade com o perfil da vaga',MC,cy); cy+=12;
+    sf([244,246,250]); doc.rect(MC,cy,PW-MC*2,8,'F');
+    b(7.5); st([65,84,106]);
+    doc.text('#',MC+1,cy+5.5);
+    doc.text('CANDIDATO',MC+14,cy+5.5);
+    doc.text('SCORE',MC+90,cy+5.5);
+    doc.text('FORMACAO',MC+132,cy+5.5);
+    doc.text('CONTATO',MC+200,cy+5.5);
     cy+=9;
     top.forEach(function(r,i){
-      if(cy>PH-25){doc.addPage();cy=20;}
-      var sc=r.score||0;
-      var sc_c=sc>=75?GREEN:sc>=55?AMBER:NAVY;
-      sf(i%2===0?WHITE:[248,250,252]);doc.rect(M,cy,PW-M*2,13,'F');
-      b(11);st(NAVY);doc.text(String(i+1),M+2,cy+9);
-      b(8.5);st(NAVY);doc.text((r.nome||'-').substring(0,26),M+12,cy+5.5);
-      n(7);st(MUTED);if(r.resumo)doc.text(r.resumo.substring(0,42),M+12,cy+10.5);
-      sf(sc_c);doc.roundedRect(M+83,cy+1.5,22,9.5,2.5,2.5,'F');
-      b(9);st(WHITE);doc.text(sc+'%',M+94,cy+7.5,{align:'center'});
+      if(cy>PH-18){doc.addPage();cy=20;}
+      var sc=r.score||0; var sc_c=scc(sc);
+      sf(i%2===0?WHITE:[248,250,253]); doc.rect(MC,cy,PW-MC*2,14,'F');
+      b(12); st(NAVY); doc.text(String(i+1),MC+1,cy+10);
+      b(9); st(NAVY); doc.text((r.nome||'-').substring(0,36),MC+14,cy+5.5);
+      n(7.5); st(MUTED); if(r.resumo)doc.text(r.resumo.substring(0,50),MC+14,cy+11);
+      sf(sc_c); doc.roundedRect(MC+90,cy+1.5,28,11,3,3,'F');
+      b(11); st(WHITE); doc.text(sc+'%',MC+104,cy+8.5,{align:'center'});
       var nb=(r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0?'ALTA':(r.nivel_aderencia||'').toUpperCase().indexOf('MED')>=0?'MED.':'BAIX.';
-      b(6.5);st(sc_c);doc.text(nb,M+107,cy+7.5);
-      n(8);st([44,62,80]);doc.text((r.formacao||'-').substring(0,22),M+112,cy+7.5);
-      n(7.5);st(MUTED);doc.text(([r.email,r.telefone].filter(Boolean).join(' ')).substring(0,24),M+162,cy+7.5);
-      cy+=13;
+      b(7); st(sc_c); doc.text(nb,MC+120,cy+9);
+      n(8.5); st([44,62,80]); doc.text((r.formacao||'-').substring(0,35),MC+132,cy+9);
+      n(7.5); st(MUTED); doc.text(([r.email,r.telefone].filter(Boolean).join(' | ')).substring(0,38),MC+200,cy+9);
+      cy+=14;
     });
 
-    // FICHAS INDIVIDUAIS (2 por página)
-    if(top.length){
-      var CARD_H=126, CARD_W=(PW-M*2-5)/2;
-      var cardXs=[M,M+CARD_W+5];
-      var col=0; var pageY=0; var firstCard=true;
+    // ══ SLIDES 3..N: FICHA INDIVIDUAL (1 por slide, painel esq + conteúdo dir) ══
+    var LP=92, RP=95, RW=PW-RP-12;
+    top.forEach(function(r,i){
+      doc.addPage();
+      var sc=r.score||0; var sc_c=scc(sc);
+      var panelBg=sc>=75?[4,98,68]:sc>=55?[98,42,0]:NAVY;
 
-      function newFichaPage(){
-        doc.addPage();
-        sf(NAVY);doc.rect(0,0,PW,16,'F');
-        if(logoB64){try{doc.addImage(logoB64,logoMime,M,3,18,7,'','FAST');}catch(e){}}
-        b(8);st(WHITE);doc.text('FICHAS INDIVIDUAIS DOS CANDIDATOS',M+22,10);
-        n(7);st(TEAL);doc.text(hoje,PW-M,10,{align:'right'});
-        sf(TEAL);doc.rect(0,16,PW,1.5,'F');
-        return 22;
+      // ─ Painel esquerdo (navy / colorido) ─
+      sf(panelBg); doc.rect(0,0,LP,PH,'F');
+      sf(TEAL); doc.rect(0,0,LP,3,'F');
+      if(logoB64){try{doc.addImage(logoB64,logoMime,8,8,30,12,'','FAST');}catch(e){}}
+
+      b(6.5); st([140,195,235]); doc.text('COMPATIBILIDADE',LP/2,46,{align:'center'});
+      b(52); st(WHITE); doc.text(sc+'%',LP/2,81,{align:'center'});
+
+      sf(sc_c); doc.roundedRect(10,87,LP-20,10,4,4,'F');
+      var nbFull=(r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0?'ALTA ADERENCIA':(r.nivel_aderencia||'').toUpperCase().indexOf('MED')>=0?'MEDIA ADERENCIA':'BAIXA ADERENCIA';
+      b(7.5); st(WHITE); doc.text(nbFull,LP/2,94,{align:'center'});
+
+      sf(WHITE); doc.rect(10,103.5,LP-20,0.4,'F');
+
+      b(12); st(WHITE);
+      var nLn=doc.splitTextToSize(r.nome||'-',LP-14);
+      doc.text(nLn.slice(0,2),LP/2,114,{align:'center'});
+      var cY=114+(nLn.slice(0,2).length-1)*7+9;
+
+      n(7.5); st([150,205,235]);
+      if(r.email){doc.text(r.email.substring(0,18),LP/2,cY,{align:'center'});cY+=5.5;}
+      if(r.telefone){doc.text(r.telefone,LP/2,cY,{align:'center'});cY+=5.5;}
+
+      sf(WHITE); doc.rect(10,cY+3,LP-20,0.4,'F');
+      b(7); st(TEAL); doc.text('FORMACAO',LP/2,cY+12,{align:'center'});
+      n(7.5); st([210,235,250]);
+      var fLn=doc.splitTextToSize(r.formacao||'-',LP-14);
+      doc.text(fLn.slice(0,3),LP/2,cY+19,{align:'center'});
+
+      n(7.5); st([100,150,210]); doc.text((i+1)+'/'+top.length,LP/2,PH-7,{align:'center'});
+
+      // ─ Painel direito (branco) ─
+      sf(WHITE); doc.rect(RP,0,PW-RP,PH,'F');
+      sf(NAVY); doc.rect(RP,0,PW-RP,14,'F');
+      b(9); st(WHITE); doc.text('FICHA DO CANDIDATO',RP+6,9);
+      n(7); st(TEAL); doc.text(hoje,PW-14,9,{align:'right'});
+      sf([215,225,240]); doc.rect(RP,14,PW-RP,3,'F');
+      sf(sc_c); doc.rect(RP,14,(PW-RP)*sc/100,3,'F');
+
+      var ry=21, rX=RP+6, rW2=RW-4;
+
+      // Resumo
+      b(8); st(PURPLE); doc.text('RESUMO PROFISSIONAL',rX,ry); ry+=5;
+      if(r.resumo){
+        n(9); st([44,62,80]);
+        var rsLn=doc.splitTextToSize(r.resumo,rW2);
+        doc.text(rsLn.slice(0,3),rX,ry);
+        ry+=rsLn.slice(0,3).length*4.8;
+      }
+      ry+=5;
+      sd(BORDER); doc.setLineWidth(0.3); doc.line(rX,ry,RP+RW,ry); ry+=6;
+
+      // Duas colunas: Experiência | Pontos Fortes
+      var colW=(rW2-6)/2, c1X=rX, c2X=rX+colW+6, sY=ry;
+
+      b(8); st(BLUE); doc.text('EXPERIENCIA RELEVANTE',c1X,sY);
+      n(8); st([44,62,80]);
+      if(r.experiencia_relevante){
+        var eTxt=r.experiencia_relevante.replace(/•/g,'-').replace(/\n/g,' / ').replace(/\s+/g,' ');
+        doc.text(doc.splitTextToSize(eTxt,colW).slice(0,10),c1X,sY+6);
       }
 
-      top.forEach(function(r,i){
-        if(col===0){
-          if(firstCard){pageY=newFichaPage();firstCard=false;}
-          else if(pageY+CARD_H>PH-M){pageY=newFichaPage();}
-        }
-        var cx=cardXs[col]; var sc=r.score||0;
-        var sc_c=sc>=75?GREEN:sc>=55?AMBER:NAVY;
-        var hdrR=sc>=75?[4,120,87]:sc>=55?[120,53,15]:NAVY;
+      b(8); st(GREEN); doc.text('PONTOS FORTES',c2X,sY);
+      n(8); st([44,62,80]);
+      if(r.pontos_fortes){
+        var pTxt=r.pontos_fortes.replace(/•/g,'-').replace(/\n/g,' / ').replace(/\s+/g,' ');
+        doc.text(doc.splitTextToSize(pTxt,colW).slice(0,10),c2X,sY+6);
+      }
 
-        sf(BORDER);doc.roundedRect(cx+0.4,pageY+0.4,CARD_W,CARD_H,4,4,'F');
-        sf(WHITE);doc.roundedRect(cx,pageY,CARD_W,CARD_H,4,4,'F');
-        sf(hdrR);doc.roundedRect(cx,pageY,CARD_W,22,4,4,'F');
-        doc.rect(cx,pageY+18,CARD_W,4,'F');
-        sf(BORDER);doc.rect(cx,pageY+22,CARD_W,2,'F');
-        sf(sc_c);doc.rect(cx,pageY+22,CARD_W*sc/100,2,'F');
+      sd([210,220,235]); doc.setLineWidth(0.3); doc.line(rX+colW+3,sY-1,rX+colW+3,sY+52);
 
-        b(9);st(WHITE);doc.text((r.nome||'-').substring(0,24),cx+5,pageY+9);
-        n(7);st([180,210,240]);if(r.email)doc.text(r.email.substring(0,28),cx+5,pageY+15);
-        b(13);st(WHITE);doc.text(sc+'%',cx+CARD_W-5,pageY+9,{align:'right'});
-        b(6.5);st([180,210,240]);doc.text((r.nivel_aderencia||'').substring(0,5).toUpperCase(),cx+CARD_W-5,pageY+15,{align:'right'});
-
-        var iy=pageY+28; var lh=3.7; var mw=CARD_W-10;
-        function cl(lbl,txt,lc){
-          if(!txt||iy>pageY+CARD_H-8)return;
-          b(6.5);st(lc);doc.text(lbl,cx+5,iy);iy+=lh;
-          n(7.5);st([44,62,80]);
-          var ls=doc.splitTextToSize(txt.replace(/•/g,'-').replace(/\n/g,' / '),mw);
-          var show=ls.slice(0,Math.min(3,Math.floor((pageY+CARD_H-10-iy)/lh)));
-          if(show.length){doc.text(show,cx+5,iy);iy+=show.length*lh+1;}
-        }
-        cl('FORMACAO',r.formacao,PURPLE);
-        cl('EXPERIENCIA RELEVANTE',r.experiencia_relevante,BLUE);
-        cl('PONTOS FORTES',r.pontos_fortes,GREEN);
-
-        if(r.justificativa&&iy<pageY+CARD_H-12){
-          sf([238,242,255]);doc.rect(cx+5,iy,CARD_W-10,Math.min(16,pageY+CARD_H-iy-3),'F');
-          b(6.5);st(PURPLE);doc.text('POR QUE CONVOCAR',cx+7,iy+4.5);
-          n(7);st([55,48,163]);
-          var jl=doc.splitTextToSize(r.justificativa,CARD_W-14);
-          doc.text(jl.slice(0,2),cx+7,iy+9);
-        }
-
-        col++;
-        if(col>=2){col=0;pageY+=CARD_H+6;}
-      });
-    }
+      // Por que convocar — box fixo no fundo do slide
+      var convY=PH-58;
+      sf([238,242,255]); doc.roundedRect(rX-2,convY,rW2+4,52,5,5,'F');
+      sf(PURPLE); doc.roundedRect(rX-2,convY,rW2+4,5,4,4,'F'); doc.rect(rX-2,convY+2,rW2+4,3,'F');
+      b(8); st(PURPLE); doc.text('POR QUE CONVOCAR',rX+2,convY+13);
+      n(9); st([55,48,163]);
+      if(r.justificativa){
+        doc.text(doc.splitTextToSize(r.justificativa,rW2).slice(0,4),rX+2,convY+21);
+      }
+      if(r.limitacoes){
+        b(7.5); st([160,60,60]); doc.text('Limitacao: ',rX+2,convY+44);
+        n(7.5); st([160,60,60]);
+        doc.text(doc.splitTextToSize(r.limitacoes,rW2-22).slice(0,1),rX+26,convY+44);
+      }
+    });
 
     doc.save('triagem-candidatos-'+new Date().toISOString().slice(0,10)+'.pdf');
   } catch(e) {
