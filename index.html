@@ -8026,7 +8026,7 @@ function cvRenderResults() {
   if (top.length) {
     // Ranking table
     html += '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:12px;padding:20px;margin-bottom:20px;">';
-    html += '<div style="font-size:14px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Ranking dos Candidatos Selecionados</div>';
+    html += '<div style="font-size:14px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Ranking de Candidatos</div>';
     html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed;">'
       +'<colgroup><col style="width:42px"><col><col style="width:120px"><col style="width:210px"><col style="width:190px"></colgroup>';
     html += '<thead><tr style="border-bottom:2px solid #E0E5EE;">';
@@ -8174,9 +8174,7 @@ async function cvDownloadPDF() {
     b(9); st(WHITE); doc.text('RANKING - TOP '+top.length+' CANDIDATOS SELECIONADOS',38,11);
     n(7.5); st(TEAL); doc.text(hoje,PW-13,11,{align:'right'});
     sf(TEAL); doc.rect(0,16,PW,1.5,'F');
-    var cy=26; var MC=13;
-    b(13); st(NAVY); doc.text('Candidatos Selecionados pela IA',MC,cy); cy+=7;
-    n(8.5); st(MUTED); doc.text('Ordenados por compatibilidade com o perfil da vaga',MC,cy); cy+=12;
+    var cy=24; var MC=13;
     sf([244,246,250]); doc.rect(MC,cy,PW-MC*2,8,'F');
     b(7.5); st([65,84,106]);
     doc.text('#',MC+1,cy+5.5);
