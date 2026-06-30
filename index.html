@@ -455,6 +455,10 @@ tbody tr:hover{background:var(--off);}
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19V6a1 1 0 00-1-1H4a1 1 0 00-1 1v13m6 0h6m-6 0V10a1 1 0 011-1h4a1 1 0 011 1v9m0 0h6V13a1 1 0 00-1-1h-4a1 1 0 00-1 1v6z"/></svg>
     Relatório Gerencial Comercial
   </div>
+  <div class="nav-item" onclick="showPage('curriculos',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12h6M9 16h4"/></svg>
+    Análise de Currículos
+  </div>
 
   <div class="nav-label">Clientes</div>
   <div class="nav-item" onclick="showPage('portal',this)">
@@ -697,6 +701,82 @@ tbody tr:hover{background:var(--off);}
 
     <!-- Análise IA -->
     <div id="rgc-ai-analysis" style="display:none;"></div>
+  </div>
+
+
+  <!-- ANÁLISE INTELIGENTE DE CURRÍCULOS -->
+  <div class="page" id="page-curriculos">
+    <!-- Header gradiente -->
+    <div style="padding:24px 28px;background:linear-gradient(135deg,#1B2B6B,#2A3F8F);color:#fff;border-radius:12px;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.75;margin-bottom:4px;">Organize Empresas — Recrutamento &amp; Seleção</div>
+          <h1 style="font-size:22px;font-weight:800;margin:0;">Análise Inteligente de Currículos</h1>
+          <div style="font-size:12.5px;opacity:.85;margin-top:6px;line-height:1.5;">Descreva o perfil da vaga, faça upload dos currículos (PDF, DOCX ou TXT) e a IA analisa todos, gerando um ranking dos candidatos mais compatíveis.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="cv-btn-analyze" disabled onclick="cvRunAnalysis()" style="background:#7C3AED;color:#fff;border:none;padding:11px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;opacity:.5;transition:opacity .2s;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            Analisar Currículos
+          </button>
+          <button id="cv-btn-pdf" onclick="cvDownloadPDF()" style="display:none;background:#fff;color:#1B2B6B;border:none;padding:11px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;align-items:center;gap:8px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+            Baixar Relatório PDF
+          </button>
+          <button onclick="cvClear()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:11px 16px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;">Limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passo 1: Perfil da vaga -->
+    <div style="background:#fff;border:1px solid #E0E5EE;border-radius:12px;padding:20px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:24px;height:24px;background:#7C3AED;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">1</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:#1B2B6B;">Defina o Perfil da Vaga</div>
+          <div style="font-size:11.5px;color:#6B7A99;">Descreva com detalhes a vaga: cargo, competências técnicas e comportamentais, formação, experiência mínima, diferenciais e quaisquer requisitos específicos.</div>
+        </div>
+      </div>
+      <textarea id="cv-perfil-input" oninput="cvUpdateBtnState()" placeholder="Ex:&#10;Cargo: Assistente Administrativo&#10;Competências técnicas: Excel avançado, pacote Office, sistema ERP&#10;Competências comportamentais: organização, proatividade, comunicação clara&#10;Formação: Ensino Superior em Administração, Contabilidade ou áreas afins (cursando ou completo)&#10;Experiência mínima: 1 ano em rotinas administrativas&#10;Diferenciais: experiência com emissão de NF, conciliação bancária, gestão de contratos&#10;Outros: disponibilidade imediata, CLT, salário R$ 1.800–2.200" style="width:100%;min-height:140px;padding:12px 14px;border:1.5px solid #D0D7E8;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:#1B2B6B;resize:vertical;outline:none;line-height:1.5;transition:border-color .2s;" onfocus="this.style.borderColor='#7C3AED'" onblur="this.style.borderColor='#D0D7E8'"></textarea>
+    </div>
+
+    <!-- Passo 2: Upload de currículos -->
+    <div style="background:#fff;border:1px solid #E0E5EE;border-radius:12px;padding:20px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="width:24px;height:24px;background:#1B2B6B;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">2</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:#1B2B6B;">Faça Upload dos Currículos</div>
+          <div style="font-size:11.5px;color:#6B7A99;">Aceita PDF, DOCX e TXT · Múltiplos arquivos de uma vez · Qualquer quantidade</div>
+        </div>
+      </div>
+      <div id="cv-upload-zone" style="border:2px dashed #1B2B6B;border-radius:10px;padding:28px 24px;text-align:center;cursor:pointer;background:#fafbfd;transition:all .15s;"
+        onclick="document.getElementById('cv-upload-input').click()"
+        ondragover="event.preventDefault();this.style.background='#eef2fb';this.style.borderColor='#7C3AED';"
+        ondragleave="this.style.background='#fafbfd';this.style.borderColor='#1B2B6B';"
+        ondrop="cvHandleDrop(event)">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#1B2B6B" stroke-width="1.5" style="margin-bottom:8px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        <div style="font-size:14.5px;font-weight:700;color:#1B2B6B;">Arraste os currículos aqui ou clique para selecionar</div>
+        <div style="font-size:11.5px;color:#6B7A99;margin-top:5px;">PDF · DOCX · TXT · Múltiplos arquivos simultâneos</div>
+        <input type="file" id="cv-upload-input" accept=".pdf,.docx,.doc,.txt" multiple style="display:none;" onchange="cvHandleFiles(event.target.files)">
+      </div>
+    </div>
+
+    <!-- Lista de arquivos -->
+    <div id="cv-file-list" style="display:none;margin-bottom:18px;"></div>
+
+    <!-- Barra de progresso -->
+    <div id="cv-progress-wrap" style="display:none;background:#fff;border:1px solid #E0E5EE;border-radius:10px;padding:16px 20px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;color:#1B2B6B;">Processando currículos com IA...</div>
+        <div id="cv-progress-text" style="font-size:12px;color:#6B7A99;"></div>
+      </div>
+      <div style="height:8px;background:#E8ECF5;border-radius:999px;overflow:hidden;">
+        <div id="cv-progress-bar" style="height:8px;width:0%;background:linear-gradient(90deg,#7C3AED,#5CC8D4);border-radius:999px;transition:width .4s ease;"></div>
+      </div>
+    </div>
+
+    <!-- Resultados -->
+    <div id="cv-results"></div>
   </div>
 
 
@@ -7560,7 +7640,7 @@ function rptTrello() {
     boardsHtml +
     rptFooter();
 }
-const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Quadros do Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', rgc:'Relatório Gerencial Comercial', portal:'Portal do Cliente', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
+const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Quadros do Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', rgc:'Relatório Gerencial Comercial', curriculos:'Análise Inteligente de Currículos', portal:'Portal do Cliente', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
 function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -7568,7 +7648,7 @@ function showPage(name, el) {
   if (el) el.classList.add('active');
   document.getElementById('page-title').textContent = pageTitles[name]||name;
   var fb = document.querySelector('.filter-bar');
-  if (fb) fb.style.display = (name === 'portal' || name === 'reports') ? 'none' : '';
+  if (fb) fb.style.display = (name === 'portal' || name === 'reports' || name === 'curriculos') ? 'none' : '';
   var tbr = document.querySelector('.topbar-right');
   if (tbr) tbr.style.display = (name === 'portal') ? 'none' : '';
   if (name === 'reports') renderReports();
@@ -7670,6 +7750,503 @@ function startRefreshCountdown(minutes) {
 }
 
 init();
+
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO: ANÁLISE INTELIGENTE DE CURRÍCULOS
+// ═══════════════════════════════════════════════════════════════════
+
+var _cvFiles = [];
+var _cvResults = [];
+var _cvPerfil = '';
+
+function cvHandleFiles(fileList) {
+  var existing = new Set(_cvFiles.map(function(f){ return f.name + '_' + f.file.size; }));
+  Array.from(fileList).forEach(function(file) {
+    var key = file.name + '_' + file.size;
+    if (!existing.has(key)) {
+      _cvFiles.push({ file: file, name: file.name, status: 'pending', result: null });
+      existing.add(key);
+    }
+  });
+  cvRenderFileList();
+  cvUpdateBtnState();
+}
+
+function cvHandleDrop(e) {
+  e.preventDefault();
+  var zone = document.getElementById('cv-upload-zone');
+  zone.style.background = '#fafbfd'; zone.style.borderColor = '#1B2B6B';
+  cvHandleFiles(e.dataTransfer.files);
+}
+
+function cvRemoveFile(idx) {
+  _cvFiles.splice(idx, 1);
+  cvRenderFileList();
+  cvUpdateBtnState();
+}
+
+function cvRenderFileList() {
+  var el = document.getElementById('cv-file-list');
+  if (!_cvFiles.length) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  var extColors = { pdf:'#C0392B', docx:'#2980B9', doc:'#2980B9', txt:'#16A34A' };
+  var statusIcons = { done:'<span style="color:#16A34A;font-weight:700;font-size:13px;">&#10003;</span>', error:'<span style="color:#C0392B;font-weight:700;font-size:13px;">&#10007;</span>', processing:'<span style="color:#7C3AED;font-size:13px;">&#8943;</span>' };
+  var html = '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:10px;padding:14px 18px;">'
+    + '<div style="font-size:11.5px;font-weight:700;color:#41546A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Curr&iacute;culos carregados (' + _cvFiles.length + ')</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;">';
+  _cvFiles.forEach(function(f, idx) {
+    var ext = f.name.split('.').pop().toLowerCase();
+    var color = extColors[ext] || '#6B7A99';
+    var icon = statusIcons[f.status] || '';
+    var kb = (f.file.size / 1024).toFixed(0);
+    html += '<div style="display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:7px;background:#F8FAFC;border:1px solid #E8ECF5;">'
+      + '<span style="background:'+color+';color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;flex-shrink:0;">'+ext.toUpperCase()+'</span>'
+      + '<span style="font-size:12px;color:#1B2B6B;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+f.name+'">'+f.name+'</span>'
+      + (icon ? '<span style="flex-shrink:0;">'+icon+'</span>' : '')
+      + '<span style="font-size:10px;color:#9CA3AF;flex-shrink:0;">'+kb+'KB</span>'
+      + (f.status==='pending' ? '<button onclick="cvRemoveFile('+idx+')" style="border:none;background:none;color:#9CA3AF;cursor:pointer;font-size:16px;padding:0 2px;line-height:1;flex-shrink:0;" title="Remover">&#215;</button>' : '')
+      + '</div>';
+  });
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+function cvUpdateBtnState() {
+  var perfil = (document.getElementById('cv-perfil-input') || {}).value || '';
+  var enabled = _cvFiles.length > 0 && perfil.trim().length > 20;
+  var btn = document.getElementById('cv-btn-analyze');
+  if (!btn) return;
+  btn.disabled = !enabled;
+  btn.style.opacity = enabled ? '1' : '.5';
+  btn.style.cursor = enabled ? 'pointer' : 'default';
+}
+
+function cvClear() {
+  _cvFiles = []; _cvResults = []; _cvPerfil = '';
+  ['cv-file-list','cv-progress-wrap'].forEach(function(id){ var e=document.getElementById(id); if(e)e.style.display='none'; });
+  var r=document.getElementById('cv-results'); if(r){r.style.display='none';r.innerHTML='';}
+  var p=document.getElementById('cv-btn-pdf'); if(p)p.style.display='none';
+  var inp=document.getElementById('cv-upload-input'); if(inp)inp.value='';
+  cvUpdateBtnState();
+}
+
+// ── DOCX text extractor (ZIP parser inline, sem biblioteca externa) ──
+async function cvExtractDocxText(file) {
+  try {
+    var buffer = await file.arrayBuffer();
+    var bytes = new Uint8Array(buffer);
+    var view = new DataView(buffer);
+    var i = 0;
+    while (i < bytes.length - 30) {
+      if (bytes[i]===0x50 && bytes[i+1]===0x4B && bytes[i+2]===0x03 && bytes[i+3]===0x04) {
+        var compression = view.getUint16(i+8, true);
+        var compSize = view.getUint32(i+18, true);
+        var fileNameLen = view.getUint16(i+26, true);
+        var extraLen = view.getUint16(i+28, true);
+        var fileName = new TextDecoder().decode(bytes.slice(i+30, i+30+fileNameLen));
+        var dataStart = i+30+fileNameLen+extraLen;
+        if (fileName === 'word/document.xml') {
+          var data = bytes.slice(dataStart, dataStart+compSize);
+          var xmlText = '';
+          if (compression === 0) {
+            xmlText = new TextDecoder('utf-8',{fatal:false}).decode(data);
+          } else if (compression === 8 && typeof DecompressionStream !== 'undefined') {
+            var ds = new DecompressionStream('deflate-raw');
+            var wr = ds.writable.getWriter(); var rd = ds.readable.getReader();
+            await wr.write(data); await wr.close();
+            var chunks = []; var chunkData;
+            while (!(chunkData = await rd.read()).done) chunks.push(chunkData.value);
+            var totalLen = chunks.reduce(function(a,c){return a+c.length;},0);
+            var out = new Uint8Array(totalLen); var off=0;
+            for(var ci=0;ci<chunks.length;ci++){out.set(chunks[ci],off);off+=chunks[ci].length;}
+            xmlText = new TextDecoder('utf-8',{fatal:false}).decode(out);
+          }
+          if (xmlText) {
+            return xmlText
+              .replace(/<w:br[^>]*\/?>/g,'\n').replace(/<\/w:p>/g,'\n')
+              .replace(/<[^>]+>/g,' ')
+              .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&apos;/g,"'").replace(/&quot;/g,'"')
+              .replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim().substring(0,9000);
+          }
+          break;
+        }
+        i = dataStart + compSize;
+      } else { i++; }
+    }
+  } catch(e) { console.warn('[CV] DOCX parse:', e); }
+  return '';
+}
+
+// ── Base64 chunked (evita stack overflow em PDFs grandes) ──
+function cvToBase64(buffer) {
+  var bytes = new Uint8Array(buffer); var binary = ''; var CHUNK = 8192;
+  for (var i=0;i<bytes.length;i+=CHUNK) binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+CHUNK, bytes.length)));
+  return btoa(binary);
+}
+
+// ── Claude API — suporte a PDF nativo (document block) e texto extraído ──
+async function cvCallClaudeDoc(apiKey, file, fileText, perfil) {
+  var isPDF = file.name.toLowerCase().endsWith('.pdf');
+  var sys = 'Você é especialista sênior em Recrutamento & Seleção. Analise o currículo com base EXCLUSIVAMENTE no perfil da vaga descrito. Seja objetivo e criterioso. Responda APENAS com JSON válido, sem markdown.';
+  var prompt = '╔╗ PERFIL DA VAGA ╔╗\n' + perfil + '\n\n'
+    + (isPDF ? '' : '╔╗ CURRÍCULO (texto extraído) ╔╗\n' + fileText + '\n\n')
+    + 'Retorne este JSON exato (sem markdown):\n'
+    + '{"nome":"Nome completo","email":"email ou null","telefone":"telefone ou null","score":0,"nivel_aderencia":"ALTA|MEDIA|BAIXA","descartar":false,"resumo":"1-2 frases","formacao":"formação principal","experiencia_relevante":"experiências relevantes (bullets com \\u2022)","competencias":"competências identificadas","pontos_fortes":"2-3 pontos fortes (bullets com \\u2022)","justificativa":"por que convocar (1-2 frases)","limitacoes":"principal gap ou null"}';
+
+  var content;
+  if (isPDF) {
+    var b64 = cvToBase64(await file.arrayBuffer());
+    content = [
+      { type:'document', source:{ type:'base64', media_type:'application/pdf', data:b64 } },
+      { type:'text', text:prompt }
+    ];
+  } else {
+    content = [{ type:'text', text:prompt }];
+  }
+
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'x-api-key':apiKey, 'anthropic-version':'2023-06-01',
+      'content-type':'application/json', 'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:1500, temperature:0, system:sys, messages:[{role:'user',content:content}] })
+  });
+  if (!resp.ok) {
+    var err = await resp.json().catch(function(){return{};});
+    throw new Error((err.error&&err.error.message)||'API '+resp.status);
+  }
+  var data = await resp.json();
+  return (data.content[0].text||'').trim();
+}
+
+// ── Análise principal ──
+async function cvRunAnalysis() {
+  var perfilEl = document.getElementById('cv-perfil-input');
+  var perfil = perfilEl ? perfilEl.value.trim() : '';
+  if (!perfil || perfil.length < 20) { alert('Descreva o perfil da vaga com mais detalhes antes de analisar.'); return; }
+  if (!_cvFiles.length) { alert('Adicione ao menos um currículo.'); return; }
+
+  var apiKey = _anthropicKey;
+  if (!apiKey) {
+    apiKey = prompt('Cole sua chave Anthropic (Claude API key):');
+    if (!apiKey) return;
+    _anthropicKey = apiKey;
+    try { localStorage.setItem('organize_anthropic_key', apiKey); } catch(e) {}
+  }
+
+  _cvPerfil = perfil; _cvResults = [];
+  var btn = document.getElementById('cv-btn-analyze');
+  var oldBtnHtml = btn.innerHTML;
+  btn.disabled = true; btn.style.opacity = '.6';
+  btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Analisando...';
+
+  var progressWrap = document.getElementById('cv-progress-wrap');
+  var progressBar = document.getElementById('cv-progress-bar');
+  var progressText = document.getElementById('cv-progress-text');
+  progressWrap.style.display = 'block';
+  progressBar.style.width = '0%'; progressBar.style.background = 'linear-gradient(90deg,#7C3AED,#5CC8D4)';
+  var resEl = document.getElementById('cv-results'); resEl.innerHTML = ''; resEl.style.display = 'none';
+  document.getElementById('cv-btn-pdf').style.display = 'none';
+
+  var total = _cvFiles.length; var done = 0;
+
+  function tick() {
+    done++;
+    progressBar.style.width = Math.round((done/total)*100)+'%';
+    progressText.textContent = done+' / '+total+' currículos analisados';
+    cvRenderFileList();
+  }
+
+  var BATCH = 6; var allFiles = _cvFiles.slice();
+  for (var b=0; b<allFiles.length; b+=BATCH) {
+    var batchFiles = allFiles.slice(b, b+BATCH);
+    var batchPromises = batchFiles.map(function(f) {
+      f.status = 'processing';
+      return (function(fi) {
+        return (async function() {
+          try {
+            var ext = fi.name.split('.').pop().toLowerCase();
+            var txt = '';
+            if (ext==='docx'||ext==='doc') txt = await cvExtractDocxText(fi.file);
+            else if (ext!=='pdf') txt = await fi.file.text();
+            var raw = await cvCallClaudeDoc(apiKey, fi.file, txt, perfil);
+            var res = extractJSON(raw);
+            if (!res.nome||res.nome.trim()==='') res.nome = fi.name.replace(/\.[^.]+$/,'');
+            res._filename = fi.name; fi.status='done'; fi.result=res;
+            return res;
+          } catch(e) {
+            console.error('[CV]', fi.name, e); fi.status='error';
+            return { _filename:fi.name, nome:fi.name.replace(/\.[^.]+$/,''), error:e.message, score:0, nivel_aderencia:'BAIXA', descartar:true };
+          } finally { tick(); }
+        })();
+      })(f);
+    });
+    var batchRes = await Promise.all(batchPromises);
+    _cvResults = _cvResults.concat(batchRes);
+    if (b+BATCH < allFiles.length) await new Promise(function(r){setTimeout(r,600);});
+  }
+
+  _cvResults.sort(function(a,b){return (b.score||0)-(a.score||0);});
+  var qual = _cvResults.filter(function(r){return !r.descartar&&!r.error;});
+  progressText.textContent = 'Análise concluída! '+qual.length+' candidatos qualificados de '+total+' analisados.';
+  progressBar.style.width = '100%'; progressBar.style.background = '#16A34A';
+  cvRenderResults();
+  btn.innerHTML = oldBtnHtml; btn.disabled=false; btn.style.opacity='1';
+}
+
+function cvKpiCard(lbl, val, color, sub) {
+  return '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:10px;padding:16px;position:relative;overflow:hidden;">'
+    +'<div style="position:absolute;top:0;left:0;right:0;height:3px;background:'+color+'"></div>'
+    +'<div style="font-size:26px;font-weight:800;color:'+color+';line-height:1.1;">'+val+'</div>'
+    +'<div style="font-size:11px;font-weight:700;color:#41546A;margin-top:4px;text-transform:uppercase;letter-spacing:.5px;">'+lbl+'</div>'
+    +'<div style="font-size:10.5px;color:#9CA3AF;margin-top:2px;">'+sub+'</div>'
+    +'</div>';
+}
+
+function cvRenderResults() {
+  var el = document.getElementById('cv-results');
+  el.style.display = 'block';
+  var qual = _cvResults.filter(function(r){return !r.descartar&&!r.error;});
+  var desc = _cvResults.filter(function(r){return r.descartar||r.error;});
+  var top = qual.slice(0,10);
+  var alta = qual.filter(function(r){return (r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0;}).length;
+  var avg = qual.length ? Math.round(qual.reduce(function(s,r){return s+(r.score||0);},0)/qual.length) : 0;
+  var html = '';
+
+  // KPIs
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px;">';
+  html += cvKpiCard('Analisados', _cvResults.length, '#1B2B6B', 'Total de currículos');
+  html += cvKpiCard('Qualificados', qual.length, '#16A34A', 'Score ≥ 40');
+  html += cvKpiCard('Alta aderência', alta, '#7C3AED', 'Score ≥ 75');
+  html += cvKpiCard('Descartados', desc.length, '#C0392B', 'Score < 40');
+  html += cvKpiCard('Compat. média', avg+'%', '#2980B9', 'Entre qualificados');
+  html += '</div>';
+
+  if (top.length) {
+    // Ranking table
+    html += '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:12px;padding:20px;margin-bottom:20px;">';
+    html += '<div style="font-size:14px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Ranking dos Candidatos Selecionados</div>';
+    html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:580px;">';
+    html += '<thead><tr style="border-bottom:2px solid #E0E5EE;">';
+    ['#','Candidato','Score','Formação','Contato'].forEach(function(h){
+      html += '<th style="text-align:left;padding:8px 10px;color:#41546A;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;">'+h+'</th>';
+    });
+    html += '</tr></thead><tbody>';
+    top.forEach(function(r,i) {
+      var sc = r.score||0;
+      var sC = sc>=75?'#16A34A':sc>=55?'#D97706':'#1B2B6B';
+      var nb = (r.nivel_aderencia||'').toUpperCase();
+      if(!nb) nb = sc>=75?'ALTA':sc>=55?'MÉDIA':'BAIXA';
+      var nbBg = nb.indexOf('ALTA')>=0?'#E8F5EE':nb.indexOf('MED')>=0||nb.indexOf('MÉD')>=0?'#FEF3C7':'#F3F4F6';
+      var nbTxt = nb.indexOf('ALTA')>=0?'#16A34A':nb.indexOf('MED')>=0||nb.indexOf('MÉD')>=0?'#D97706':'#6B7280';
+      html += '<tr style="border-bottom:1px solid #F0F4F8;">'
+        +'<td style="padding:10px;font-weight:800;color:#1B2B6B;font-size:15px;">'+(i+1)+'</td>'
+        +'<td style="padding:10px;"><div style="font-weight:700;color:#1B2B6B;">'+(r.nome||'—')+'</div>'
+          +(r.resumo?'<div style="font-size:11px;color:#6B7A99;margin-top:2px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.resumo+'</div>':'')
+          +'</td>'
+        +'<td style="padding:10px;"><div style="display:flex;align-items:center;gap:7px;">'
+          +'<span style="font-size:20px;font-weight:800;color:'+sC+';">'+sc+'%</span>'
+          +'<span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:999px;background:'+nbBg+';color:'+nbTxt+';">'+nb+'</span>'
+          +'</div></td>'
+        +'<td style="padding:10px;font-size:12px;color:#41546A;">'+(r.formacao||'—')+'</td>'
+        +'<td style="padding:10px;font-size:11.5px;color:#6B7A99;">'+([r.email,r.telefone].filter(Boolean).join(' · ')||'—')+'</td>'
+        +'</tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    // Cards detalhados
+    html += '<div style="font-size:14px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Fichas Detalhadas — Top '+top.length+'</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px;margin-bottom:24px;">';
+    top.forEach(function(r,i) {
+      var sc = r.score||0;
+      var sC = sc>=75?'#16A34A':sc>=55?'#D97706':'#2980B9';
+      var hdrBg = sc>=75?'linear-gradient(135deg,#065F46,#047857)':sc>=55?'linear-gradient(135deg,#78350F,#B45309)':'linear-gradient(135deg,#1B2B6B,#2A3F8F)';
+      html += '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,80,.05);">'
+        +'<div style="background:'+hdrBg+';padding:14px 18px;display:flex;justify-content:space-between;align-items:flex-start;">'
+          +'<div style="flex:1;min-width:0;">'
+            +'<div style="font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">#'+(i+1)+' de '+top.length+'</div>'
+            +'<div style="font-size:15px;font-weight:800;color:#fff;line-height:1.2;">'+(r.nome||'—')+'</div>'
+            +(r.email?'<div style="font-size:10.5px;color:rgba(255,255,255,.7);margin-top:3px;">'+r.email+'</div>':'')
+          +'</div>'
+          +'<div style="text-align:right;flex-shrink:0;margin-left:12px;">'
+            +'<div style="font-size:28px;font-weight:900;color:#fff;line-height:1;">'+sc+'%</div>'
+            +'<div style="font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;">'+(r.nivel_aderencia||'—')+'</div>'
+          +'</div>'
+        +'</div>'
+        +'<div style="height:3px;background:#E0E5EE;"><div style="height:3px;width:'+sc+'%;background:'+sC+';"></div></div>'
+        +'<div style="padding:14px 18px;">'
+          +(r.resumo?'<div style="font-size:12.5px;color:#41546A;line-height:1.5;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #F0F4F8;font-style:italic;">'+r.resumo+'</div>':'')
+          +(r.formacao?'<div style="margin-bottom:9px;"><span style="font-size:9.5px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;">Formação</span><div style="font-size:12.5px;color:#1B2B6B;">'+r.formacao+'</div></div>':'')
+          +(r.experiencia_relevante?'<div style="margin-bottom:9px;"><span style="font-size:9.5px;font-weight:700;color:#2980B9;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;">Experiência Relevante</span><div style="font-size:12px;color:#41546A;line-height:1.45;white-space:pre-line;">'+r.experiencia_relevante.substring(0,220)+'</div></div>':'')
+          +(r.pontos_fortes?'<div style="margin-bottom:9px;"><span style="font-size:9.5px;font-weight:700;color:#16A34A;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;">Pontos Fortes</span><div style="font-size:12px;color:#41546A;line-height:1.45;white-space:pre-line;">'+r.pontos_fortes+'</div></div>':'')
+          +(r.justificativa?'<div style="background:#EEF2FF;border-left:3px solid #7C3AED;border-radius:0 6px 6px 0;padding:9px 13px;margin-top:4px;"><span style="font-size:9.5px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;">Por que convocar</span><div style="font-size:12.5px;color:#3730A3;line-height:1.45;">'+r.justificativa+'</div></div>':'')
+          +(r.limitacoes?'<div style="margin-top:8px;background:#FEF2F2;border-left:3px solid #C0392B;border-radius:0 5px 5px 0;padding:7px 12px;"><span style="font-size:9.5px;font-weight:700;color:#C0392B;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;">Limitações</span><div style="font-size:11.5px;color:#7F1D1D;">'+r.limitacoes+'</div></div>':'')
+        +'</div></div>';
+    });
+    html += '</div>';
+    document.getElementById('cv-btn-pdf').style.display = 'inline-flex';
+  }
+
+  if (desc.length) {
+    html += '<details style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;padding:14px 18px;">'
+      +'<summary style="cursor:pointer;font-weight:700;color:#991B1B;font-size:13px;list-style:none;">Descartados automaticamente — '+desc.length+' currículo(s) com baixa aderência</summary>'
+      +'<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:7px;">';
+    desc.forEach(function(r){
+      html += '<span style="background:#FEE2E2;border-radius:6px;padding:4px 10px;font-size:12px;color:#991B1B;">'+(r.nome||r._filename||'—')+(r.score?' ('+r.score+'%)':'')+(r.error?' [erro]':'')+'</span>';
+    });
+    html += '</div></details>';
+  }
+  el.innerHTML = html;
+}
+
+// ── PDF — jsPDF vetorial, padrão visual Organize ──
+async function cvDownloadPDF() {
+  if (!_cvResults.length) { alert('Gere a análise primeiro.'); return; }
+  var btn = document.getElementById('cv-btn-pdf');
+  var oldTxt = btn.innerHTML; btn.innerHTML = 'Gerando PDF...'; btn.disabled = true;
+  try {
+    var JsPDF = window.jspdf.jsPDF;
+    var doc = new JsPDF({ unit:'mm', format:'a4', orientation:'portrait', compress:true });
+    var PW=210, PH=297, M=15;
+    var logoB64 = (typeof S!=='undefined'&&S.logoConfig&&S.logoConfig.img)?S.logoConfig.img:(typeof LOGO_ORGANIZE_B64!=='undefined'?LOGO_ORGANIZE_B64:'');
+    var logoMime = (logoB64&&logoB64.indexOf('image/jpeg')!==-1)?'JPEG':'PNG';
+    var qual = _cvResults.filter(function(r){return !r.descartar&&!r.error;});
+    var top = qual.slice(0,10);
+    var alta = qual.filter(function(r){return (r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0;}).length;
+    var avg = qual.length?Math.round(qual.reduce(function(s,r){return s+(r.score||0);},0)/qual.length):0;
+    var hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+    var NAVY=[27,43,107], TEAL=[92,200,212], WHITE=[255,255,255], BORDER=[224,229,238], MUTED=[107,122,153];
+    var GREEN=[22,163,74], AMBER=[217,119,6], PURPLE=[124,58,237], BLUE=[41,128,185];
+
+    function sf(c){doc.setFillColor(c[0],c[1],c[2]);}
+    function st(c){doc.setTextColor(c[0],c[1],c[2]);}
+    function sd(c){doc.setDrawColor(c[0],c[1],c[2]);}
+    function b(sz){doc.setFont('helvetica','bold');doc.setFontSize(sz);}
+    function n(sz){doc.setFont('helvetica','normal');doc.setFontSize(sz);}
+
+    // CAPA
+    sf(NAVY);doc.rect(0,0,PW,PH,'F');
+    sf(TEAL);doc.rect(0,0,PW,3,'F');
+    if(logoB64){try{doc.addImage(logoB64,logoMime,M,18,44,17,'','FAST');}catch(e){}}
+    b(9);st(TEAL);doc.text('ORGANIZE EMPRESAS - RECRUTAMENTO & SELECAO',M,50);
+    b(26);st(WHITE);doc.text('Relatorio de Triagem',M,63);doc.text('de Candidatos',M,75);
+    sd(TEAL);doc.setLineWidth(0.6);doc.line(M,83,PW-M,83);
+    n(9);st([160,190,230]);
+    var pv = _cvPerfil.substring(0,150)+(_cvPerfil.length>150?'...':'');
+    doc.text(doc.splitTextToSize(pv,PW-M*2-8).slice(0,3),M,91);
+    var kpis=[{l:'ANALISADOS',v:String(_cvResults.length)},{l:'QUALIFICADOS',v:String(qual.length)},{l:'ALTA ADERENCIA',v:String(alta)},{l:'COMPAT. MEDIA',v:avg+'%'}];
+    var kw=(PW-M*2-9)/4;
+    kpis.forEach(function(k,i){
+      var kx=M+i*(kw+3),ky=118;
+      doc.setFillColor(255,255,255);doc.roundedRect(kx,ky,kw,26,4,4,'F');
+      doc.setFillColor(27,43,107);
+      b(18);st(TEAL);doc.text(k.v,kx+kw/2,ky+14,{align:'center'});
+      b(7);st([160,190,230]);doc.text(k.l,kx+kw/2,ky+21.5,{align:'center'});
+    });
+    doc.setFillColor(255,255,255);doc.roundedRect(M,PH-28,90,12,4,4,'F');
+    b(8);st(TEAL);doc.text('Gerado em '+hoje,M+45,PH-20,{align:'center'});
+
+    // RANKING
+    doc.addPage();
+    sf(NAVY);doc.rect(0,0,PW,16,'F');
+    if(logoB64){try{doc.addImage(logoB64,logoMime,M,3,18,7,'','FAST');}catch(e){}}
+    b(8);st(WHITE);doc.text('RANKING - TOP '+top.length+' CANDIDATOS',M+22,10);
+    n(7);st(TEAL);doc.text(hoje,PW-M,10,{align:'right'});
+    sf(TEAL);doc.rect(0,16,PW,1.5,'F');
+    var cy=26;
+    b(12);st(NAVY);doc.text('Candidatos Selecionados pela IA',M,cy);cy+=7;
+    n(8.5);st(MUTED);doc.text('Ordenados por compatibilidade com a vaga',M,cy);cy+=11;
+    sf([245,247,250]);doc.rect(M,cy,PW-M*2,8,'F');
+    b(7.5);st([65,84,106]);
+    doc.text('#',M+2,cy+5.5);doc.text('CANDIDATO',M+12,cy+5.5);doc.text('SCORE',M+83,cy+5.5);doc.text('FORMACAO',M+112,cy+5.5);doc.text('CONTATO',M+162,cy+5.5);
+    cy+=9;
+    top.forEach(function(r,i){
+      if(cy>PH-25){doc.addPage();cy=20;}
+      var sc=r.score||0;
+      var sc_c=sc>=75?GREEN:sc>=55?AMBER:NAVY;
+      sf(i%2===0?WHITE:[248,250,252]);doc.rect(M,cy,PW-M*2,13,'F');
+      b(11);st(NAVY);doc.text(String(i+1),M+2,cy+9);
+      b(8.5);st(NAVY);doc.text((r.nome||'-').substring(0,26),M+12,cy+5.5);
+      n(7);st(MUTED);if(r.resumo)doc.text(r.resumo.substring(0,42),M+12,cy+10.5);
+      sf(sc_c);doc.roundedRect(M+83,cy+1.5,22,9.5,2.5,2.5,'F');
+      b(9);st(WHITE);doc.text(sc+'%',M+94,cy+7.5,{align:'center'});
+      var nb=(r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0?'ALTA':(r.nivel_aderencia||'').toUpperCase().indexOf('MED')>=0?'MED.':'BAIX.';
+      b(6.5);st(sc_c);doc.text(nb,M+107,cy+7.5);
+      n(8);st([44,62,80]);doc.text((r.formacao||'-').substring(0,22),M+112,cy+7.5);
+      n(7.5);st(MUTED);doc.text(([r.email,r.telefone].filter(Boolean).join(' ')).substring(0,24),M+162,cy+7.5);
+      cy+=13;
+    });
+
+    // FICHAS INDIVIDUAIS (2 por página)
+    if(top.length){
+      var CARD_H=126, CARD_W=(PW-M*2-5)/2;
+      var cardXs=[M,M+CARD_W+5];
+      var col=0; var pageY=0; var firstCard=true;
+
+      function newFichaPage(){
+        doc.addPage();
+        sf(NAVY);doc.rect(0,0,PW,16,'F');
+        if(logoB64){try{doc.addImage(logoB64,logoMime,M,3,18,7,'','FAST');}catch(e){}}
+        b(8);st(WHITE);doc.text('FICHAS INDIVIDUAIS DOS CANDIDATOS',M+22,10);
+        n(7);st(TEAL);doc.text(hoje,PW-M,10,{align:'right'});
+        sf(TEAL);doc.rect(0,16,PW,1.5,'F');
+        return 22;
+      }
+
+      top.forEach(function(r,i){
+        if(col===0){
+          if(firstCard){pageY=newFichaPage();firstCard=false;}
+          else if(pageY+CARD_H>PH-M){pageY=newFichaPage();}
+        }
+        var cx=cardXs[col]; var sc=r.score||0;
+        var sc_c=sc>=75?GREEN:sc>=55?AMBER:NAVY;
+        var hdrR=sc>=75?[4,120,87]:sc>=55?[120,53,15]:NAVY;
+
+        sf(BORDER);doc.roundedRect(cx+0.4,pageY+0.4,CARD_W,CARD_H,4,4,'F');
+        sf(WHITE);doc.roundedRect(cx,pageY,CARD_W,CARD_H,4,4,'F');
+        sf(hdrR);doc.roundedRect(cx,pageY,CARD_W,22,4,4,'F');
+        doc.rect(cx,pageY+18,CARD_W,4,'F');
+        sf(BORDER);doc.rect(cx,pageY+22,CARD_W,2,'F');
+        sf(sc_c);doc.rect(cx,pageY+22,CARD_W*sc/100,2,'F');
+
+        b(9);st(WHITE);doc.text((r.nome||'-').substring(0,24),cx+5,pageY+9);
+        n(7);st([180,210,240]);if(r.email)doc.text(r.email.substring(0,28),cx+5,pageY+15);
+        b(13);st(WHITE);doc.text(sc+'%',cx+CARD_W-5,pageY+9,{align:'right'});
+        b(6.5);st([180,210,240]);doc.text((r.nivel_aderencia||'').substring(0,5).toUpperCase(),cx+CARD_W-5,pageY+15,{align:'right'});
+
+        var iy=pageY+28; var lh=3.7; var mw=CARD_W-10;
+        function cl(lbl,txt,lc){
+          if(!txt||iy>pageY+CARD_H-8)return;
+          b(6.5);st(lc);doc.text(lbl,cx+5,iy);iy+=lh;
+          n(7.5);st([44,62,80]);
+          var ls=doc.splitTextToSize(txt.replace(/•/g,'-').replace(/\n/g,' / '),mw);
+          var show=ls.slice(0,Math.min(3,Math.floor((pageY+CARD_H-10-iy)/lh)));
+          if(show.length){doc.text(show,cx+5,iy);iy+=show.length*lh+1;}
+        }
+        cl('FORMACAO',r.formacao,PURPLE);
+        cl('EXPERIENCIA RELEVANTE',r.experiencia_relevante,BLUE);
+        cl('PONTOS FORTES',r.pontos_fortes,GREEN);
+
+        if(r.justificativa&&iy<pageY+CARD_H-12){
+          sf([238,242,255]);doc.rect(cx+5,iy,CARD_W-10,Math.min(16,pageY+CARD_H-iy-3),'F');
+          b(6.5);st(PURPLE);doc.text('POR QUE CONVOCAR',cx+7,iy+4.5);
+          n(7);st([55,48,163]);
+          var jl=doc.splitTextToSize(r.justificativa,CARD_W-14);
+          doc.text(jl.slice(0,2),cx+7,iy+9);
+        }
+
+        col++;
+        if(col>=2){col=0;pageY+=CARD_H+6;}
+      });
+    }
+
+    doc.save('triagem-candidatos-'+new Date().toISOString().slice(0,10)+'.pdf');
+  } catch(e) {
+    console.error('[CV] PDF',e); alert('Erro ao gerar PDF: '+e.message);
+  }
+  btn.innerHTML=oldTxt; btn.disabled=false;
+}
 </script>
 </body>
 </html>
