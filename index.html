@@ -8053,9 +8053,11 @@ function cvRenderResults() {
             +'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;background:'+nbBg+';color:'+nbTxt+';white-space:nowrap;flex-shrink:0;">'+nb+'</span>'
           +'</div>'
         +'</td>'
-        +'<td style="padding:10px;font-size:12px;color:#41546A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+(r.formacao||'—')+'">'+(r.formacao||'—')+'</td>'
-        +'<td style="padding:10px;font-size:11.5px;color:#6B7A99;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+([r.email,r.telefone].filter(Boolean).join(' · '))+'">'
-          +([r.email,r.telefone].filter(Boolean).join(' · ')||'—')
+        +'<td style="padding:10px;font-size:12px;color:#41546A;word-break:break-word;">'+(r.formacao||'—')+'</td>'
+        +'<td style="padding:10px;font-size:11.5px;">'
+          +(r.email?'<div style="color:#6B7A99;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.email+'</div>':'')
+          +(r.telefone?'<div style="color:#1B2B6B;font-weight:600;margin-top:2px;">'+r.telefone+'</div>':'')
+          +(!r.email&&!r.telefone?'<span style="color:#9CA3AF;">—</span>':'')
         +'</td>'
         +'</tr>';
     });
@@ -8131,32 +8133,41 @@ async function cvDownloadPDF() {
     function b(sz){doc.setFont('helvetica','bold');doc.setFontSize(sz);}
     function n(sz){doc.setFont('helvetica','normal');doc.setFontSize(sz);}
     function scc(sc){return sc>=75?GREEN:sc>=55?AMBER:NAVY;}
+    // Sanitiza caracteres fora do range Latin-1 que jsPDF não suporta nos fonts embutidos
+    function tx(s){
+      if(!s)return'';
+      return String(s)
+        .replace(/—|–/g,'-')
+        .replace(/[‘’]/g,"'")
+        .replace(/[“”]/g,'"')
+        .replace(/•/g,'·')
+        .replace(/…/g,'...')
+        .replace(/ /g,' ')
+        .replace(/[^\x00-\xFF]/g,'?');
+    }
 
-    // ══ SLIDE 1: CAPA (navy esq + branco dir) ══
+    // ══ SLIDE 1: CAPA ══
     sf(NAVY); doc.rect(0,0,PW,PH,'F');
     sf(TEAL); doc.rect(0,0,PW,3,'F');
     sf(WHITE); doc.rect(150,3,PW-150,PH-3,'F');
-    // Logo esq
     if(logoB64){try{doc.addImage(logoB64,logoMime,14,13,54,22,'','FAST');}catch(e){}}
-    // Título esq
-    b(8); st(TEAL); doc.text('ORGANIZE EMPRESAS - RECRUTAMENTO & SELECAO',14,50);
-    b(28); st(WHITE); doc.text('Relatorio de',14,66);
+    b(8); st(TEAL); doc.text('ORGANIZE EMPRESAS - RECRUTAMENTO & SELEÇÃO',14,50);
+    b(28); st(WHITE); doc.text('Relatório de',14,66);
     b(28); st(WHITE); doc.text('Triagem de',14,81);
     b(28); st(WHITE); doc.text('Candidatos',14,96);
     sd(TEAL); doc.setLineWidth(0.6); doc.line(14,106,136,106);
-    var pv=(_cvPerfil||'').substring(0,135)+(_cvPerfil.length>135?'...':'');
+    var pv=tx((_cvPerfil||'').substring(0,135)+(_cvPerfil.length>135?'...':''));
     n(8.5); st([155,200,230]);
     doc.text(doc.splitTextToSize(pv,126).slice(0,3),14,115);
     sf([38,58,140]); doc.roundedRect(14,PH-18,90,11,4,4,'F');
     b(8.5); st(TEAL); doc.text('Gerado em '+hoje,59,PH-11,{align:'center'});
-    // KPI dir 2×2
-    b(12); st(NAVY); doc.text('Resultados da Analise',162,23);
-    n(8.5); st(MUTED); doc.text('Resumo da triagem inteligente',162,30);
+    b(12); st(NAVY); doc.text('Resultados da Análise',162,23);
+    n(8.5); st(MUTED); doc.text('Resumo da triagem de currículos',162,30);
     var kpis=[
-      {l:'ANALISADOS',    v:String(_cvResults.length), c:NAVY},
-      {l:'QUALIFICADOS',  v:String(qual.length),        c:GREEN},
-      {l:'ALTA ADERENCIA',v:String(alta),               c:PURPLE},
-      {l:'COMPAT. MEDIA', v:avg+'%',                    c:AMBER}
+      {l:'ANALISADOS',         v:String(_cvResults.length), c:NAVY},
+      {l:'QUALIFICADOS',       v:String(qual.length),        c:GREEN},
+      {l:'ALTA ADERÊNCIA',v:String(alta),               c:PURPLE},
+      {l:'COMPAT. MÉDIA', v:avg+'%',                    c:AMBER}
     ];
     var kw=60,kh=66,kg=5;
     kpis.forEach(function(k,i){
@@ -8167,7 +8178,7 @@ async function cvDownloadPDF() {
       b(7); st(MUTED); doc.text(k.l,kx+kw/2,ky+50,{align:'center'});
     });
 
-    // ══ SLIDE 2: RANKING (full-width, landscape) ══
+    // ══ SLIDE 2: RANKING ══
     doc.addPage();
     sf(NAVY); doc.rect(0,0,PW,16,'F');
     if(logoB64){try{doc.addImage(logoB64,logoMime,12,3.5,22,8,'','FAST');}catch(e){}}
@@ -8180,64 +8191,66 @@ async function cvDownloadPDF() {
     doc.text('#',MC+1,cy+5.5);
     doc.text('CANDIDATO',MC+14,cy+5.5);
     doc.text('SCORE',MC+90,cy+5.5);
-    doc.text('FORMACAO',MC+132,cy+5.5);
+    doc.text('FORMAÇÃO',MC+132,cy+5.5);
     doc.text('CONTATO',MC+200,cy+5.5);
     cy+=9;
+    var ROW_H=22;
     top.forEach(function(r,i){
-      if(cy>PH-18){doc.addPage();cy=20;}
+      if(cy>PH-22){doc.addPage();cy=20;}
       var sc=r.score||0; var sc_c=scc(sc);
-      sf(i%2===0?WHITE:[248,250,253]); doc.rect(MC,cy,PW-MC*2,14,'F');
-      b(12); st(NAVY); doc.text(String(i+1),MC+1,cy+10);
-      b(9); st(NAVY); doc.text((r.nome||'-').substring(0,36),MC+14,cy+5.5);
-      n(7.5); st(MUTED); if(r.resumo)doc.text(r.resumo.substring(0,50),MC+14,cy+11);
-      sf(sc_c); doc.roundedRect(MC+90,cy+1.5,28,11,3,3,'F');
-      b(11); st(WHITE); doc.text(sc+'%',MC+104,cy+8.5,{align:'center'});
-      var nb=(r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0?'ALTA':(r.nivel_aderencia||'').toUpperCase().indexOf('MED')>=0?'MED.':'BAIX.';
-      b(7); st(sc_c); doc.text(nb,MC+120,cy+9);
-      n(8.5); st([44,62,80]); doc.text((r.formacao||'-').substring(0,35),MC+132,cy+9);
-      n(7.5); st(MUTED); doc.text(([r.email,r.telefone].filter(Boolean).join(' | ')).substring(0,38),MC+200,cy+9);
-      cy+=14;
+      sf(i%2===0?WHITE:[248,250,253]); doc.rect(MC,cy,PW-MC*2,ROW_H,'F');
+      // Número
+      b(12); st(NAVY); doc.text(String(i+1),MC+1,cy+13);
+      // Nome + resumo
+      b(9); st(NAVY); doc.text(tx(r.nome||'-').substring(0,36),MC+14,cy+7);
+      n(7.5); st(MUTED); if(r.resumo)doc.text(tx(r.resumo).substring(0,52),MC+14,cy+13.5);
+      // Score badge
+      sf(sc_c); doc.roundedRect(MC+90,cy+3,28,11,3,3,'F');
+      b(11); st(WHITE); doc.text(sc+'%',MC+104,cy+10,{align:'center'});
+      var nb=(r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0?'ALTA':(r.nivel_aderencia||'').toUpperCase().indexOf('MED')>=0?'MÉD.':'BAIX.';
+      b(7); st(sc_c); doc.text(nb,MC+120,cy+10.5);
+      // Formação — até 2 linhas
+      var fLn=doc.splitTextToSize(tx(r.formacao||'-'),64);
+      n(8); st([44,62,80]); doc.text(fLn.slice(0,2),MC+132,cy+7.5);
+      // Contato — e-mail e telefone em linhas separadas
+      n(7.5); st(MUTED);
+      if(r.email)doc.text(tx(r.email).substring(0,34),MC+200,cy+7);
+      if(r.telefone){b(8);st([27,43,107]);doc.text(tx(r.telefone),MC+200,cy+14);}
+      cy+=ROW_H;
     });
 
-    // ══ SLIDES 3..N: FICHA INDIVIDUAL (1 por slide, painel esq + conteúdo dir) ══
+    // ══ SLIDES 3..N: FICHA INDIVIDUAL ══
     var LP=92, RP=95, RW=PW-RP-12;
     top.forEach(function(r,i){
       doc.addPage();
       var sc=r.score||0; var sc_c=scc(sc);
       var panelBg=sc>=75?[4,98,68]:sc>=55?[98,42,0]:NAVY;
 
-      // ─ Painel esquerdo (navy / colorido) ─
+      // Painel esquerdo
       sf(panelBg); doc.rect(0,0,LP,PH,'F');
       sf(TEAL); doc.rect(0,0,LP,3,'F');
       if(logoB64){try{doc.addImage(logoB64,logoMime,8,8,30,12,'','FAST');}catch(e){}}
-
       b(6.5); st([140,195,235]); doc.text('COMPATIBILIDADE',LP/2,46,{align:'center'});
       b(52); st(WHITE); doc.text(sc+'%',LP/2,81,{align:'center'});
-
       sf(sc_c); doc.roundedRect(10,87,LP-20,10,4,4,'F');
-      var nbFull=(r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0?'ALTA ADERENCIA':(r.nivel_aderencia||'').toUpperCase().indexOf('MED')>=0?'MEDIA ADERENCIA':'BAIXA ADERENCIA';
+      var nbFull=(r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0?'ALTA ADERÊNCIA':(r.nivel_aderencia||'').toUpperCase().indexOf('MED')>=0?'MÉDIA ADERÊNCIA':'BAIXA ADERÊNCIA';
       b(7.5); st(WHITE); doc.text(nbFull,LP/2,94,{align:'center'});
-
       sf(WHITE); doc.rect(10,103.5,LP-20,0.4,'F');
-
       b(12); st(WHITE);
-      var nLn=doc.splitTextToSize(r.nome||'-',LP-14);
+      var nLn=doc.splitTextToSize(tx(r.nome||'-'),LP-14);
       doc.text(nLn.slice(0,2),LP/2,114,{align:'center'});
       var cY=114+(nLn.slice(0,2).length-1)*7+9;
-
       n(7.5); st([150,205,235]);
-      if(r.email){doc.text(r.email.substring(0,18),LP/2,cY,{align:'center'});cY+=5.5;}
-      if(r.telefone){doc.text(r.telefone,LP/2,cY,{align:'center'});cY+=5.5;}
-
+      if(r.email){doc.text(tx(r.email).substring(0,18),LP/2,cY,{align:'center'});cY+=5.5;}
+      if(r.telefone){doc.text(tx(r.telefone),LP/2,cY,{align:'center'});cY+=5.5;}
       sf(WHITE); doc.rect(10,cY+3,LP-20,0.4,'F');
-      b(7); st(TEAL); doc.text('FORMACAO',LP/2,cY+12,{align:'center'});
+      b(7); st(TEAL); doc.text('FORMAÇÃO',LP/2,cY+12,{align:'center'});
       n(7.5); st([210,235,250]);
-      var fLn=doc.splitTextToSize(r.formacao||'-',LP-14);
-      doc.text(fLn.slice(0,3),LP/2,cY+19,{align:'center'});
-
+      var fLn2=doc.splitTextToSize(tx(r.formacao||'-'),LP-14);
+      doc.text(fLn2.slice(0,3),LP/2,cY+19,{align:'center'});
       n(7.5); st([100,150,210]); doc.text((i+1)+'/'+top.length,LP/2,PH-7,{align:'center'});
 
-      // ─ Painel direito (branco) ─
+      // Painel direito
       sf(WHITE); doc.rect(RP,0,PW-RP,PH,'F');
       sf(NAVY); doc.rect(RP,0,PW-RP,14,'F');
       b(9); st(WHITE); doc.text('FICHA DO CANDIDATO',RP+6,9);
@@ -8247,49 +8260,43 @@ async function cvDownloadPDF() {
 
       var ry=21, rX=RP+6, rW2=RW-4;
 
-      // Resumo
       b(8); st(PURPLE); doc.text('RESUMO PROFISSIONAL',rX,ry); ry+=5;
       if(r.resumo){
         n(9); st([44,62,80]);
-        var rsLn=doc.splitTextToSize(r.resumo,rW2);
+        var rsLn=doc.splitTextToSize(tx(r.resumo),rW2);
         doc.text(rsLn.slice(0,3),rX,ry);
         ry+=rsLn.slice(0,3).length*4.8;
       }
       ry+=5;
       sd(BORDER); doc.setLineWidth(0.3); doc.line(rX,ry,RP+RW,ry); ry+=6;
 
-      // Duas colunas: Experiência | Pontos Fortes
       var colW=(rW2-6)/2, c1X=rX, c2X=rX+colW+6, sY=ry;
-
-      b(8); st(BLUE); doc.text('EXPERIENCIA RELEVANTE',c1X,sY);
+      b(8); st(BLUE); doc.text('EXPERIÊNCIA RELEVANTE',c1X,sY);
       n(8); st([44,62,80]);
       if(r.experiencia_relevante){
-        var eTxt=r.experiencia_relevante.replace(/•/g,'-').replace(/\n/g,' / ').replace(/\s+/g,' ');
+        var eTxt=tx(r.experiencia_relevante).replace(/·/g,'-').replace(/\n/g,' / ').replace(/\s+/g,' ');
         doc.text(doc.splitTextToSize(eTxt,colW).slice(0,10),c1X,sY+6);
       }
-
       b(8); st(GREEN); doc.text('PONTOS FORTES',c2X,sY);
       n(8); st([44,62,80]);
       if(r.pontos_fortes){
-        var pTxt=r.pontos_fortes.replace(/•/g,'-').replace(/\n/g,' / ').replace(/\s+/g,' ');
+        var pTxt=tx(r.pontos_fortes).replace(/·/g,'-').replace(/\n/g,' / ').replace(/\s+/g,' ');
         doc.text(doc.splitTextToSize(pTxt,colW).slice(0,10),c2X,sY+6);
       }
-
       sd([210,220,235]); doc.setLineWidth(0.3); doc.line(rX+colW+3,sY-1,rX+colW+3,sY+52);
 
-      // Por que convocar — box fixo no fundo do slide
       var convY=PH-58;
       sf([238,242,255]); doc.roundedRect(rX-2,convY,rW2+4,52,5,5,'F');
       sf(PURPLE); doc.roundedRect(rX-2,convY,rW2+4,5,4,4,'F'); doc.rect(rX-2,convY+2,rW2+4,3,'F');
       b(8); st(PURPLE); doc.text('POR QUE CONVOCAR',rX+2,convY+13);
       n(9); st([55,48,163]);
       if(r.justificativa){
-        doc.text(doc.splitTextToSize(r.justificativa,rW2).slice(0,4),rX+2,convY+21);
+        doc.text(doc.splitTextToSize(tx(r.justificativa),rW2).slice(0,4),rX+2,convY+21);
       }
       if(r.limitacoes){
-        b(7.5); st([160,60,60]); doc.text('Limitacao: ',rX+2,convY+44);
+        b(7.5); st([160,60,60]); doc.text('Limitação: ',rX+2,convY+44);
         n(7.5); st([160,60,60]);
-        doc.text(doc.splitTextToSize(r.limitacoes,rW2-22).slice(0,1),rX+26,convY+44);
+        doc.text(doc.splitTextToSize(tx(r.limitacoes),rW2-22).slice(0,1),rX+26,convY+44);
       }
     });
 
