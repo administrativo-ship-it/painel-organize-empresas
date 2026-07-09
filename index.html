@@ -474,6 +474,10 @@ tbody tr:hover{background:var(--off);}
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
       Config Trello
     </button>
+    <button class="cfg-btn" onclick="openConfig('ia')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      Config IA
+    </button>
     <button class="cfg-btn" onclick="openLogoConfig()">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       Personalizar
@@ -986,6 +990,7 @@ tbody tr:hover{background:var(--off);}
         <button class="tab-btn active" id="tab-flowup" onclick="switchCfgTab('flowup')">FlowUp</button>
         <button class="tab-btn" id="tab-trello" onclick="switchCfgTab('trello')">Trello</button>
         <button class="tab-btn" id="tab-general" onclick="switchCfgTab('general')">Geral</button>
+        <button class="tab-btn" id="tab-ia" onclick="switchCfgTab('ia')">IA</button>
       </div>
 
       <!-- FlowUp -->
@@ -1033,6 +1038,20 @@ tbody tr:hover{background:var(--off);}
           <label class="cfg-lbl">Boards Trello incluídos (um por linha)</label>
           <textarea class="cfg-inp sans" id="tr-boards-filter" rows="5" placeholder="Deixe vazio para incluir todos&#10;ou cole IDs/nomes de boards (um por linha)" style="resize:vertical;font-size:12px;"></textarea>
         </div>
+      </div>
+
+      <!-- IA -->
+      <div id="cfg-ia" style="display:none">
+        <div class="cfg-field">
+          <label class="cfg-lbl">Chave API Anthropic (Claude)</label>
+          <div style="position:relative">
+            <input class="cfg-inp" id="ai-apikey" type="password" placeholder="sk-ant-api03-..." style="padding-right:80px">
+            <button onclick="var el=document.getElementById('ai-apikey');el.type=el.type==='password'?'text':'password';this.textContent=el.type==='password'?'Mostrar':'Ocultar'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--navy);font-size:11px;font-weight:600;cursor:pointer;padding:2px 4px;">Mostrar</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:5px">Obtenha em: <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--navy)">console.anthropic.com</a> · Salva apenas neste navegador</div>
+        </div>
+        <button onclick="testAnthropicKey()" style="width:100%;background:rgba(92,200,212,.12);border:1px solid rgba(92,200,212,.3);color:var(--teal);padding:9px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px">Testar conexão</button>
+        <div id="ai-test-result" style="font-size:12px;margin-top:8px;min-height:18px;text-align:center"></div>
       </div>
 
       <button class="cfg-save" onclick="saveConfig()">Salvar e Reconectar</button>
@@ -2361,15 +2380,32 @@ function openConfig(tab='flowup') {
   document.getElementById('tr-org').value = c.trOrg || '';
   document.getElementById('cfg-refresh').value = c.refresh || 0;
   document.getElementById('tr-boards-filter').value = (c.boardsFilter||[]).join('\n');
+  document.getElementById('ai-apikey').value = localStorage.getItem('organize_anthropic_key') || '';
+  document.getElementById('ai-test-result').textContent = '';
   // Update Trello auth link
   if (c.trKey) document.getElementById('trello-auth-link').href = `https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=PainelOrganize&key=${c.trKey}`;
   switchCfgTab(tab);
   document.getElementById('cfg-overlay').classList.add('open');
 }
 function closeConfig() { document.getElementById('cfg-overlay').classList.remove('open'); }
+async function testAnthropicKey() {
+  var key = document.getElementById('ai-apikey').value.trim();
+  var res = document.getElementById('ai-test-result');
+  if (!key) { res.style.color='#B45309'; res.textContent='Cole a chave antes de testar.'; return; }
+  res.style.color='var(--muted)'; res.textContent='Testando…';
+  try {
+    var r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'oi'}]})
+    });
+    if (r.ok) { res.style.color='#15803D'; res.textContent='✓ Chave válida! Conexão OK.'; }
+    else { var d=await r.json(); res.style.color='#DC2626'; res.textContent='✗ Erro ' + r.status + ': ' + (d.error?.message||'chave inválida'); }
+  } catch(e) { res.style.color='#DC2626'; res.textContent='✗ Erro de rede: ' + e.message; }
+}
 function switchCfgTab(tab) {
   _cfgTab = tab;
-  ['flowup','trello','general'].forEach(t => {
+  ['flowup','trello','general','ia'].forEach(t => {
     document.getElementById('cfg-'+t).style.display = t === tab ? '' : 'none';
     document.getElementById('tab-'+t).classList.toggle('active', t === tab);
   });
@@ -2382,6 +2418,9 @@ function saveConfig() {
   S.config.trOrg       = document.getElementById('tr-org').value.trim();
   S.config.refresh     = parseInt(document.getElementById('cfg-refresh').value);
   S.config.boardsFilter = document.getElementById('tr-boards-filter').value.split('\n').map(s=>s.trim()).filter(Boolean);
+
+  var aiKey = document.getElementById('ai-apikey').value.trim();
+  if (aiKey) { _anthropicKey = aiKey; try { localStorage.setItem('organize_anthropic_key', aiKey); } catch(e) {} }
 
   try { localStorage.setItem('oe_cfg2', JSON.stringify(S.config)); } catch(e) {}
 
