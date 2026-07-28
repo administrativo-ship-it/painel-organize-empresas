@@ -1254,10 +1254,19 @@ async function fuGetProjectInfos() {
 
 // Busca todos os quadros ativos + enriquece com GetBoardInfo.
 // NUNCA lança erro — retorna [] em qualquer falha para não quebrar o sync principal.
+// ATENÇÃO: GetActiveBoards usa snake_case (page_size/current_page), não PascalCase.
 async function fuGetBoardsWithInfo() {
   try {
-    // POST /v1/Board/GetActiveBoards com paginação (mesma autenticação Bearer)
-    var boardsList = await fuFetchAllPages('/v1/Board/GetActiveBoards', 100);
+    // Busca paginada com snake_case — fuFetchAllPages usa PascalCase e retorna 0 neste endpoint
+    var boardsList = [];
+    var page = 1, pageSize = 100;
+    while (true) {
+      var d = await fuRequest('POST', '/v1/Board/GetActiveBoards', { page_size: pageSize, current_page: page });
+      var items = d.Result || d.Items || d.items || (Array.isArray(d) ? d : []);
+      boardsList = boardsList.concat(items);
+      if (!items.length || boardsList.length >= (d.Count || 0) || items.length < pageSize) break;
+      page++;
+    }
     if (!boardsList.length) return [];
     // Enriquece em paralelo com GetBoardInfo para obter TasksDelayed/TasksForToday
     var boardInfos = await Promise.all(boardsList.map(function(b) {
