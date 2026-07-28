@@ -1150,13 +1150,14 @@ async function fuRequest(method, path, body) {
   return r.json();
 }
 
-async function fuFetchAllPages(path, pageSize) {
+async function fuFetchAllPages(path, pageSize, extraBody) {
   // Paginação por fragmento: para quando items.length < pageSize (último fragmento)
   // Usa pageSize pequeno (5) para projetos pois a API retorna 0 com valores maiores
   var all = [], page = 1;
   pageSize = pageSize || 100;
   while (true) {
-    var d = await fuRequest('POST', path, { PageSize: pageSize, CurrentPage: page });
+    var body = Object.assign({ PageSize: pageSize, CurrentPage: page }, extraBody || {});
+    var d = await fuRequest('POST', path, body);
     var items = d.Result || d.Items || d.items || (Array.isArray(d) ? d : []);
     all = all.concat(items);
     if (items.length < pageSize) break;
@@ -1167,7 +1168,7 @@ async function fuFetchAllPages(path, pageSize) {
 
 async function loadFlowUpDataDirect() {
   var projects = await fuFetchAllPages('/v1/project/getall', 5);
-  var tasks = await fuFetchAllPages('/v1/task/querytasks', 100);
+  var tasks = await fuFetchAllPages('/v1/task/querytasks', 100, { ShowFinished: true });
   var usersResp = await fuRequest('GET', '/v1/user/getactiveusers');
   var members = usersResp.Result || usersResp.Items || (Array.isArray(usersResp) ? usersResp : []);
   return { projects, tasks, members, generatedAt: new Date().toISOString(), _meta: { source: 'direct' } };
@@ -1234,7 +1235,7 @@ function normFlowUpTask(t) {
   const finDate = t.FinalizationDate;
   const endDate = t.EndDate;
   const sn = (t.StatusName || '').toLowerCase();
-  const isDoneTask = !!finDate || sn.includes('conclu') || sn.includes('finaliz');
+  const isDoneTask = !!t.Finished || !!finDate || sn.includes('conclu') || sn.includes('finaliz');
   var endD = endDate ? new Date(endDate) : null;
   var now = new Date();
   // "Vencendo hoje" = data de entrega é HOJE e ainda não concluída
