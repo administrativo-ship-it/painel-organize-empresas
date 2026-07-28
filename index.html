@@ -1314,8 +1314,8 @@ async function loadFlowUpData() {
   // 1. Tenta API direta com até 2 retentativas (backoff exponencial)
   if (S.config.fuSubdomain && S.config.fuKey) {
     try {
-      // timeout 25s + 1 retry (2s delay) = máximo 52s antes de desistir
-      data = await withTimeout(withRetry(function() { return loadFlowUpDataDirect(); }, 1, 2000), 25000);
+      // timeout 45s + 1 retry (2s delay): paralelo ~10-15s por tentativa
+      data = await withTimeout(withRetry(function() { return loadFlowUpDataDirect(); }, 1, 2000), 45000);
       // Só persiste se tiver dados reais — nunca salvar zeros no cache
       if (data.projects && data.projects.length > 0) {
         try { localStorage.setItem('oe_flowup_cache', JSON.stringify({ data: data, savedAt: new Date().toISOString() })); } catch(_) {}
@@ -1325,14 +1325,22 @@ async function loadFlowUpData() {
       console.warn('[FlowUp] API direta falhou, tentando fallback:', e.message);
     }
   }
-  // 2. Fallback: Worker cache
+  // 2. Fallback: Worker cache (só usa se tiver dados reais)
   if (!data) {
     try {
       var r = await fetch(FLOWUP_WORKER_URL + '/flowup-data.json?t=' + Math.floor(Date.now()/30000));
       if (!r.ok) throw new Error('Worker HTTP ' + r.status);
-      data = await r.json();
-      _flowupDataMeta.source = 'worker';
-      _flowupDataMeta.cache = r.headers.get('x-cache') || '';
+      var workerData = await r.json();
+      var workerOk = workerData &&
+        ((workerData.projects && workerData.projects.length > 0) ||
+         (workerData.tasks && workerData.tasks.length > 0));
+      if (workerOk) {
+        data = workerData;
+        _flowupDataMeta.source = 'worker';
+        _flowupDataMeta.cache = r.headers.get('x-cache') || '';
+      } else {
+        console.warn('[FlowUp] Worker retornou dados vazios — ignorando, usando próximo fallback');
+      }
     } catch(e) {
       console.warn('[FlowUp] Worker indisponível, usando JSON estático:', e.message);
       try {
