@@ -1114,30 +1114,94 @@ const S = {
   _logoPending: null
 };
 
-// ═══════════════ FLOWUP (dados via Cloudflare Worker — proxy do GitHub) ═══════════════
-// O Worker serve o JSON via cache de borda (latência <100ms globalmente) e expõe
-// endpoint POST /sync que dispara o GitHub Actions imediatamente (botão Sincronizar).
+// ═══════════════ FLOWUP — API DIRETA (OAuth2 Bearer) ═══════════════
+// Autenticação: POST /token com grant_type=password → Bearer token (~1 ano)
+// Endpoints: https://api.flowup.me/v1/...  (base correta desde jul/2026)
+var FLOWUP_BASE = 'https://api.flowup.me';
 var FLOWUP_WORKER_URL = 'https://morning-hat-c69eflowup-organize-live.administrativo-2a8.workers.dev';
 var _flowupDataMeta = { fetchedAt: null, generatedAt: null, source: null };
+var _fuTokenCache = null; // { token, expiresAt }
+
+async function fuGetToken() {
+  var now = Date.now();
+  if (_fuTokenCache && _fuTokenCache.expiresAt > now + 60000) return _fuTokenCache.token;
+  var sub = S.config.fuSubdomain, pwd = S.config.fuKey;
+  if (!sub || !pwd) throw new Error('Configure o subdomínio e senha de API do FlowUp em Config FlowUp.');
+  var body = new URLSearchParams({ password: pwd, grant_type: 'password', scope: 'api', subdomain: sub });
+  var r = await fetch(FLOWUP_BASE + '/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+    body
+  });
+  if (!r.ok) throw new Error('FlowUp auth falhou: HTTP ' + r.status);
+  var d = await r.json();
+  _fuTokenCache = { token: d.access_token, expiresAt: now + (d.expires_in || 31536000) * 1000 };
+  return _fuTokenCache.token;
+}
+
+async function fuRequest(method, path, body) {
+  var token = await fuGetToken();
+  var r = await fetch(FLOWUP_BASE + path, {
+    method,
+    headers: Object.assign({ Authorization: 'Bearer ' + token, Accept: 'application/json' }, body ? { 'Content-Type': 'application/json' } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!r.ok) throw new Error('FlowUp ' + path + ' HTTP ' + r.status);
+  return r.json();
+}
+
+async function fuFetchAllPages(path, pageSize) {
+  // Paginação por fragmento: para quando items.length < pageSize (último fragmento)
+  // Usa pageSize pequeno (5) para projetos pois a API retorna 0 com valores maiores
+  var all = [], page = 1;
+  pageSize = pageSize || 100;
+  while (true) {
+    var d = await fuRequest('POST', path, { PageSize: pageSize, CurrentPage: page });
+    var items = d.Result || d.Items || d.items || (Array.isArray(d) ? d : []);
+    all = all.concat(items);
+    if (items.length < pageSize) break;
+    page++;
+  }
+  return all;
+}
+
+async function loadFlowUpDataDirect() {
+  var projects = await fuFetchAllPages('/v1/project/getall', 5);
+  var tasks = await fuFetchAllPages('/v1/task/querytasks', 100);
+  var usersResp = await fuRequest('GET', '/v1/user/getactiveusers');
+  var members = usersResp.Result || usersResp.Items || (Array.isArray(usersResp) ? usersResp : []);
+  return { projects, tasks, members, generatedAt: new Date().toISOString(), _meta: { source: 'direct' } };
+}
 
 async function loadFlowUpData() {
-  // Tenta o Worker primeiro; se falhar, fallback para o JSON estático local
   var data;
-  try {
-    var r = await fetch(FLOWUP_WORKER_URL + '/flowup-data.json?t=' + Math.floor(Date.now()/30000));
-    if (!r.ok) throw new Error('Worker HTTP ' + r.status);
-    data = await r.json();
-    _flowupDataMeta.source = 'worker';
-    _flowupDataMeta.cache = r.headers.get('x-cache') || '';
-  } catch (e) {
-    console.warn('[FlowUp] Worker indisponível, usando JSON estático:', e.message);
-    var rFallback = await fetch('./flowup-data.json?t=' + Date.now());
-    if (!rFallback.ok) throw new Error('FlowUp: arquivo de dados não encontrado');
-    data = await rFallback.json();
-    _flowupDataMeta.source = 'static-fallback';
+  // 1. Tenta API direta (nova autenticação OAuth2 Bearer — api.flowup.me/v1/...)
+  if (S.config.fuSubdomain && S.config.fuKey) {
+    try {
+      data = await loadFlowUpDataDirect();
+      _flowupDataMeta.source = 'direct';
+    } catch(e) {
+      console.warn('[FlowUp] API direta falhou, tentando Worker:', e.message);
+    }
+  }
+  // 2. Fallback: Worker cache
+  if (!data) {
+    try {
+      var r = await fetch(FLOWUP_WORKER_URL + '/flowup-data.json?t=' + Math.floor(Date.now()/30000));
+      if (!r.ok) throw new Error('Worker HTTP ' + r.status);
+      data = await r.json();
+      _flowupDataMeta.source = 'worker';
+      _flowupDataMeta.cache = r.headers.get('x-cache') || '';
+    } catch(e) {
+      console.warn('[FlowUp] Worker indisponível, usando JSON estático:', e.message);
+      var rFallback = await fetch('./flowup-data.json?t=' + Date.now());
+      if (!rFallback.ok) throw new Error('FlowUp: nenhuma fonte de dados disponível');
+      data = await rFallback.json();
+      _flowupDataMeta.source = 'static-fallback';
+    }
   }
   _flowupDataMeta.fetchedAt = new Date().toISOString();
-  _flowupDataMeta.generatedAt = data.generatedAt || data.exported_at || data.timestamp || data._meta?.generated || null;
+  _flowupDataMeta.generatedAt = data.generatedAt || data.exported_at || data.timestamp || (data._meta && data._meta.generated) || null;
   return data;
 }
 
