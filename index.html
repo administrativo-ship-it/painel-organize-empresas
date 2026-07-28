@@ -1224,7 +1224,11 @@ async function fuGetProjectInfos() {
     for (var b = 0; b < 10; b++) batch.push(id + b);
     id += 10;
     var batchRes = await Promise.all(batch.map(function(bid) {
-      return fuRequest('GET', '/v1/Project/GetProjectInfo/' + bid).catch(function() { return null; });
+      return fuRequest('GET', '/v1/Project/GetProjectInfo/' + bid).catch(function(e) {
+        // Re-propaga erros de auth — 404 (ID inexistente) é tratado como miss normal
+        if (e.message && (e.message.includes('HTTP 401') || e.message.includes('HTTP 403'))) throw e;
+        return null;
+      });
     }));
     for (var i = 0; i < batchRes.length; i++) {
       var r = batchRes[i];
@@ -1268,6 +1272,10 @@ async function loadFlowUpDataDirect() {
   ]);
   var projectInfos = critical[0], tasks = critical[1], usersResp = critical[2];
   var members = usersResp.Result || usersResp.Items || (Array.isArray(usersResp) ? usersResp : []);
+  // Dados vazios = falha silenciosa de auth ou API instável — não tratar como sucesso
+  if (projectInfos.length === 0 && tasks.length === 0) {
+    throw new Error('FlowUp retornou dados vazios — verifique credenciais ou tente novamente');
+  }
   return { projects: projectInfos, tasks: tasks, members: members, boards: boards,
            generatedAt: new Date().toISOString(), _meta: { source: 'direct' } };
 }
@@ -1296,7 +1304,10 @@ async function loadFlowUpData() {
     try {
       // timeout 25s + 1 retry (2s delay) = máximo 52s antes de desistir
       data = await withTimeout(withRetry(function() { return loadFlowUpDataDirect(); }, 1, 2000), 25000);
-      try { localStorage.setItem('oe_flowup_cache', JSON.stringify({ data: data, savedAt: new Date().toISOString() })); } catch(_) {}
+      // Só persiste se tiver dados reais — nunca salvar zeros no cache
+      if (data.projects && data.projects.length > 0) {
+        try { localStorage.setItem('oe_flowup_cache', JSON.stringify({ data: data, savedAt: new Date().toISOString() })); } catch(_) {}
+      }
       _flowupDataMeta.source = 'direct';
     } catch(e) {
       console.warn('[FlowUp] API direta falhou, tentando fallback:', e.message);
@@ -1322,11 +1333,18 @@ async function loadFlowUpData() {
   if (!data) {
     try {
       var cached = JSON.parse(localStorage.getItem('oe_flowup_cache') || 'null');
-      if (cached && cached.data) {
+      var cacheOk = cached && cached.data &&
+        ((cached.data.projects && cached.data.projects.length > 0) ||
+         (cached.data.tasks && cached.data.tasks.length > 0));
+      if (cacheOk) {
         data = cached.data;
         _flowupDataMeta.source = 'localStorage-cache';
         _flowupDataMeta.cache = 'stale:' + cached.savedAt;
         console.warn('[FlowUp] Usando cache localStorage de', cached.savedAt);
+      } else if (cached) {
+        // Cache corrompido (zeros) — descarta para não bloquear o erro real
+        try { localStorage.removeItem('oe_flowup_cache'); } catch(_) {}
+        console.warn('[FlowUp] Cache descartado por conter dados vazios');
       }
     } catch(_) {}
   }
@@ -1908,7 +1926,15 @@ async function syncAll(forceLive = false) {
   btn.classList.remove('loading');
   hideLoading();
 
-  if (errors.length) alert('Erros na sincronização:\n\n' + errors.join('\n'));
+  if (errors.length) {
+    const fuErr = errors.find(e => e.startsWith('FlowUp'));
+    if (fuErr && lbl) {
+      lbl.textContent = '⚠ ' + fuErr.replace('FlowUp: ', '').slice(0, 60);
+      lbl.title = fuErr;
+      lbl.style.color = '#ef4444';
+    }
+    console.error('[syncAll] Erros:', errors);
+  }
 }
 
 // Atualiza o label da topbar mostrando "Atualizado XX:XX · FlowUp há Y min"
