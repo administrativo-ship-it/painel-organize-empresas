@@ -1168,7 +1168,7 @@ async function fuFetchAllPages(path, pageSize, extraBody) {
 
 async function loadFlowUpDataDirect() {
   var projects = await fuFetchAllPages('/v1/project/getall', 5);
-  var tasks = await fuFetchAllPages('/v1/task/querytasks', 100, { ShowFinished: true });
+  var tasks = await fuFetchAllPages('/v1/task/querytasks', 100, { Filter: { ShowFinished: true } });
   var usersResp = await fuRequest('GET', '/v1/user/getactiveusers');
   var members = usersResp.Result || usersResp.Items || (Array.isArray(usersResp) ? usersResp : []);
   return { projects, tasks, members, generatedAt: new Date().toISOString(), _meta: { source: 'direct' } };
