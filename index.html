@@ -1200,17 +1200,29 @@ async function fuRequest(method, path, body) {
 }
 
 async function fuFetchAllPages(path, pageSize, extraBody) {
-  // Paginação por fragmento: para quando items.length < pageSize (último fragmento)
-  // Usa pageSize pequeno (5) para projetos pois a API retorna 0 com valores maiores
-  var all = [], page = 1;
   pageSize = pageSize || 100;
-  while (true) {
-    var body = Object.assign({ PageSize: pageSize, CurrentPage: page }, extraBody || {});
-    var d = await fuRequest('POST', path, body);
-    var items = d.Result || d.Items || d.items || (Array.isArray(d) ? d : []);
-    all = all.concat(items);
-    if (items.length < pageSize) break;
-    page++;
+  // Busca página 1 para descobrir total (Count) e primeiros itens
+  var body1 = Object.assign({ PageSize: pageSize, CurrentPage: 1 }, extraBody || {});
+  var d1 = await fuRequest('POST', path, body1);
+  var items1 = d1.Result || d1.Items || d1.items || (Array.isArray(d1) ? d1 : []);
+  var count = d1.Count || 0;
+  // Se a API não retorna Count ou cabe em 1 página, retorna direto
+  if (!count || items1.length >= count || items1.length < pageSize) return items1;
+  // Calcula páginas restantes e busca em paralelo (batches de 10)
+  var totalPages = Math.ceil(count / pageSize);
+  var all = items1.slice();
+  var pageNums = [];
+  for (var p = 2; p <= totalPages; p++) pageNums.push(p);
+  // Processa em lotes de 10 páginas simultâneas para não sobrecarregar a API
+  for (var i = 0; i < pageNums.length; i += 10) {
+    var batch = pageNums.slice(i, i + 10);
+    var results = await Promise.all(batch.map(function(pg) {
+      var body = Object.assign({ PageSize: pageSize, CurrentPage: pg }, extraBody || {});
+      return fuRequest('POST', path, body).then(function(d) {
+        return d.Result || d.Items || d.items || (Array.isArray(d) ? d : []);
+      });
+    }));
+    results.forEach(function(items) { all = all.concat(items); });
   }
   return all;
 }
