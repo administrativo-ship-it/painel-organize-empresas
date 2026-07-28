@@ -1236,37 +1236,40 @@ async function fuGetProjectInfos() {
   return results.filter(function(r) { return r && r.IsActive; });
 }
 
-async function fuGetBoardsList() {
-  // GetActiveBoards aceita GET sem body OU POST com paginação — tenta GET primeiro
+// Busca todos os quadros ativos + enriquece com GetBoardInfo.
+// NUNCA lança erro — retorna [] em qualquer falha para não quebrar o sync principal.
+async function fuGetBoardsWithInfo() {
   try {
-    var d = await fuRequest('GET', '/v1/Board/GetActiveBoards');
-    var items = d.Result || d.Items || (Array.isArray(d) ? d : []);
-    if (items.length > 0) return items;
-  } catch(e) {}
-  // Fallback: POST com paginação
-  return fuFetchAllPages('/v1/Board/GetActiveBoards', 100);
+    // POST /v1/Board/GetActiveBoards com paginação (mesma autenticação Bearer)
+    var boardsList = await fuFetchAllPages('/v1/Board/GetActiveBoards', 100);
+    if (!boardsList.length) return [];
+    // Enriquece em paralelo com GetBoardInfo para obter TasksDelayed/TasksForToday
+    var boardInfos = await Promise.all(boardsList.map(function(b) {
+      return fuRequest('GET', '/v1/Board/GetBoardInfo/' + b.Id).catch(function() { return null; });
+    }));
+    return boardsList.map(function(b, i) { return Object.assign({}, b, boardInfos[i] || {}); });
+  } catch(e) {
+    console.warn('[FlowUp] Quadros não carregados:', e.message);
+    return [];
+  }
 }
 
 async function loadFlowUpDataDirect() {
-  // Projetos, tarefas e usuários primeiro (dados críticos)
-  var projectInfos = await fuGetProjectInfos();
-  var tasks = await fuFetchAllPages('/v1/task/querytasks', 10, { Filter: { ShowFinished: true } });
-  var usersResp = await fuRequest('GET', '/v1/user/getactiveusers');
+  // Projetos + tarefas + usuários em PARALELO (independentes entre si).
+  // PageSize=50: equilibrio entre cobertura (~545 tasks) e velocidade (~11 requests).
+  // Boards em ramo paralelo isolado — falha nunca afeta os dados críticos.
+  var [critical, boards] = await Promise.all([
+    Promise.all([
+      fuGetProjectInfos(),
+      fuFetchAllPages('/v1/task/querytasks', 50, { Filter: { ShowFinished: true } }),
+      fuRequest('GET', '/v1/user/getactiveusers')
+    ]),
+    fuGetBoardsWithInfo()
+  ]);
+  var projectInfos = critical[0], tasks = critical[1], usersResp = critical[2];
   var members = usersResp.Result || usersResp.Items || (Array.isArray(usersResp) ? usersResp : []);
-  // Quadros: isolados em try-catch — falha aqui não afeta o resto do sync
-  var boards = [];
-  try {
-    var boardsList = await fuGetBoardsList();
-    if (boardsList.length > 0) {
-      var boardInfos = await Promise.all(boardsList.map(function(b) {
-        return fuRequest('GET', '/v1/Board/GetBoardInfo/' + b.Id).catch(function() { return null; });
-      }));
-      boards = boardsList.map(function(b, i) { return Object.assign({}, b, boardInfos[i] || {}); });
-    }
-  } catch(e) {
-    console.warn('[FlowUp] Boards não carregados:', e.message);
-  }
-  return { projects: projectInfos, tasks, members, boards, generatedAt: new Date().toISOString(), _meta: { source: 'direct' } };
+  return { projects: projectInfos, tasks: tasks, members: members, boards: boards,
+           generatedAt: new Date().toISOString(), _meta: { source: 'direct' } };
 }
 
 async function withRetry(fn, retries, delayMs) {
@@ -1274,10 +1277,16 @@ async function withRetry(fn, retries, delayMs) {
   for (var i = 0; i <= retries; i++) {
     try { return await fn(); } catch(e) {
       lastErr = e;
-      if (i < retries) await new Promise(function(resolve) { setTimeout(resolve, delayMs * Math.pow(2, i)); });
+      if (i < retries) await new Promise(function(resolve) { setTimeout(resolve, delayMs); });
     }
   }
   throw lastErr;
+}
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise(function(_, reject) { setTimeout(function() { reject(new Error('Timeout após ' + ms/1000 + 's')); }, ms); })
+  ]);
 }
 
 async function loadFlowUpData() {
@@ -1285,11 +1294,12 @@ async function loadFlowUpData() {
   // 1. Tenta API direta com até 2 retentativas (backoff exponencial)
   if (S.config.fuSubdomain && S.config.fuKey) {
     try {
-      data = await withRetry(function() { return loadFlowUpDataDirect(); }, 2, 1500);
+      // timeout 25s + 1 retry (2s delay) = máximo 52s antes de desistir
+      data = await withTimeout(withRetry(function() { return loadFlowUpDataDirect(); }, 1, 2000), 25000);
       try { localStorage.setItem('oe_flowup_cache', JSON.stringify({ data: data, savedAt: new Date().toISOString() })); } catch(_) {}
       _flowupDataMeta.source = 'direct';
     } catch(e) {
-      console.warn('[FlowUp] API direta falhou após retentativas, tentando Worker:', e.message);
+      console.warn('[FlowUp] API direta falhou, tentando fallback:', e.message);
     }
   }
   // 2. Fallback: Worker cache
@@ -2217,8 +2227,8 @@ function renderTasks() {
       <td style="white-space:nowrap">${tagHtml||'—'}</td>
       <td><span class="badge ${t.isOver?'b-over':t.isDone?'b-done':'b-active'}">${t.isOver?'Atrasada':t.isDone?'Concluída':'Ativa'}</span></td>
       <td style="white-space:nowrap">
-        ${!t.isDone ? `<button class="act-btn g" onclick="fuActionMarkDone(${t.id},this)" title="Marcar concluída">✓</button> ` : ''}
-        <button class="act-btn" onclick="fuActionComment(${t.id},'${t.name.replace(/'/g,'\\'').replace(/"/g,'&quot;')}')" title="Comentar">💬</button>
+        ${!t.isDone ? `<button class="act-btn g" data-tid="${t.id}" onclick="fuActionMarkDone(this)" title="Marcar concluída">✓</button> ` : ''}
+        <button class="act-btn" data-tid="${t.id}" onclick="fuActionComment(this)" title="Comentar">💬</button>
       </td>
     </tr>`;
   }).join('');
@@ -2288,9 +2298,10 @@ function showToast(msg, type) {
   setTimeout(function(){ el.style.opacity = '0'; el.style.transition = 'opacity .4s'; setTimeout(function(){ el.remove(); }, 400); }, 3000);
 }
 
-async function fuActionMarkDone(taskId, btn) {
+async function fuActionMarkDone(btn) {
+  var taskId = parseInt(btn.getAttribute('data-tid'));
   if (!confirm('Marcar esta tarefa como concluída no FlowUp?')) return;
-  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  btn.disabled = true; btn.textContent = '…';
   try {
     await fuRequest('PUT', '/v1/Task/Update', { Id: taskId, Finished: true });
     var t = S.tasks.find(function(x){ return x.id === taskId; });
@@ -2299,18 +2310,23 @@ async function fuActionMarkDone(taskId, btn) {
     renderAll();
   } catch(e) {
     showToast('Erro: ' + e.message, 'err');
-    if (btn) { btn.disabled = false; btn.textContent = '✓'; }
+    btn.disabled = false; btn.textContent = '✓';
   }
 }
 
-async function fuActionComment(taskId, taskName) {
-  var text = prompt('Comentário para "' + taskName + '":');
+async function fuActionComment(btn) {
+  var taskId = parseInt(btn.getAttribute('data-tid'));
+  var t = S.tasks.find(function(x){ return x.id === taskId; });
+  var text = prompt('Comentário para "' + (t ? t.name : '#' + taskId) + '":');
   if (!text || !text.trim()) return;
+  btn.disabled = true;
   try {
     await fuRequest('POST', '/v1/Task/CreateComment', { TaskId: taskId, Comment: text.trim() });
     showToast('Comentário adicionado!', 'ok');
   } catch(e) {
     showToast('Erro ao comentar: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
   }
 }
 
