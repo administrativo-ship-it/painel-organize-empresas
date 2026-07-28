@@ -1236,20 +1236,36 @@ async function fuGetProjectInfos() {
   return results.filter(function(r) { return r && r.IsActive; });
 }
 
+async function fuGetBoardsList() {
+  // GetActiveBoards aceita GET sem body OU POST com paginação — tenta GET primeiro
+  try {
+    var d = await fuRequest('GET', '/v1/Board/GetActiveBoards');
+    var items = d.Result || d.Items || (Array.isArray(d) ? d : []);
+    if (items.length > 0) return items;
+  } catch(e) {}
+  // Fallback: POST com paginação
+  return fuFetchAllPages('/v1/Board/GetActiveBoards', 100);
+}
+
 async function loadFlowUpDataDirect() {
-  // Executa projetos, tarefas, usuários e quadros em paralelo
-  var [projectInfos, tasks, usersResp, boardsList] = await Promise.all([
-    fuGetProjectInfos(),
-    fuFetchAllPages('/v1/task/querytasks', 10, { Filter: { ShowFinished: true } }),
-    fuRequest('GET', '/v1/user/getactiveusers'),
-    fuFetchAllPages('/v1/Board/GetActiveBoards', 100)
-  ]);
+  // Projetos, tarefas e usuários primeiro (dados críticos)
+  var projectInfos = await fuGetProjectInfos();
+  var tasks = await fuFetchAllPages('/v1/task/querytasks', 10, { Filter: { ShowFinished: true } });
+  var usersResp = await fuRequest('GET', '/v1/user/getactiveusers');
   var members = usersResp.Result || usersResp.Items || (Array.isArray(usersResp) ? usersResp : []);
-  // Enriquece cada quadro com GetBoardInfo para obter TasksDelayed/TasksForToday
-  var boardInfos = await Promise.all(boardsList.map(function(b) {
-    return fuRequest('GET', '/v1/Board/GetBoardInfo/' + b.Id).catch(function() { return null; });
-  }));
-  var boards = boardsList.map(function(b, i) { return Object.assign({}, b, boardInfos[i] || {}); });
+  // Quadros: isolados em try-catch — falha aqui não afeta o resto do sync
+  var boards = [];
+  try {
+    var boardsList = await fuGetBoardsList();
+    if (boardsList.length > 0) {
+      var boardInfos = await Promise.all(boardsList.map(function(b) {
+        return fuRequest('GET', '/v1/Board/GetBoardInfo/' + b.Id).catch(function() { return null; });
+      }));
+      boards = boardsList.map(function(b, i) { return Object.assign({}, b, boardInfos[i] || {}); });
+    }
+  } catch(e) {
+    console.warn('[FlowUp] Boards não carregados:', e.message);
+  }
   return { projects: projectInfos, tasks, members, boards, generatedAt: new Date().toISOString(), _meta: { source: 'direct' } };
 }
 
