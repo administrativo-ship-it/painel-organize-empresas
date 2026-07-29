@@ -10,20 +10,17 @@ from threading import Lock
 
 # Chave nova embutida como fallback caso o secret FLOWUP_API_KEY ainda tenha a chave velha
 FALLBACK_KEY = '0f46646eb5d54286baeb3e55d6721db7'
-API_KEY  = (os.environ.get('FLOWUP_API_KEY',  '') or FALLBACK_KEY).strip()
+API_KEY   = (os.environ.get('FLOWUP_API_KEY', '') or FALLBACK_KEY).strip()
 SUBDOMAIN = os.environ.get('FLOWUP_SUBDOMAIN', 'organizementoring').strip()
-BASE_URL  = os.environ.get('FLOWUP_BASE_URL',  'https://task.flowup.me').rstrip('/')
-
-if not API_KEY:
-    print('ERRO: API_KEY ausente', file=sys.stderr); sys.exit(1)
+BASE_URL  = os.environ.get('FLOWUP_BASE_URL', 'https://task.flowup.me').rstrip('/')
 
 EP_TOKEN       = '/token'
 EP_QUERY_TASKS = '/api/v1/public/task/querytasks'
 EP_LIST_USERS  = '/api/v1/public/user/getactiveusers'
 
-MAX_PID         = 30
+MAX_PID           = 30
 N_RECENT_FINISHED = 0
-MAX_WORKERS     = 32
+MAX_WORKERS       = 32
 
 _token, _exp = None, 0
 _token_lock  = Lock()
@@ -48,7 +45,8 @@ def get_token():
                 with urllib.request.urlopen(req, timeout=30) as r:
                     d = json.loads(r.read().decode('utf-8'))
                 tk = d.get('access_token')
-                if not tk: raise RuntimeError(f'Sem token: {d}')
+                if not tk:
+                    raise RuntimeError(f'Sem token: {d}')
                 _token = tk
                 _exp   = time.time() + int(d.get('expires_in', 3600))
                 if key != keys_to_try[0]:
@@ -104,13 +102,10 @@ def fetch_pages_parallel(filter_obj, page_start, page_end):
 
 
 def merge_into(target, new_list):
-    novos = 0
     for t in new_list:
         tid = t.get('Id')
         if tid and tid not in target:
             target[tid] = t
-            novos += 1
-    return novos
 
 
 def derive_projects(tasks, project_counts):
@@ -121,58 +116,103 @@ def derive_projects(tasks, project_counts):
         if pid not in projs:
             projs[pid] = {
                 'Id': pid, 'Name': (t.get('ProjectName') or '').strip(),
-                'TotalTasks': project_counts.get(pid, {}).get('total', 0),
-                'OpenTasks': project_counts.get(pid, {}).get('open', 0),
+                'TotalTasks':    project_counts.get(pid, {}).get('total', 0),
+                'OpenTasks':     project_counts.get(pid, {}).get('open', 0),
                 'FinishedTasks': project_counts.get(pid, {}).get('finished', 0),
                 'ArchivedTasks': 0
             }
     return list(projs.values())
 
 
-def embed_token_in_index_html():
-    """Embeds the bearer token into _DC in index.html so the browser bypasses the auth endpoint."""
+def embed_token_in_index_html_via_api():
+    """
+    Busca index.html do GitHub, embute fuToken no _DC, commita de volta via API.
+    Usa GITHUB_TOKEN disponivel automaticamente no runner do GitHub Actions.
+    Nao modifica arquivo local para evitar conflito com git pull --rebase.
+    """
     if not _token:
         print('  AVISO: _token vazio, pulando embed'); return False
-    idx_path = 'index.html'
-    if not os.path.exists(idx_path):
-        print(f'  AVISO: {idx_path} nao encontrado'); return False
-    try:
-        with open(idx_path, encoding='utf-8') as f:
-            content = f.read()
-    except Exception as e:
-        print(f'  AVISO: erro ao ler {idx_path}: {e}'); return False
 
-    pattern = (r"const _DC = \(function\(\)\{try\{return JSON\.parse\(atob\(\'([^\']+)\'\)\);"
-               r"\}catch\(e\)\{return \{\};\}\}\)\(\);")
-    m = re.search(pattern, content)
+    gh_token = os.environ.get('GITHUB_TOKEN')
+    if not gh_token:
+        print('  AVISO: GITHUB_TOKEN nao disponivel'); return False
+
+    repo = os.environ.get('GITHUB_REPOSITORY', 'administrativo-ship-it/painel-organize-empresas')
+    url  = f'https://api.github.com/repos/{repo}/contents/index.html'
+
+    gh_headers = {
+        'Authorization': f'Bearer {gh_token}',
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'sync-flowup',
+        'X-GitHub-Api-Version': '2022-11-28',
+    }
+
+    # Busca conteudo atual
+    try:
+        req = urllib.request.Request(url, headers=gh_headers)
+        with urllib.request.urlopen(req, timeout=30) as r:
+            current = json.loads(r.read())
+    except Exception as e:
+        print(f'  AVISO: erro ao buscar index.html da API GitHub: {e}'); return False
+
+    current_sha = current['sha']
+    try:
+        html = base64.b64decode(current['content'].replace('\n', '')).decode('utf-8')
+    except Exception as e:
+        print(f'  AVISO: erro ao decodificar index.html: {e}'); return False
+
+    # Localiza _DC e decodifica
+    DC_PATTERN = (
+        r"const _DC = \(function\(\)\{try\{return JSON\.parse\(atob\(\'([^\']+)\'\)\);"
+        r"\}catch\(e\)\{return \{\};\}\}\)\(\);"
+    )
+    m = re.search(DC_PATTERN, html)
     if not m:
-        print('  AVISO: _DC nao encontrado em index.html (pattern nao combinou)'); return False
+        print('  AVISO: _DC nao encontrado em index.html'); return False
 
     try:
         dc = json.loads(base64.b64decode(m.group(1)).decode('utf-8'))
     except Exception as e:
         print(f'  AVISO: falha ao decodificar _DC: {e}'); return False
 
+    if dc.get('fuToken') == _token:
+        print('  index.html: token ja esta atualizado, nada a commitar'); return True
+
     dc['fuToken']    = _token
     dc['fuTokenExp'] = int(_exp * 1000)
 
     new_b64 = base64.b64encode(json.dumps(dc, separators=(',', ':')).encode()).decode()
     new_dc  = (
-        "const _DC = (function(){try{return JSON.parse(atob('" + new_b64
+        "const _DC = (function(){try{return JSON.parse(atob('"
+        + new_b64
         + "'));}catch(e){return {};}})();"
     )
-    new_content = re.sub(pattern, new_dc, content)
-    if new_content == content:
-        print('  AVISO: substituicao sem efeito'); return False
+    new_html = re.sub(DC_PATTERN, new_dc, html)
+    if new_html == html:
+        print('  AVISO: substituicao de _DC sem efeito'); return False
 
+    # Commita via API
+    exp_date = time.strftime('%Y-%m-%d', time.gmtime(_exp))
+    commit_body = {
+        'message': f'fix: fuToken pre-obtido (exp {exp_date}) [skip ci]',
+        'content': base64.b64encode(new_html.encode('utf-8')).decode(),
+        'sha': current_sha,
+    }
     try:
-        with open(idx_path, 'w', encoding='utf-8') as f:
-            f.write(new_content)
-        exp_date = time.strftime('%Y-%m-%d', time.gmtime(_exp))
-        print(f'  index.html: fuToken embutido (expira {exp_date})')
+        req2 = urllib.request.Request(
+            url, data=json.dumps(commit_body).encode(), method='PUT',
+            headers={**gh_headers, 'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req2, timeout=30) as r:
+            result = json.loads(r.read())
+        print(f'  index.html commitado via API: {result["commit"]["sha"][:8]} (exp {exp_date})')
         return True
+    except urllib.error.HTTPError as e:
+        err = e.read().decode('utf-8', errors='ignore')
+        print(f'  AVISO: erro ao commitar index.html (HTTP {e.code}): {err[:200]}')
+        return False
     except Exception as e:
-        print(f'  AVISO: erro ao escrever {idx_path}: {e}'); return False
+        print(f'  AVISO: erro ao commitar index.html: {e}'); return False
 
 
 def main():
@@ -191,7 +231,9 @@ def main():
         _, total      = query_one({'Projects': [pid], 'ShowFinished': True,  'ShowArchived': False}, 1)
         _, total_open = query_one({'Projects': [pid], 'ShowFinished': False, 'ShowArchived': False}, 1)
         if total > 0:
-            project_counts[pid] = {'total': total, 'open': total_open, 'finished': total - total_open}
+            project_counts[pid] = {
+                'total': total, 'open': total_open, 'finished': total - total_open
+            }
             valid_pids.append(pid)
             print(f'  pid={pid}: total={total} abertas={total_open}')
 
@@ -225,13 +267,13 @@ def main():
         print(f'  ERRO: {e}'); users = []
     print(f'  Ativos: {len(users)}')
 
-    g_total = sum(p['TotalTasks']   for p in projects)
-    g_open  = sum(p['OpenTasks']    for p in projects)
+    g_total = sum(p['TotalTasks']    for p in projects)
+    g_open  = sum(p['OpenTasks']     for p in projects)
     g_fin   = sum(p['FinishedTasks'] for p in projects)
     print(f'\n[TOTAIS REAIS] tarefas={g_total} | abertas={g_open} | fin={g_fin} | projetos={len(projects)}')
 
     print('\n[TOKEN EMBED]')
-    embed_token_in_index_html()
+    embed_token_in_index_html_via_api()
 
     output = {
         'generatedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
@@ -256,9 +298,11 @@ def main():
         ],
         'projects': projects,
         'members': [
-            {'Id': u.get('Id'), 'Name': u.get('Name'), 'Email': u.get('Email'),
-             'JobName': u.get('JobName'), 'Profile': u.get('Profile'),
-             'IsMaster': u.get('IsMaster'), 'IsActive': True}
+            {
+                'Id': u.get('Id'), 'Name': u.get('Name'), 'Email': u.get('Email'),
+                'JobName': u.get('JobName'), 'Profile': u.get('Profile'),
+                'IsMaster': u.get('IsMaster'), 'IsActive': True
+            }
             for u in users
         ]
     }
