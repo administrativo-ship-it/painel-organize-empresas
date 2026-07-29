@@ -1174,6 +1174,11 @@ var _fuTokenCache = null; // { token, expiresAt }
 async function fuGetToken() {
   var now = Date.now();
   if (_fuTokenCache && _fuTokenCache.expiresAt > now + 60000) return _fuTokenCache.token;
+  // Token pré-obtido embutido no _DC (bypass quando o endpoint de auth estiver bloqueado por IP)
+  if (_DC.fuToken && _DC.fuTokenExp && _DC.fuTokenExp > now + 60000) {
+    _fuTokenCache = { token: _DC.fuToken, expiresAt: _DC.fuTokenExp };
+    return _fuTokenCache.token;
+  }
   var sub = S.config.fuSubdomain, pwd = S.config.fuKey;
   if (!sub || !pwd) throw new Error('Configure o subdomínio e senha de API do FlowUp em Config FlowUp.');
   var body = new URLSearchParams({ password: pwd, grant_type: 'password', scope: 'api', subdomain: sub });
