@@ -4,7 +4,7 @@ Sincroniza FlowUp -> flowup-data.json via API REST direta (sem MCP).
 OAuth2 Password Grant em https://task.flowup.me.
 Tambem embute o bearer token no index.html (bypass de IP bloqueado no navegador).
 """
-import os, sys, json, time, base64, re, urllib.request, urllib.parse, urllib.error
+import os, sys, json, time, base64, re, subprocess, urllib.request, urllib.parse, urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 
@@ -124,18 +124,38 @@ def derive_projects(tasks, project_counts):
     return list(projs.values())
 
 
+def _get_github_token_from_git_config():
+    """Extrai GITHUB_TOKEN do git config criado por actions/checkout@v4."""
+    try:
+        r = subprocess.run(
+            ['git', 'config', '--local', '--get-all', 'http.https://github.com/.extraheader'],
+            capture_output=True, text=True
+        )
+        for line in r.stdout.splitlines():
+            if 'basic ' in line:
+                b64 = line.split('basic ', 1)[1].strip()
+                decoded = base64.b64decode(b64).decode('utf-8', errors='ignore')
+                if decoded.startswith('x-access-token:'):
+                    return decoded.split(':', 1)[1]
+    except Exception:
+        pass
+    return None
+
+
 def embed_token_in_index_html_via_api():
     """
     Busca index.html do GitHub, embute fuToken no _DC, commita de volta via API.
-    Usa GITHUB_TOKEN disponivel automaticamente no runner do GitHub Actions.
+    Token GitHub obtido do env GITHUB_TOKEN ou do git config (actions/checkout).
     Nao modifica arquivo local para evitar conflito com git pull --rebase.
     """
     if not _token:
         print('  AVISO: _token vazio, pulando embed'); return False
 
-    gh_token = os.environ.get('GITHUB_TOKEN')
+    gh_token = (os.environ.get('GITHUB_TOKEN') or '').strip()
     if not gh_token:
-        print('  AVISO: GITHUB_TOKEN nao disponivel'); return False
+        gh_token = _get_github_token_from_git_config() or ''
+    if not gh_token:
+        print('  AVISO: GITHUB_TOKEN nao disponivel (env nem git config)'); return False
 
     repo = os.environ.get('GITHUB_REPOSITORY', 'administrativo-ship-it/painel-organize-empresas')
     url  = f'https://api.github.com/repos/{repo}/contents/index.html'
