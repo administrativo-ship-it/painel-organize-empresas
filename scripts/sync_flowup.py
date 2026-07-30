@@ -3,12 +3,19 @@
 Sincroniza FlowUp -> flowup-data.json via API REST direta (sem MCP).
 OAuth2 Password Grant em https://task.flowup.me.
 Tambem embute o bearer token no index.html (bypass de IP bloqueado no navegador).
+
+Estrategia:
+1. Busca COUNT de todas as tarefas abertas (sem filtro de projeto)
+2. Busca todas as paginas em paralelo (PS=1, sem risco de truncagem)
+3. Deriva projetos a partir dos dados das tarefas
+4. Para cada projeto descoberto, busca count total (aberto + finalizado)
+5. Embute token FlowUp no index.html via GitHub API
 """
 import os, sys, json, time, base64, re, subprocess, urllib.request, urllib.parse, urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 
-# Chave nova embutida como fallback caso o secret FLOWUP_API_KEY ainda tenha a chave velha
+# Chave embutida como fallback caso FLOWUP_API_KEY no secret ainda tenha a chave velha
 FALLBACK_KEY = '0f46646eb5d54286baeb3e55d6721db7'
 API_KEY   = (os.environ.get('FLOWUP_API_KEY', '') or FALLBACK_KEY).strip()
 SUBDOMAIN = os.environ.get('FLOWUP_SUBDOMAIN', 'organizementoring').strip()
@@ -18,9 +25,7 @@ EP_TOKEN       = '/token'
 EP_QUERY_TASKS = '/api/v1/public/task/querytasks'
 EP_LIST_USERS  = '/api/v1/public/user/getactiveusers'
 
-MAX_PID           = 30
-N_RECENT_FINISHED = 0
-MAX_WORKERS       = 32
+MAX_WORKERS = 32
 
 _token, _exp = None, 0
 _token_lock  = Lock()
@@ -29,7 +34,8 @@ _token_lock  = Lock()
 def get_token():
     global _token, _exp, API_KEY
     with _token_lock:
-        if _token and _exp > time.time() + 60: return _token
+        if _token and _exp > time.time() + 60:
+            return _token
         keys_to_try = list(dict.fromkeys(k for k in [API_KEY, FALLBACK_KEY] if k))
         last_err = None
         for key in keys_to_try:
@@ -56,15 +62,19 @@ def get_token():
             except Exception as e:
                 last_err = e
                 continue
-        raise RuntimeError(f'Falha ao obter token: {last_err}')
+        raise RuntimeError(f'Falha ao obter token com todas as chaves: {last_err}')
 
 
-def api(method, path, body=None):
+def api_call(method, path, body=None):
     tk = get_token()
     data = json.dumps(body).encode('utf-8') if body is not None else None
     req = urllib.request.Request(
         f'{BASE_URL}{path}', data=data, method=method,
-        headers={'Authorization': f'Bearer {tk}', 'Content-Type': 'application/json', 'Accept': 'application/json'}
+        headers={
+            'Authorization': f'Bearer {tk}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
     )
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
@@ -77,9 +87,10 @@ def api(method, path, body=None):
 
 
 def query_one(filter_obj, page, retries=2):
+    """Retorna (task_or_None, count). Silencia erros apos retries."""
     for attempt in range(retries + 1):
         try:
-            r = api('POST', EP_QUERY_TASKS, {
+            r = api_call('POST', EP_QUERY_TASKS, {
                 'Filter': filter_obj, 'CurrentPage': page, 'PageSize': 1
             })
             chunk = r.get('Result') or []
@@ -91,37 +102,16 @@ def query_one(filter_obj, page, retries=2):
             return None, 0
 
 
-def fetch_pages_parallel(filter_obj, page_start, page_end):
+def fetch_all_pages_parallel(filter_obj, total):
+    """Busca paginas 0..total-1 em paralelo (PS=1, MAX_WORKERS threads)."""
     tasks = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futs = [ex.submit(query_one, filter_obj, p) for p in range(page_start, page_end + 1)]
+        futs = [ex.submit(query_one, filter_obj, p) for p in range(0, total)]
         for fut in as_completed(futs):
             t, _ = fut.result()
-            if t: tasks.append(t)
+            if t:
+                tasks.append(t)
     return tasks
-
-
-def merge_into(target, new_list):
-    for t in new_list:
-        tid = t.get('Id')
-        if tid and tid not in target:
-            target[tid] = t
-
-
-def derive_projects(tasks, project_counts):
-    projs = {}
-    for t in tasks:
-        pid = t.get('ProjectId')
-        if not pid: continue
-        if pid not in projs:
-            projs[pid] = {
-                'Id': pid, 'Name': (t.get('ProjectName') or '').strip(),
-                'TotalTasks':    project_counts.get(pid, {}).get('total', 0),
-                'OpenTasks':     project_counts.get(pid, {}).get('open', 0),
-                'FinishedTasks': project_counts.get(pid, {}).get('finished', 0),
-                'ArchivedTasks': 0
-            }
-    return list(projs.values())
 
 
 def _get_github_token_from_git_config():
@@ -142,24 +132,29 @@ def _get_github_token_from_git_config():
     return None
 
 
+DC_PATTERN = (
+    r"const _DC = \(function\(\)\{try\{return JSON\.parse\(atob\(\'([^\']+)\'\)\);"
+    r"\}catch\(e\)\{return \{\};\}\}\)\(\);"
+)
+
+
 def embed_token_in_index_html_via_api():
     """
     Busca index.html do GitHub, embute fuToken no _DC, commita de volta via API.
-    Token GitHub obtido do env GITHUB_TOKEN ou do git config (actions/checkout).
-    Nao modifica arquivo local para evitar conflito com git pull --rebase.
+    Usa GITHUB_TOKEN do env ou extrai do git config (actions/checkout).
+    Nao modifica arquivo local para nao conflitar com git pull --rebase.
     """
     if not _token:
-        print('  AVISO: _token vazio, pulando embed'); return False
+        print('  AVISO: FlowUp _token vazio, pulando embed'); return False
 
     gh_token = (os.environ.get('GITHUB_TOKEN') or '').strip()
     if not gh_token:
-        gh_token = _get_github_token_from_git_config() or ''
+        gh_token = (_get_github_token_from_git_config() or '').strip()
     if not gh_token:
-        print('  AVISO: GITHUB_TOKEN nao disponivel (env nem git config)'); return False
+        print('  AVISO: GITHUB_TOKEN nao disponivel (nem env nem git config)'); return False
 
     repo = os.environ.get('GITHUB_REPOSITORY', 'administrativo-ship-it/painel-organize-empresas')
     url  = f'https://api.github.com/repos/{repo}/contents/index.html'
-
     gh_headers = {
         'Authorization': f'Bearer {gh_token}',
         'Accept': 'application/vnd.github+json',
@@ -167,7 +162,7 @@ def embed_token_in_index_html_via_api():
         'X-GitHub-Api-Version': '2022-11-28',
     }
 
-    # Busca conteudo atual
+    # Busca conteudo atual do index.html
     try:
         req = urllib.request.Request(url, headers=gh_headers)
         with urllib.request.urlopen(req, timeout=30) as r:
@@ -182,10 +177,6 @@ def embed_token_in_index_html_via_api():
         print(f'  AVISO: erro ao decodificar index.html: {e}'); return False
 
     # Localiza _DC e decodifica
-    DC_PATTERN = (
-        r"const _DC = \(function\(\)\{try\{return JSON\.parse\(atob\(\'([^\']+)\'\)\);"
-        r"\}catch\(e\)\{return \{\};\}\}\)\(\);"
-    )
     m = re.search(DC_PATTERN, html)
     if not m:
         print('  AVISO: _DC nao encontrado em index.html'); return False
@@ -196,7 +187,7 @@ def embed_token_in_index_html_via_api():
         print(f'  AVISO: falha ao decodificar _DC: {e}'); return False
 
     if dc.get('fuToken') == _token:
-        print('  index.html: token ja esta atualizado, nada a commitar'); return True
+        print('  index.html: token ja atualizado, nada a commitar'); return True
 
     dc['fuToken']    = _token
     dc['fuTokenExp'] = int(_exp * 1000)
@@ -213,19 +204,20 @@ def embed_token_in_index_html_via_api():
 
     # Commita via API
     exp_date = time.strftime('%Y-%m-%d', time.gmtime(_exp))
-    commit_body = {
-        'message': f'fix: fuToken pre-obtido (exp {exp_date}) [skip ci]',
-        'content': base64.b64encode(new_html.encode('utf-8')).decode(),
-        'sha': current_sha,
-    }
     try:
         req2 = urllib.request.Request(
-            url, data=json.dumps(commit_body).encode(), method='PUT',
+            url,
+            data=json.dumps({
+                'message': f'fix: fuToken pre-obtido (exp {exp_date}) [skip ci]',
+                'content': base64.b64encode(new_html.encode('utf-8')).decode(),
+                'sha': current_sha,
+            }).encode(),
+            method='PUT',
             headers={**gh_headers, 'Content-Type': 'application/json'}
         )
         with urllib.request.urlopen(req2, timeout=30) as r:
             result = json.loads(r.read())
-        print(f'  index.html commitado via API: {result["commit"]["sha"][:8]} (exp {exp_date})')
+        print(f'  index.html commitado: {result["commit"]["sha"][:8]} (exp {exp_date})')
         return True
     except urllib.error.HTTPError as e:
         err = e.read().decode('utf-8', errors='ignore')
@@ -237,50 +229,70 @@ def embed_token_in_index_html_via_api():
 
 def main():
     ts = time.strftime('%Y-%m-%d %H:%M:%S')
-    print(f'[{ts}] Sync FlowUp (PS=1 paralelo, MAX_WORKERS={MAX_WORKERS})')
-    print(f'  Base: {BASE_URL} | Sub: {SUBDOMAIN}')
+    print(f'[{ts}] Sync FlowUp | Base: {BASE_URL} | Sub: {SUBDOMAIN}')
+
+    # Autentica (tenta chave do env, fallback para chave embutida)
     get_token()
     print('  Token OK')
 
-    all_tasks = {}
+    # ─── Fase 1: conta total de tarefas abertas (sem filtro de projeto) ───
+    print('\n[1] Obtendo count de tarefas abertas...')
+    _, total_open = query_one({'ShowFinished': False, 'ShowArchived': False}, 1)
+    print(f'  Count: {total_open}')
+
+    tasks_list = []
+    if total_open > 0:
+        # ─── Fase 2: busca todas as paginas em paralelo (PS=1) ───────────────
+        t0 = time.time()
+        print(f'\n[2] Buscando {total_open} tarefas (MAX_WORKERS={MAX_WORKERS})...')
+        raw = fetch_all_pages_parallel({'ShowFinished': False, 'ShowArchived': False}, total_open)
+        seen = {}
+        for t in raw:
+            if t and t.get('Id'):
+                seen[t['Id']] = t
+        tasks_list = list(seen.values())
+        print(f'  Coletadas: {len(tasks_list)} ({time.time()-t0:.1f}s)')
+    else:
+        print('  AVISO: 0 tarefas — possivel falha de autenticacao ou acesso')
+
+    # ─── Fase 3: deriva projetos a partir das tarefas ────────────────────────
+    print('\n[3] Derivando projetos...')
+    pid_to_name  = {}
+    pid_to_open  = {}
+    for t in tasks_list:
+        pid = t.get('ProjectId')
+        if not pid: continue
+        pid_to_name[pid] = (t.get('ProjectName') or '').strip()
+        pid_to_open[pid] = pid_to_open.get(pid, 0) + 1
+
     project_counts = {}
+    for pid in pid_to_name:
+        _, total = query_one({'Projects': [pid], 'ShowFinished': True, 'ShowArchived': False}, 1)
+        project_counts[pid] = {
+            'total': total,
+            'open':  pid_to_open.get(pid, 0),
+            'finished': max(0, total - pid_to_open.get(pid, 0))
+        }
 
-    print(f'\n[1] Descobrindo projetos (pid 1..{MAX_PID})')
-    valid_pids = []
-    for pid in range(1, MAX_PID + 1):
-        _, total      = query_one({'Projects': [pid], 'ShowFinished': True,  'ShowArchived': False}, 1)
-        _, total_open = query_one({'Projects': [pid], 'ShowFinished': False, 'ShowArchived': False}, 1)
-        if total > 0:
-            project_counts[pid] = {
-                'total': total, 'open': total_open, 'finished': total - total_open
-            }
-            valid_pids.append(pid)
-            print(f'  pid={pid}: total={total} abertas={total_open}')
-
-    print(f'\n[2] Coletando tarefas ({len(valid_pids)} projetos serial, paralelismo interno {MAX_WORKERS})')
-    for pid in valid_pids:
-        t_start = time.time()
-        n_open  = project_counts[pid]['open']
-        sys.stdout.flush()
-        tks = fetch_pages_parallel(
-            {'Projects': [pid], 'ShowFinished': False, 'ShowArchived': False}, 0, n_open - 1
-        ) if n_open > 0 else []
-        merge_into(all_tasks, tks)
-        dur = time.time() - t_start
-        print(f'  pid={pid}: open={len(tks)}/{n_open} | {dur:.1f}s | acumulado={len(all_tasks)}', flush=True)
-
-    tasks_list = list(all_tasks.values())
-    projects   = derive_projects(tasks_list, project_counts)
+    projects = [
+        {
+            'Id': pid, 'Name': pid_to_name[pid],
+            'TotalTasks':    project_counts[pid]['total'],
+            'OpenTasks':     project_counts[pid]['open'],
+            'FinishedTasks': project_counts[pid]['finished'],
+            'ArchivedTasks': 0
+        }
+        for pid in pid_to_name
+    ]
     projects.sort(key=lambda p: -p['TotalTasks'])
 
-    print(f'\n[CONSOLIDACAO] {len(tasks_list)} tarefas em {len(projects)} projetos')
     for p in projects:
-        nome = p['Name'][:42]
-        print(f"  #{p['Id']:3} {nome:42} | tot={p['TotalTasks']:4} | ab={p['OpenTasks']:3} | fin={p['FinishedTasks']:4}")
+        print(f"  #{p['Id']:6} {p['Name'][:42]:42} | tot={p['TotalTasks']:4} | ab={p['OpenTasks']:3}")
 
+    # ─── Usuarios ────────────────────────────────────────────────────────────
     print('\n[USUARIOS]')
     try:
-        ur    = api('GET', EP_LIST_USERS)
+        ur    = api_call('GET', EP_LIST_USERS)
         users = ur.get('Result') if isinstance(ur, dict) else ur
         if not isinstance(users, list): users = []
     except Exception as e:
@@ -290,11 +302,13 @@ def main():
     g_total = sum(p['TotalTasks']    for p in projects)
     g_open  = sum(p['OpenTasks']     for p in projects)
     g_fin   = sum(p['FinishedTasks'] for p in projects)
-    print(f'\n[TOTAIS REAIS] tarefas={g_total} | abertas={g_open} | fin={g_fin} | projetos={len(projects)}')
+    print(f'\n[TOTAIS] tarefas={g_total} | abertas={g_open} | fin={g_fin} | projetos={len(projects)}')
 
+    # ─── Embute token no index.html ──────────────────────────────────────────
     print('\n[TOKEN EMBED]')
     embed_token_in_index_html_via_api()
 
+    # ─── Escreve saida ───────────────────────────────────────────────────────
     output = {
         'generatedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'totals': {
@@ -327,9 +341,10 @@ def main():
         ]
     }
 
-    with open(os.environ.get('OUTPUT_PATH', 'flowup-data.json'), 'w', encoding='utf-8') as f:
+    out_path = os.environ.get('OUTPUT_PATH', 'flowup-data.json')
+    with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, separators=(',', ':'))
-    print(f'\nOK -> flowup-data.json')
+    print(f'\nOK -> {out_path}')
 
 
 if __name__ == '__main__':
