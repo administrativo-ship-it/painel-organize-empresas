@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
 """
-Sincroniza FlowUp -> flowup-data.json via API REST direta (sem MCP).
-OAuth2 Password Grant em https://task.flowup.me.
-Tambem embute o bearer token no index.html (bypass de IP bloqueado no navegador).
+Sincroniza FlowUp -> flowup-data.json via api.flowup.me (API privada, mesmos endpoints do painel).
+OAuth2 Password Grant + parallel page fetch com PageSize=50.
+Tambem embute o bearer token no index.html para bypass de IP bloqueado no navegador.
 
 Estrategia:
-1. Busca COUNT de todas as tarefas abertas (sem filtro de projeto)
-2. Busca todas as paginas em paralelo (PS=1, sem risco de truncagem)
+1. Auth em api.flowup.me/token (funciona de IPs nao bloqueados como GitHub Actions)
+2. Busca todas as tarefas abertas em paralelo (sem filtro de projeto, PS=50)
 3. Deriva projetos a partir dos dados das tarefas
-4. Para cada projeto descoberto, busca count total (aberto + finalizado)
-5. Embute token FlowUp no index.html via GitHub API
+4. Para cada projeto, busca count total (aberto+finalizado)
+5. Embute token no index.html via GitHub API
 """
 import os, sys, json, time, base64, re, subprocess, urllib.request, urllib.parse, urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 
-# Chave embutida como fallback caso FLOWUP_API_KEY no secret ainda tenha a chave velha
 FALLBACK_KEY = '0f46646eb5d54286baeb3e55d6721db7'
 API_KEY   = (os.environ.get('FLOWUP_API_KEY', '') or FALLBACK_KEY).strip()
 SUBDOMAIN = os.environ.get('FLOWUP_SUBDOMAIN', 'organizementoring').strip()
-BASE_URL  = os.environ.get('FLOWUP_BASE_URL', 'https://task.flowup.me').rstrip('/')
+BASE_URL  = 'https://api.flowup.me'
 
 EP_TOKEN       = '/token'
-EP_QUERY_TASKS = '/api/v1/public/task/querytasks'
-EP_LIST_USERS  = '/api/v1/public/user/getactiveusers'
+EP_QUERY_TASKS = '/v1/task/querytasks'
+EP_LIST_USERS  = '/v1/user/getactiveusers'
 
+PAGE_SIZE   = 50
 MAX_WORKERS = 32
 
 _token, _exp = None, 0
@@ -52,17 +52,17 @@ def get_token():
                     d = json.loads(r.read().decode('utf-8'))
                 tk = d.get('access_token')
                 if not tk:
-                    raise RuntimeError(f'Sem token: {d}')
+                    raise RuntimeError(f'Sem token na resposta: {d}')
                 _token = tk
                 _exp   = time.time() + int(d.get('expires_in', 3600))
                 if key != keys_to_try[0]:
-                    print('  AVISO: env FLOWUP_API_KEY falhou, usando chave embutida')
+                    print('  AVISO: FLOWUP_API_KEY do ambiente falhou, usando chave embutida')
                     API_KEY = key
                 return _token
             except Exception as e:
                 last_err = e
                 continue
-        raise RuntimeError(f'Falha ao obter token com todas as chaves: {last_err}')
+        raise RuntimeError(f'Falha ao obter token: {last_err}')
 
 
 def api_call(method, path, body=None):
@@ -86,32 +86,49 @@ def api_call(method, path, body=None):
         raise RuntimeError(f'NET {method} {path}: {e}')
 
 
-def query_one(filter_obj, page, retries=2):
-    """Retorna (task_or_None, count). Silencia erros apos retries."""
-    for attempt in range(retries + 1):
+def fetch_all_pages(extra_filter=None):
+    """
+    Busca todas as paginas de EP_QUERY_TASKS com PAGE_SIZE itens por pagina.
+    Pagina 1 sequential (obtem Count), restantes em paralelo com ThreadPoolExecutor.
+    """
+    flt = extra_filter or {}
+    body1 = {'PageSize': PAGE_SIZE, 'CurrentPage': 1, 'Filter': flt}
+    d1    = api_call('POST', EP_QUERY_TASKS, body1)
+    items1 = d1.get('Result') or []
+    count  = d1.get('Count', 0)
+
+    if not count or len(items1) >= count or len(items1) < PAGE_SIZE:
+        return items1
+
+    total_pages = (count + PAGE_SIZE - 1) // PAGE_SIZE
+    all_items   = items1[:]
+
+    def fetch_page(pg):
+        body = {'PageSize': PAGE_SIZE, 'CurrentPage': pg, 'Filter': flt}
         try:
-            r = api_call('POST', EP_QUERY_TASKS, {
-                'Filter': filter_obj, 'CurrentPage': page, 'PageSize': 1
-            })
-            chunk = r.get('Result') or []
-            return (chunk[0] if chunk else None), r.get('Count', 0)
+            d = api_call('POST', EP_QUERY_TASKS, body)
+            return d.get('Result') or []
         except Exception:
-            if attempt < retries:
-                time.sleep(0.3 * (attempt + 1))
-                continue
-            return None, 0
+            return []
 
-
-def fetch_all_pages_parallel(filter_obj, total):
-    """Busca paginas 0..total-1 em paralelo (PS=1, MAX_WORKERS threads)."""
-    tasks = []
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futs = [ex.submit(query_one, filter_obj, p) for p in range(0, total)]
+        futs = {ex.submit(fetch_page, pg): pg for pg in range(2, total_pages + 1)}
         for fut in as_completed(futs):
-            t, _ = fut.result()
-            if t:
-                tasks.append(t)
-    return tasks
+            all_items.extend(fut.result())
+
+    return all_items
+
+
+def get_project_total_count(pid):
+    """Retorna count total de tarefas (abertas + finalizadas) para um projeto."""
+    try:
+        d = api_call('POST', EP_QUERY_TASKS, {
+            'PageSize': 1, 'CurrentPage': 1,
+            'Filter': {'Projects': [pid], 'ShowFinished': True, 'ShowArchived': False}
+        })
+        return d.get('Count', 0)
+    except Exception:
+        return 0
 
 
 def _get_github_token_from_git_config():
@@ -141,17 +158,16 @@ DC_PATTERN = (
 def embed_token_in_index_html_via_api():
     """
     Busca index.html do GitHub, embute fuToken no _DC, commita de volta via API.
-    Usa GITHUB_TOKEN do env ou extrai do git config (actions/checkout).
-    Nao modifica arquivo local para nao conflitar com git pull --rebase.
+    Token GitHub obtido do env GITHUB_TOKEN ou extraido do git config (actions/checkout).
     """
     if not _token:
-        print('  AVISO: FlowUp _token vazio, pulando embed'); return False
+        print('  AVISO: _token vazio, pulando embed'); return False
 
     gh_token = (os.environ.get('GITHUB_TOKEN') or '').strip()
     if not gh_token:
         gh_token = (_get_github_token_from_git_config() or '').strip()
     if not gh_token:
-        print('  AVISO: GITHUB_TOKEN nao disponivel (nem env nem git config)'); return False
+        print('  AVISO: GITHUB_TOKEN nao disponivel'); return False
 
     repo = os.environ.get('GITHUB_REPOSITORY', 'administrativo-ship-it/painel-organize-empresas')
     url  = f'https://api.github.com/repos/{repo}/contents/index.html'
@@ -162,13 +178,12 @@ def embed_token_in_index_html_via_api():
         'X-GitHub-Api-Version': '2022-11-28',
     }
 
-    # Busca conteudo atual do index.html
     try:
         req = urllib.request.Request(url, headers=gh_headers)
         with urllib.request.urlopen(req, timeout=30) as r:
             current = json.loads(r.read())
     except Exception as e:
-        print(f'  AVISO: erro ao buscar index.html da API GitHub: {e}'); return False
+        print(f'  AVISO: erro ao buscar index.html: {e}'); return False
 
     current_sha = current['sha']
     try:
@@ -176,7 +191,6 @@ def embed_token_in_index_html_via_api():
     except Exception as e:
         print(f'  AVISO: erro ao decodificar index.html: {e}'); return False
 
-    # Localiza _DC e decodifica
     m = re.search(DC_PATTERN, html)
     if not m:
         print('  AVISO: _DC nao encontrado em index.html'); return False
@@ -187,7 +201,7 @@ def embed_token_in_index_html_via_api():
         print(f'  AVISO: falha ao decodificar _DC: {e}'); return False
 
     if dc.get('fuToken') == _token:
-        print('  index.html: token ja atualizado, nada a commitar'); return True
+        print('  index.html: token ja atualizado'); return True
 
     dc['fuToken']    = _token
     dc['fuTokenExp'] = int(_exp * 1000)
@@ -202,7 +216,6 @@ def embed_token_in_index_html_via_api():
     if new_html == html:
         print('  AVISO: substituicao de _DC sem efeito'); return False
 
-    # Commita via API
     exp_date = time.strftime('%Y-%m-%d', time.gmtime(_exp))
     try:
         req2 = urllib.request.Request(
@@ -221,7 +234,7 @@ def embed_token_in_index_html_via_api():
         return True
     except urllib.error.HTTPError as e:
         err = e.read().decode('utf-8', errors='ignore')
-        print(f'  AVISO: erro ao commitar index.html (HTTP {e.code}): {err[:200]}')
+        print(f'  AVISO: erro ao commitar index.html HTTP {e.code}: {err[:200]}')
         return False
     except Exception as e:
         print(f'  AVISO: erro ao commitar index.html: {e}'); return False
@@ -229,36 +242,30 @@ def embed_token_in_index_html_via_api():
 
 def main():
     ts = time.strftime('%Y-%m-%d %H:%M:%S')
-    print(f'[{ts}] Sync FlowUp | Base: {BASE_URL} | Sub: {SUBDOMAIN}')
+    print(f'[{ts}] Sync FlowUp | Base: {BASE_URL} | Sub: {SUBDOMAIN} | PS={PAGE_SIZE}')
 
-    # Autentica (tenta chave do env, fallback para chave embutida)
     get_token()
     print('  Token OK')
 
-    # ─── Fase 1: conta total de tarefas abertas (sem filtro de projeto) ───
-    print('\n[1] Obtendo count de tarefas abertas...')
-    _, total_open = query_one({'ShowFinished': False, 'ShowArchived': False}, 1)
-    print(f'  Count: {total_open}')
+    # Busca todas as tarefas abertas (sem filtro de projeto)
+    print(f'\n[1] Buscando tarefas abertas (ShowFinished=false, PS={PAGE_SIZE})...')
+    t0 = time.time()
+    raw_tasks = fetch_all_pages({'ShowFinished': False, 'ShowArchived': False})
+    # Deduplicacao
+    seen = {}
+    for t in raw_tasks:
+        if t and t.get('Id'):
+            seen[t['Id']] = t
+    tasks_list = list(seen.values())
+    print(f'  Coletadas: {len(tasks_list)} tarefas ({time.time()-t0:.1f}s)')
 
-    tasks_list = []
-    if total_open > 0:
-        # ─── Fase 2: busca todas as paginas em paralelo (PS=1) ───────────────
-        t0 = time.time()
-        print(f'\n[2] Buscando {total_open} tarefas (MAX_WORKERS={MAX_WORKERS})...')
-        raw = fetch_all_pages_parallel({'ShowFinished': False, 'ShowArchived': False}, total_open)
-        seen = {}
-        for t in raw:
-            if t and t.get('Id'):
-                seen[t['Id']] = t
-        tasks_list = list(seen.values())
-        print(f'  Coletadas: {len(tasks_list)} ({time.time()-t0:.1f}s)')
-    else:
-        print('  AVISO: 0 tarefas — possivel falha de autenticacao ou acesso')
+    if not tasks_list:
+        print('  AVISO: 0 tarefas retornadas — possivel falha de auth ou acesso')
 
-    # ─── Fase 3: deriva projetos a partir das tarefas ────────────────────────
-    print('\n[3] Derivando projetos...')
-    pid_to_name  = {}
-    pid_to_open  = {}
+    # Deriva projetos
+    print('\n[2] Derivando projetos...')
+    pid_to_name = {}
+    pid_to_open = {}
     for t in tasks_list:
         pid = t.get('ProjectId')
         if not pid: continue
@@ -267,10 +274,10 @@ def main():
 
     project_counts = {}
     for pid in pid_to_name:
-        _, total = query_one({'Projects': [pid], 'ShowFinished': True, 'ShowArchived': False}, 1)
+        total = get_project_total_count(pid)
         project_counts[pid] = {
             'total': total,
-            'open':  pid_to_open.get(pid, 0),
+            'open': pid_to_open.get(pid, 0),
             'finished': max(0, total - pid_to_open.get(pid, 0))
         }
 
@@ -289,8 +296,8 @@ def main():
     for p in projects:
         print(f"  #{p['Id']:6} {p['Name'][:42]:42} | tot={p['TotalTasks']:4} | ab={p['OpenTasks']:3}")
 
-    # ─── Usuarios ────────────────────────────────────────────────────────────
-    print('\n[USUARIOS]')
+    # Membros
+    print('\n[3] Membros...')
     try:
         ur    = api_call('GET', EP_LIST_USERS)
         users = ur.get('Result') if isinstance(ur, dict) else ur
@@ -304,11 +311,11 @@ def main():
     g_fin   = sum(p['FinishedTasks'] for p in projects)
     print(f'\n[TOTAIS] tarefas={g_total} | abertas={g_open} | fin={g_fin} | projetos={len(projects)}')
 
-    # ─── Embute token no index.html ──────────────────────────────────────────
-    print('\n[TOKEN EMBED]')
+    # Embute token no index.html
+    print('\n[4] Embed token em index.html...')
     embed_token_in_index_html_via_api()
 
-    # ─── Escreve saida ───────────────────────────────────────────────────────
+    # Escreve saida
     output = {
         'generatedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'totals': {
