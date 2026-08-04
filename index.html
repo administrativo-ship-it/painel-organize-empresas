@@ -1151,7 +1151,7 @@ tbody tr:hover{background:var(--off);}
 
 <script>
 // ═══════════════ STATE ═══════════════
-const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImZ1VG9rZW4iOiI0ckM5MnBveGJmdDVTd000d1BnZnR4bVk0TGdWYURDal9wWGNJNTF3TG1LQmVhQjR3LUtYRzlweEVDaFBzZ0twZERXY3N1OVphLUZGMWp4MTUySWZNR0NnN0xMc05MV2IzNDJjd1VZdllubkVtdU9KQl9ncC1SRTY1WnZUbklGV2R6b3lIaDJEdXF4MVBQUk8tMnpLTkNpbmJSa1dWT1BHcm9kUkFlUE9Kd0Uyd216YUdZdUQyclJ0ZXVTZVdFTjJuLXdJYU5tcmVFQkJnSXh5eGVzQmtSbWR2dTlEeUx5NjBfTHJzSFRBS2ZHbV9VcE91U1hZMGl5YlRBQnJnTEVfS3FZbC1RIiwiZnVUb2tlbkV4cCI6MTgxNzQwOTAwNTExMH0='));}catch(e){return {};}})();
+const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjV9'));}catch(e){return {};}})();
 const S = {
   projects: [], tasks: [], members: [], boards: [],
   trelloBoards: [], trelloCards: [], trelloLists: [],
@@ -4677,11 +4677,33 @@ function rptGenSvgChart(historico, mesSel, anoRef) {
 
 // ════════ ANÁLISE COM IA ════════
 
-var _anthropicKey = localStorage.getItem('organize_anthropic_key') || '';
+var _anthropicKey = localStorage.getItem('organize_anthropic_key') || (_DC && _DC.aiKey) || '';
 
 function setAnthropicKey(key) {
   _anthropicKey = key;
   localStorage.setItem('organize_anthropic_key', key);
+}
+
+function _promptForAnthropicKey(prefill) {
+  var k = prompt(
+    'Chave de API Anthropic inválida ou expirada.\n\n' +
+    'Cole sua chave aqui (começa com sk-ant-):\n' +
+    '(Obtenha em: console.anthropic.com → API Keys)',
+    prefill || ''
+  );
+  if (!k || !k.trim()) return null;
+  k = k.trim();
+  setAnthropicKey(k);
+  return k;
+}
+
+function _isAnthropicAuthError(msg) {
+  return msg && (
+    msg.toLowerCase().includes('invalid x-api-key') ||
+    msg.toLowerCase().includes('authentication_error') ||
+    msg.toLowerCase().includes('invalid api key') ||
+    msg.toLowerCase().includes('x-api-key')
+  );
 }
 
 // ═══════════════ AI CONTEXT BUILDER ═══════════════
@@ -5239,7 +5261,11 @@ async function generateAnalysisWithAI() {
   } catch(e) {
     if (btn) { btn.textContent = '✗ Erro — tente novamente'; btn.disabled = false; }
     console.error('Erro AI:', e);
-    alert('Erro ao gerar relatório: ' + e.message + '\n\nVerifique sua chave de API Anthropic em: claude.ai → Settings → API Keys');
+    if (_isAnthropicAuthError(e.message)) {
+      var newKey = _promptForAnthropicKey();
+      if (newKey) { setTimeout(generateAnalysisWithAI, 100); return; }
+    }
+    alert('Erro ao gerar relatório: ' + e.message);
   }
 }
 
@@ -5455,8 +5481,12 @@ async function generateAnalysisEncerramento() {
     if (btn) { btn.disabled = false; btn.textContent = '✔ Relatório gerado pela IA'; }
   } catch(e) {
     console.error('Erro AI encerramento:', e);
-    alert('Erro ao gerar relatório: ' + e.message);
     if (btn) { btn.disabled = false; btn.textContent = 'Gerar Análise com IA'; }
+    if (_isAnthropicAuthError(e.message)) {
+      var newKey = _promptForAnthropicKey();
+      if (newKey) { setTimeout(generateAnalysisEncerramento, 100); return; }
+    }
+    alert('Erro ao gerar relatório: ' + e.message);
   }
 }
 
