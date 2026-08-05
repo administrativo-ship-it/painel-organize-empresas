@@ -1151,7 +1151,7 @@ tbody tr:hover{background:var(--off);}
 
 <script>
 // ═══════════════ STATE ═══════════════
-const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImZ1VG9rZW4iOiJJcW84ZlRKdHpJazR1QWtIaHk1S3lyd2lEWngxbC1janRkd3FCNmsxSk5vMHkwSUlBR3RsWkhvZzEwT2ZrU0UwU01xeTh4YUdrODBEMkdNTm4wUGpzc2FTbFdjMC1BUlNnS0lOTktYTElnemRCWmNmV3lGd0RPMm5Kam1VMDFHZ0FVckdXaldKbHk3OGR2eWF0QnJ3b2g4eFM0QXMwelBKa3BwWDV2b3ZOM3phel9YLWpfbHUxQWdTbmNYaFZrYXFrY0wwc1RySHN2c25SMkNRa01FNTE5Y0hRRW84RjFUVTg5aW9KNFZrV0l3ZDhQM3l5ZndkNHVHQjFnX1MzajlKYVN4M05nIiwiZnVUb2tlbkV4cCI6MTgxNzQ2ODA2OTUyNn0='));}catch(e){return {};}})();
+const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIn0='));}catch(e){return {};}})();
 const S = {
   projects: [], tasks: [], members: [], boards: [],
   trelloBoards: [], trelloCards: [], trelloLists: [],
@@ -4698,12 +4698,15 @@ function _promptForAnthropicKey(prefill) {
 }
 
 function _isAnthropicAuthError(msg) {
-  return msg && (
-    msg.toLowerCase().includes('invalid x-api-key') ||
-    msg.toLowerCase().includes('authentication_error') ||
-    msg.toLowerCase().includes('invalid api key') ||
-    msg.toLowerCase().includes('x-api-key')
-  );
+  if (!msg) return false;
+  var m = msg.toLowerCase();
+  return m.includes('invalid x-api-key') ||
+    m.includes('authentication_error') ||
+    m.includes('invalid api key') ||
+    m.includes('api key is invalid') ||
+    m.includes('key is invalid') ||
+    m.includes('x-api-key') ||
+    m.includes('401');
 }
 
 // ═══════════════ AI CONTEXT BUILDER ═══════════════
