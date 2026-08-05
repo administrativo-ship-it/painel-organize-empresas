@@ -8206,7 +8206,7 @@ function init() {
   renderAll();
 
   // Sincroniza imediatamente se tiver credenciais
-  if (fromSetup) {
+  if (window.fromSetup) {
     setTimeout(() => {
       document.getElementById('kpi-overview').innerHTML = `
         <div style="grid-column:1/-1;background:#e8f5ee;border:2px solid #1a7a4a;border-radius:var(--r);padding:28px;text-align:center">
