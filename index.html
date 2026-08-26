@@ -1203,7 +1203,7 @@ tbody tr:hover{background:var(--off);}
 
 <script>
 // ═══════════════ STATE ═══════════════
-const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIiwiZnVUb2tlbiI6IlZmNTdwaUtYaGZrZ01EOTVpaV8wZ2FHMm5Ga0pYOHZfN1lFNFNOemZ0Z1BVNlZmZ19nYnUtblRfenhhcUk4eGNRajdhelBGbmk1b2dhcDh2Yy15eDNnVkpKLWxyUE5DODFyRDRVWmtUQnA1Vi1GaXQyZkNmTVJ0cTNzbTU3LXNJTllmb0ZXYk4ycXNfajdBNzhxa2J6RG5pejZfSElMQlRnVVdmb1g3NjZKYVhmVDBSRTZmeDRxMi04VGNDNXVHM19vNU1MejdXTmZkNGRLa0c2anExYm43RW9MZnZzUGpiLXdiclVrZ2cwUDBCWjJnWVpiX3AtNjdwN242YnY3RFpPblh0Z0EiLCJmdVRva2VuRXhwIjoxODE5MjQ2MTkyNDQ3fQ=='));}catch(e){return {};}})();
+const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIn0='));}catch(e){return {};}})();
 const S = {
   projects: [], tasks: [], members: [], boards: [],
   trelloBoards: [], trelloCards: [], trelloLists: [],
@@ -8293,10 +8293,11 @@ async function inscLoadInscritos(formId, box) {
       box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Nenhuma inscrição recebida ainda.</div>';
       return;
     }
+    var hasPlano = list.some(function(e){ return e.plano; });
     var rows = list.slice().reverse().map(function(e) {
       var ts = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR') + ' ' + new Date(e.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '—';
       var comprovante = (e.comprovante_confirmado === true || e.comprovante_confirmado === 'true') ? '✓ Confirmado' : '—';
-      var plano = e.plano ? esc(e.plano === 'completo' ? 'Inscrição completa' : (e.plano === 'basico' ? 'Somente inscrição' : e.plano)) : '';
+      var plano = e.plano === 'completo' ? 'Inscrição completa' : (e.plano === 'basico' ? 'Somente inscrição' : (e.plano || ''));
       return '<tr>' +
         '<td>' + esc(ts) + '</td>' +
         '<td>' + esc(e.nome || '—') + '</td>' +
@@ -8304,13 +8305,16 @@ async function inscLoadInscritos(formId, box) {
         '<td>' + esc(e.email || '—') + '</td>' +
         '<td>' + esc(e.empresa || '—') + '</td>' +
         '<td>' + esc(e.cargo || '—') + '</td>' +
-        (plano ? '<td>' + plano + '</td>' : '') +
+        '<td>' + esc(e.colaboradores || '—') + '</td>' +
+        '<td>' + esc(e.faturamento || '—') + '</td>' +
+        (hasPlano ? '<td>' + esc(plano || '—') + '</td>' : '') +
         '<td>' + comprovante + '</td>' +
+        '<td>' + esc(e.observacao || '—') + '</td>' +
       '</tr>';
     }).join('');
-    var planoHeader = list.some(function(e){ return e.plano; }) ? '<th>Plano</th>' : '';
+    var planoHeader = hasPlano ? '<th>Plano</th>' : '';
     box.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">' + list.length + ' inscrição(ões) recebida(s)</div>' +
-      '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Empresa</th><th>Cargo</th>' + planoHeader + '<th>Comprovante</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Empresa</th><th>Cargo</th><th>Colaboradores</th><th>Faturamento</th>' + planoHeader + '<th>Comprovante</th><th>Observação</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   } catch (e) {
     box.innerHTML = '<div style="color:var(--red);font-size:12.5px;padding:8px 0;">Erro ao carregar inscrições: ' + esc(e.message) + '</div>';
   }
