@@ -12,5 +12,19 @@
     "comprovante_confirmado": "true",
     "id": "rmt9g2bri131spf",
     "ts": "2026-08-26T01:57:55.854Z"
+  },
+  {
+    "nome": "MARCOS WIGNER FERREIRA DA SILVA",
+    "whatsapp": "(65) 99297-9249",
+    "email": "marcos.wigner@unemat.br",
+    "empresa": "Marcos",
+    "cargo": "Proprietário",
+    "colaboradores": "Só eu",
+    "faturamento": "Até R$ 10 mil",
+    "plano": "completo",
+    "observacao": "",
+    "comprovante_confirmado": "true",
+    "id": "rmt9g2rcxcy4jkq",
+    "ts": "2026-08-26T01:58:16.065Z"
   }
 ]
