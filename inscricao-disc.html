@@ -63,6 +63,15 @@ select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(
 .pix-box-amount{margin-top:9px;padding-top:9px;border-top:1px solid var(--border);font-size:13px;color:var(--ink-soft);}
 .pix-box-amount strong{color:var(--navy);font-family:'DM Mono',ui-monospace,monospace;}
 .copied-flash{color:var(--green);font-size:11px;margin-left:8px;}
+.method-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+@media (max-width:480px){.method-options{grid-template-columns:1fr;}}
+.method-card{position:relative;display:block;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 12px 12px 34px;cursor:pointer;background:var(--surface-2);}
+.method-card input{position:absolute;left:12px;top:15px;margin:0;width:auto;}
+.method-card .label{font-weight:700;font-size:13.5px;color:var(--ink);}
+.method-card .desc{font-size:11.5px;color:var(--ink-soft);line-height:1.4;margin-top:2px;}
+.method-card.is-selected{border-color:var(--cyan-dark);background:rgba(139,212,224,.18);}
+.btn-card{background:var(--navy);color:#fff;width:100%;justify-content:center;margin-bottom:8px;}
+.card-note{font-size:11.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.5;}
 .btn{appearance:none;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:14.5px;border-radius:100px;padding:12px 24px;display:inline-flex;align-items:center;gap:8px;transition:transform .12s,opacity .12s;text-decoration:none;}
 .btn:active{transform:scale(0.98);}
 .btn-primary{background:var(--navy);color:#fff;width:100%;justify-content:center;margin-top:2px;}
@@ -106,6 +115,7 @@ var CONFIG = {
   planOptions: [],
   pixKey: 'administrativo@organizementoring.com',
   pixAmountStatic: 'R$ 297,00',
+  cardPaymentUrl: 'https://www.asaas.com/c/nxwl2aw9hi7n5tmg',
   contactPhoneDigits: '5569993518755',
   contactPhoneDisplay: '(69) 9 9351-8755',
   contactEmail: 'administrativo@organizementoring.com'
@@ -129,6 +139,12 @@ function collect(form){
     var pl = form.querySelector('input[name="plano"]:checked');
     v.plano = pl ? pl.value : '';
   }
+  if (CONFIG.cardPaymentUrl) {
+    var fp = form.querySelector('input[name="forma_pagamento"]:checked');
+    v.forma_pagamento = fp ? fp.value : 'pix';
+  } else {
+    v.forma_pagamento = 'pix';
+  }
   var cc = form.elements['comprovante_confirmado'];
   v.comprovante_confirmado = !!(cc && cc.checked);
   return v;
@@ -144,7 +160,11 @@ function validate(v){
   if(!v.colaboradores) e.colaboradores = 'Selecione uma opção.';
   if(!v.faturamento) e.faturamento = 'Selecione uma opção.';
   if(CONFIG.hasPlanChoice && !v.plano) e.plano = 'Escolha uma opção de inscrição.';
-  if(!v.comprovante_confirmado) e.comprovante_confirmado = 'Confirme que realizou o pagamento via Pix e enviará o comprovante pelo WhatsApp.';
+  if(!v.comprovante_confirmado){
+    e.comprovante_confirmado = v.forma_pagamento === 'cartao'
+      ? 'Confirme que realizou (ou iniciou) o pagamento no cartão.'
+      : 'Confirme que realizou o pagamento via Pix e enviará o comprovante pelo WhatsApp.';
+  }
   return e;
 }
 
@@ -161,12 +181,28 @@ function renderTicket(){
   '</div>';
 }
 
+function confirmTextFor(method){
+  return method === 'cartao'
+    ? 'Já realizei (ou iniciei) o pagamento no cartão através do link acima. Entendo que minha inscrição fica sujeita à confirmação após a identificação do pagamento.'
+    : 'Já realizei o pagamento via Pix e vou enviar (ou já enviei) o comprovante pelo WhatsApp acima. Entendo que minha inscrição fica sujeita à confirmação após a identificação do pagamento.';
+}
+
 function renderPixSection(n, v, errs, locked){
   var amount = CONFIG.hasPlanChoice ? (planPrice(v.plano) || 'Selecione uma opção acima') : (CONFIG.pixAmountStatic||'');
   var waMsg = 'Olá! Me chamo ' + (v.nome||'[seu nome]') + ' e estou enviando o comprovante do pagamento via Pix da minha inscrição em ' + CONFIG.courseTitle + '.';
   var waHref = 'https://wa.me/' + CONFIG.contactPhoneDigits + '?text=' + encodeURIComponent(waMsg);
-  return '<div class="field'+(errs.comprovante_confirmado?' has-error':'')+'">' +
-    '<label class="field-label"><span class="num">0'+n+'</span>Pagamento via Pix</label>' +
+  var method = v.forma_pagamento || 'pix';
+  var hasCard = !!CONFIG.cardPaymentUrl;
+
+  var methodSelector = '';
+  if (hasCard) {
+    methodSelector = '<div class="method-options">' +
+      '<label class="method-card'+(method==='pix'?' is-selected':'')+'" data-method="pix"><input type="radio" name="forma_pagamento" value="pix"'+(method==='pix'?' checked':'')+' '+(locked?'disabled':'')+'><div class="label">Pix</div><div class="desc">Pagamento à vista</div></label>' +
+      '<label class="method-card'+(method==='cartao'?' is-selected':'')+'" data-method="cartao"><input type="radio" name="forma_pagamento" value="cartao"'+(method==='cartao'?' checked':'')+' '+(locked?'disabled':'')+'><div class="label">Cartão de Crédito</div><div class="desc">Parcelamento disponível</div></label>' +
+    '</div>';
+  }
+
+  var pixBox = '<div id="paymentPixBox" style="display:'+(method==='cartao'?'none':'block')+';">' +
     '<div class="pix-box">' +
       '<div class="pix-box-row">' +
         '<div><div class="pix-box-label">Chave Pix (e-mail)</div><div class="pix-box-value" id="pixKeyValue">'+esc(CONFIG.pixKey)+'</div></div>' +
@@ -175,9 +211,21 @@ function renderPixSection(n, v, errs, locked){
       '<div class="pix-box-amount">Valor a pagar: <strong id="pixAmountValue">'+esc(amount)+'</strong></div>' +
     '</div>' +
     '<a class="btn btn-whatsapp" id="waComprovanteBtn" href="'+esc(waHref)+'" target="_blank" rel="noopener">Enviar comprovante pelo WhatsApp</a>' +
+  '</div>';
+
+  var cardBox = hasCard ? '<div id="paymentCardBox" style="display:'+(method==='cartao'?'block':'none')+';">' +
+    '<p class="card-note">Você será redirecionado para o ambiente seguro de pagamento (Asaas), onde poderá escolher o número de parcelas no cartão de crédito.</p>' +
+    '<a class="btn btn-card" href="'+esc(CONFIG.cardPaymentUrl)+'" target="_blank" rel="noopener">Pagar com cartão (parcelado)</a>' +
+  '</div>' : '';
+
+  return '<div class="field'+(errs.comprovante_confirmado?' has-error':'')+'">' +
+    '<label class="field-label"><span class="num">0'+n+'</span>Pagamento</label>' +
+    methodSelector +
+    pixBox +
+    cardBox +
     '<label class="checkbox-row">' +
       '<input type="checkbox" id="f_comprovante_confirmado" name="comprovante_confirmado"'+(v.comprovante_confirmado?' checked':'')+' '+(locked?'disabled':'')+'>' +
-      '<span>Já realizei o pagamento via Pix e vou enviar (ou já enviei) o comprovante pelo WhatsApp acima. Entendo que minha inscrição fica sujeita à confirmação após a identificação do pagamento.</span>' +
+      '<span id="paymentConfirmText">'+confirmTextFor(method)+'</span>' +
     '</label>' +
     '<div class="err-msg" style="display:'+(errs.comprovante_confirmado?'block':'none')+';">'+esc(errs.comprovante_confirmado||'')+'</div>' +
   '</div>';
@@ -223,14 +271,20 @@ function renderFormPanel(){
   '</div>';
   html += '<button type="submit" class="btn btn-primary" '+(locked?'disabled':'')+'>'+(locked?'Enviando…':'Registrar inscrição')+'</button>';
   html += '<p class="privacy-note">Seus dados são usados apenas pela equipe da Organize Empresas para tratar esta inscrição.</p>';
-  return '<div class="panel"><h2>Formulário de inscrição</h2><p class="sub">Preencha os dados, pague via Pix e confirme o envio do comprovante — nossa equipe valida o pagamento e confirma sua vaga.</p><form id="regform" novalidate>'+html+'</form></div>';
+  var subText = CONFIG.cardPaymentUrl
+    ? 'Preencha os dados, pague via Pix ou cartão de crédito (parcelado) e confirme o pagamento — nossa equipe valida e confirma sua vaga.'
+    : 'Preencha os dados, pague via Pix e confirme o envio do comprovante — nossa equipe valida o pagamento e confirma sua vaga.';
+  return '<div class="panel"><h2>Formulário de inscrição</h2><p class="sub">'+subText+'</p><form id="regform" novalidate>'+html+'</form></div>';
 }
 
 function renderThanks(entry){
+  var followUp = entry.forma_pagamento === 'cartao'
+    ? 'Assim que identificarmos a confirmação do pagamento no cartão, sua vaga será confirmada.'
+    : 'Recebemos a confirmação do seu pagamento via Pix. Nossa equipe vai validar o comprovante enviado pelo WhatsApp e confirmar sua vaga em breve.';
   return '<div class="topbar"><div class="logo-chip"><img src="'+esc(CONFIG.logoSrc)+'" alt="Organize Empresas"></div></div>' +
     '<div class="thanks"><div class="check">&#10003;</div><h2>Inscrição confirmada</h2>' +
     '<p>'+esc(entry.nome)+', sua inscrição para <strong>'+esc(CONFIG.courseTitle)+'</strong> foi registrada.</p>' +
-    '<p>Recebemos a confirmação do seu pagamento via Pix. Nossa equipe vai validar o comprovante enviado pelo WhatsApp e confirmar sua vaga em breve.</p>' +
+    '<p>'+followUp+'</p>' +
     '</div>' +
     '<div class="footer"><div class="footer-brand">Organizar para crescer, estruturar para prosperar.</div>' +
     '<div class="footer-contact"><a href="https://wa.me/'+CONFIG.contactPhoneDigits+'" target="_blank" rel="noopener">WhatsApp '+esc(CONFIG.contactPhoneDisplay)+'</a><a href="mailto:'+CONFIG.contactEmail+'">'+esc(CONFIG.contactEmail)+'</a></div></div>';
@@ -295,6 +349,23 @@ function bind(){
       updatePixAmount(ev.target.value);
     });
   }
+  var mcards = document.querySelectorAll('.method-card input[type=radio]');
+  for (var k=0;k<mcards.length;k++){
+    mcards[k].addEventListener('change', function(ev){
+      var all = document.querySelectorAll('.method-card');
+      for (var j=0;j<all.length;j++){ all[j].classList.remove('is-selected'); }
+      ev.target.closest('.method-card').classList.add('is-selected');
+      var method = ev.target.value;
+      var pixBox = document.getElementById('paymentPixBox');
+      var cardBox = document.getElementById('paymentCardBox');
+      if (pixBox) pixBox.style.display = method === 'cartao' ? 'none' : 'block';
+      if (cardBox) cardBox.style.display = method === 'cartao' ? 'block' : 'none';
+      var confirmText = document.getElementById('paymentConfirmText');
+      if (confirmText) confirmText.textContent = confirmTextFor(method);
+      var cc = document.getElementById('f_comprovante_confirmado');
+      if (cc) cc.checked = false;
+    });
+  }
   var copyBtn = document.getElementById('pixCopyBtn');
   if (copyBtn) copyBtn.addEventListener('click', function(){
     var key = CONFIG.pixKey;
@@ -323,7 +394,7 @@ function submitHandler(e){
   VIEW.banner = {type:'info', text:'Enviando sua inscrição…'};
   render();
 
-  var entry = {nome:v.nome, whatsapp:fmtWhatsApp(v.whatsapp), email:v.email, empresa:v.empresa, cargo:v.cargo, colaboradores:v.colaboradores, faturamento:v.faturamento, comprovante_confirmado:v.comprovante_confirmado, observacao:v.observacao};
+  var entry = {nome:v.nome, whatsapp:fmtWhatsApp(v.whatsapp), email:v.email, empresa:v.empresa, cargo:v.cargo, colaboradores:v.colaboradores, faturamento:v.faturamento, forma_pagamento:v.forma_pagamento, comprovante_confirmado:v.comprovante_confirmado, observacao:v.observacao};
   if (CONFIG.hasPlanChoice) entry.plano = v.plano;
 
   fetch(CONFIG.registerUrl, {
