@@ -368,6 +368,26 @@ tbody tr:hover{background:var(--off);}
 .portal-list-btn.danger:hover{background:var(--red);color:#fff;border-color:var(--red);}
 .portal-list-link{color:var(--teal-dark);font-weight:700;font-size:11.5px;text-decoration:none;padding:6px 8px;}
 .portal-list-link:hover{text-decoration:underline;}
+/* ── LINKS DE INSCRIÇÃO ── */
+.insc-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 3px rgba(27,43,107,.04);}
+.insc-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.insc-card-title{font-size:16px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.insc-status{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:3px 10px;border-radius:999px;}
+.insc-status.open{background:rgba(34,197,94,.13);color:#178a4c;}
+.insc-status.closed{background:rgba(239,68,68,.12);color:var(--red);}
+.insc-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px 18px;margin-bottom:14px;}
+.insc-info-item .k{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+.insc-info-item .v{font-size:12.5px;color:var(--navy);font-weight:600;}
+.insc-link-row{display:flex;align-items:center;gap:8px;background:var(--off);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-bottom:10px;flex-wrap:wrap;}
+.insc-link-row .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;flex:none;}
+.insc-link-row .url{flex:1;min-width:180px;font-family:'DM Mono',monospace;font-size:11.5px;color:var(--navy);word-break:break-all;}
+.insc-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.insc-code-hint{font-size:11px;color:var(--muted);margin-top:2px;}
+.insc-code-hint b{color:var(--navy);font-family:'DM Mono',monospace;}
+.insc-flow{display:flex;flex-wrap:wrap;gap:8px;}
+.insc-flow-step{background:var(--off);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--navy);font-weight:600;display:flex;align-items:center;gap:8px;}
+.insc-flow-step span{background:var(--navy);color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex:none;}
+.insc-copied{color:#178a4c;font-size:11px;font-weight:700;margin-left:6px;display:none;}
 
 @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.sidebar,.topbar,.filter-bar,.rpt-top,.rpt-filters-row,.btn-pdf{display:none!important;}.main{margin-left:0!important;}.page{display:none!important;padding:0!important;}.page.active{display:block!important;}#page-reports{padding:0!important;}.report-preview{border:none!important;box-shadow:none!important;padding:20px 0!important;border-radius:0!important;}body{background:#fff!important;}.table-wrap{box-shadow:none!important;border:1px solid #ccc!important;}tr{page-break-inside:avoid;}.rpt-header{page-break-after:avoid;}.rpt-sec{page-break-after:avoid;}}
 /* ── BOARDS ── */
@@ -503,6 +523,10 @@ tbody tr:hover{background:var(--off);}
   <div class="nav-item" onclick="showPage('portal',this)">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197v-1"/></svg>
     Portal do Cliente
+  </div>
+  <div class="nav-item" onclick="showPage('inscricoes',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    Links de Inscrição
   </div>
   <div class="sidebar-footer">
     <button class="cfg-btn" onclick="openConfig('flowup')">
@@ -971,6 +995,34 @@ tbody tr:hover{background:var(--off);}
     </div>
   </div>
 
+  <!-- LINKS DE INSCRIÇÃO -->
+  <div class="page" id="page-inscricoes">
+    <div class="portal-shell">
+      <div class="portal-header">
+        <div>
+          <h2 class="portal-h2">Links de Inscrição</h2>
+          <p class="portal-sub">Controle centralizado dos formulários públicos de inscrição — acesso direto, sem login, com pagamento via Pix.</p>
+        </div>
+      </div>
+
+      <div id="insc-list" class="portal-list-wrap"></div>
+
+      <div class="portal-card" style="margin-top:16px;">
+        <div class="portal-card-h">Como o fluxo funciona para quem se inscreve</div>
+        <div class="portal-card-s" style="margin-bottom:10px;">Mesmo processo em todos os links abaixo.</div>
+        <div class="insc-flow">
+          <div class="insc-flow-step"><span>1</span>Acessa o link (sem login)</div>
+          <div class="insc-flow-step"><span>2</span>Preenche os dados</div>
+          <div class="insc-flow-step"><span>3</span>Copia a chave Pix</div>
+          <div class="insc-flow-step"><span>4</span>Paga via Pix</div>
+          <div class="insc-flow-step"><span>5</span>Envia comprovante no WhatsApp</div>
+          <div class="insc-flow-step"><span>6</span>Confirma a inscrição</div>
+        </div>
+        <div class="portal-hint" style="margin-top:12px;">A inscrição fica sujeita à confirmação da equipe após identificação do pagamento. Para ver os inscritos, abra o link e clique em "Acesso da equipe" no rodapé, usando o código de acesso de cada formulário.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- REPORTS -->
   <div class="page" id="page-reports">
     <div class="rpt-top">
@@ -1151,7 +1203,7 @@ tbody tr:hover{background:var(--off);}
 
 <script>
 // ═══════════════ STATE ═══════════════
-const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIiwiZnVUb2tlbiI6IjlYekVnMFRSRFh6U0tLSWVYeDVadXE1ajJfVWczQUVPdncweWNGeFZwQTVDZTF2VVJobk1ObmNIc1NUQW5kRGZ6MUtSZzlBaXJRZjVKV1VKdFBROGgxY2NDVkVHa2ZuTXBwZVJyOXlvcVI3b1ItOERPaGFxTERzYVA5Z25rSGRQN2FlbGFnbEl3MnZSWVFvOGJNRjFBdzRpRC1fMVIwQ1dPNFltSlVNeVhtZVR0Uzhid21kVVF5bnczT1hEZW1MWF9oU3RiZDRLaWV6blFiVG9yNTM5RzdRWGwzNlBLZGRrbmFPR1ZOaF9mdG1ZZzZTMTdiNkRHVG1BWUhsamVrdkZPS09OM1EiLCJmdVRva2VuRXhwIjoxODE5MjM5OTE4MjQyfQ=='));}catch(e){return {};}})();
+const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIn0='));}catch(e){return {};}})();
 const S = {
   projects: [], tasks: [], members: [], boards: [],
   trelloBoards: [], trelloCards: [], trelloLists: [],
@@ -8137,7 +8189,7 @@ function rptTrello() {
     boardsHtml +
     rptFooter();
 }
-const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Quadros do Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', rgc:'Relatório Gerencial Comercial', curriculos:'Análise Inteligente de Currículos', portal:'Portal do Cliente', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
+const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Quadros do Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', rgc:'Relatório Gerencial Comercial', curriculos:'Análise Inteligente de Currículos', portal:'Portal do Cliente', inscricoes:'Links de Inscrição', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
 function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -8145,11 +8197,141 @@ function showPage(name, el) {
   if (el) el.classList.add('active');
   document.getElementById('page-title').textContent = pageTitles[name]||name;
   var fb = document.querySelector('.filter-bar');
-  if (fb) fb.style.display = (name === 'portal' || name === 'reports' || name === 'curriculos') ? 'none' : '';
+  if (fb) fb.style.display = (name === 'portal' || name === 'reports' || name === 'curriculos' || name === 'inscricoes') ? 'none' : '';
   var tbr = document.querySelector('.topbar-right');
-  if (tbr) tbr.style.display = (name === 'portal') ? 'none' : '';
+  if (tbr) tbr.style.display = (name === 'portal' || name === 'inscricoes') ? 'none' : '';
   if (name === 'reports') renderReports();
   if (name === 'portal') renderPortalPage();
+  if (name === 'inscricoes') renderInscricoesPage();
+}
+
+// ═══════════════ LINKS DE INSCRIÇÃO ═══════════════
+var INSCRICOES_LINKS = [
+  {
+    id: 'disc',
+    nome: 'Curso de Formação em DISC',
+    url: 'https://administrativo-ship-it.github.io/painel-organize-empresas/inscricao-disc.html',
+    formato: '100% on-line, pelo Google Meet',
+    cargaHoraria: '2 encontros de 2h — 4h no total',
+    dataHorario: 'A confirmar — avisado por WhatsApp',
+    investimento: 'R$ 297,00',
+    vagas: 'Sem limite',
+    prazo: 'Aberto, sem prazo definido',
+    aberto: true
+  },
+  {
+    id: 'finance',
+    nome: 'Imersão Organize Finance',
+    url: 'https://administrativo-ship-it.github.io/painel-organize-empresas/inscricao-finance.html',
+    formato: '100% on-line, pelo Google Meet',
+    dataHorario: '12/09/2026, às 13h (Brasília)',
+    investimento: 'R$ 57,90 (só inscrição) ou R$ 97,90 (completa)',
+    vagas: 'Sem limite',
+    prazo: 'Até 11/09/2026, às 00h',
+    aberto: true
+  }
+];
+
+function renderInscricoesPage() {
+  var wrap = document.getElementById('insc-list');
+  if (!wrap) return;
+  wrap.innerHTML = INSCRICOES_LINKS.map(function(f, idx) {
+    var infoItems = '';
+    ['formato','cargaHoraria','dataHorario','investimento','vagas','prazo'].forEach(function(k) {
+      if (!f[k]) return;
+      var labels = { formato:'Formato', cargaHoraria:'Carga horária', dataHorario:'Data e horário', investimento:'Investimento', vagas:'Vagas', prazo:'Prazo de inscrição' };
+      infoItems += '<div class="insc-info-item"><div class="k">' + labels[k] + '</div><div class="v">' + f[k] + '</div></div>';
+    });
+    return '<div class="insc-card">' +
+      '<div class="insc-card-top">' +
+        '<div class="insc-card-title">' + f.nome + '<span class="insc-status ' + (f.aberto ? 'open' : 'closed') + '">' + (f.aberto ? 'Aberto' : 'Encerrado') + '</span></div>' +
+      '</div>' +
+      '<div class="insc-info-grid">' + infoItems + '</div>' +
+      '<div class="insc-link-row">' +
+        '<span class="lbl">Link público</span>' +
+        '<span class="url" id="insc-url-' + idx + '">' + f.url + '</span>' +
+        '<button class="portal-list-btn" onclick="inscCopyLink(' + idx + ')">Copiar link<span class="insc-copied" id="insc-copied-' + idx + '">Copiado!</span></button>' +
+      '</div>' +
+      '<div class="insc-actions">' +
+        '<a class="portal-list-btn" href="' + f.url + '" target="_blank" rel="noopener">Abrir formulário ↗</a>' +
+        '<button class="portal-list-btn" onclick="inscToggleInscritos(\'' + f.id + '\', this)">Ver inscritos</button>' +
+      '</div>' +
+      '<div class="insc-inscritos-wrap" id="insc-inscritos-' + f.id + '" style="display:none;margin-top:12px;"></div>' +
+    '</div>';
+  }).join('');
+}
+
+function inscToggleInscritos(formId, btn) {
+  var box = document.getElementById('insc-inscritos-' + formId);
+  if (!box) return;
+  var showing = box.style.display !== 'none';
+  if (showing) { box.style.display = 'none'; btn.textContent = 'Ver inscritos'; return; }
+  box.style.display = 'block';
+  btn.textContent = 'Ocultar inscritos';
+  inscLoadInscritos(formId, box);
+}
+
+async function inscLoadInscritos(formId, box) {
+  box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Carregando inscrições...</div>';
+  try {
+    var url = 'https://raw.githubusercontent.com/administrativo-ship-it/painel-organize-empresas/main/inscricoes/' + formId + '.json?t=' + Date.now();
+    var r = await fetch(url);
+    if (r.status === 404) {
+      box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Nenhuma inscrição recebida ainda.</div>';
+      return;
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var list = await r.json();
+    if (!Array.isArray(list) || !list.length) {
+      box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Nenhuma inscrição recebida ainda.</div>';
+      return;
+    }
+    var rows = list.slice().reverse().map(function(e) {
+      var ts = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR') + ' ' + new Date(e.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '—';
+      var comprovante = (e.comprovante_confirmado === true || e.comprovante_confirmado === 'true') ? '✓ Confirmado' : '—';
+      var plano = e.plano ? esc(e.plano === 'completo' ? 'Inscrição completa' : (e.plano === 'basico' ? 'Somente inscrição' : e.plano)) : '';
+      return '<tr>' +
+        '<td>' + esc(ts) + '</td>' +
+        '<td>' + esc(e.nome || '—') + '</td>' +
+        '<td><a href="https://wa.me/55' + esc((e.whatsapp||'').replace(/\D/g,'')) + '" target="_blank" rel="noopener" style="color:var(--navy)">' + esc(e.whatsapp || '—') + '</a></td>' +
+        '<td>' + esc(e.email || '—') + '</td>' +
+        '<td>' + esc(e.empresa || '—') + '</td>' +
+        '<td>' + esc(e.cargo || '—') + '</td>' +
+        (plano ? '<td>' + plano + '</td>' : '') +
+        '<td>' + comprovante + '</td>' +
+      '</tr>';
+    }).join('');
+    var planoHeader = list.some(function(e){ return e.plano; }) ? '<th>Plano</th>' : '';
+    box.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">' + list.length + ' inscrição(ões) recebida(s)</div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Empresa</th><th>Cargo</th>' + planoHeader + '<th>Comprovante</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  } catch (e) {
+    box.innerHTML = '<div style="color:var(--red);font-size:12.5px;padding:8px 0;">Erro ao carregar inscrições: ' + esc(e.message) + '</div>';
+  }
+}
+function esc(s) { s = (s===undefined||s===null) ? '' : String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function inscCopyLink(idx) {
+  var el = document.getElementById('insc-url-' + idx);
+  if (!el) return;
+  var text = el.textContent;
+  function flash() {
+    var f = document.getElementById('insc-copied-' + idx);
+    if (f) { f.style.display = 'inline'; setTimeout(function(){ f.style.display = 'none'; }, 2000); }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(flash).catch(function(){ inscFallbackCopy(text); flash(); });
+  } else {
+    inscFallbackCopy(text); flash();
+  }
+}
+function inscFallbackCopy(text) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch (_e) {}
 }
 
 // ═══════════════ HELPERS ═══════════════
