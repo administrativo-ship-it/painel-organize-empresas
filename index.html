@@ -8274,14 +8274,21 @@ function inscToggleInscritos(formId, btn) {
 async function inscLoadInscritos(formId, box) {
   box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Carregando inscrições...</div>';
   try {
-    var url = 'https://raw.githubusercontent.com/administrativo-ship-it/painel-organize-empresas/main/inscricoes/' + formId + '.json?t=' + Date.now();
-    var r = await fetch(url);
+    // Contents API (não passa por CDN cacheado como raw.githubusercontent — sempre atual)
+    var apiUrl = 'https://api.github.com/repos/' + PORTAL_REPO + '/contents/inscricoes/' + formId + '.json?ref=' + PORTAL_BRANCH + '&t=' + Date.now();
+    var apiHeaders = portalGhToken() ? portalGhHeaders() : { Accept: 'application/vnd.github+json' };
+    var r = await fetch(apiUrl, { headers: apiHeaders });
     if (r.status === 404) {
       box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Nenhuma inscrição recebida ainda.</div>';
       return;
     }
+    if (r.status === 403 && !portalGhToken()) {
+      box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Limite de acesso sem login atingido. <button class="f-clr" onclick="var t=prompt(\'Cole o token GitHub:\');if(t){localStorage.setItem(\'organize_gh_token\',t);}">Conectar GitHub</button> e tente de novo.</div>';
+      return;
+    }
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    var list = await r.json();
+    var fileData = await r.json();
+    var list = JSON.parse(decodeURIComponent(escape(atob(fileData.content.replace(/\n/g,'')))));
     if (!Array.isArray(list) || !list.length) {
       box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Nenhuma inscrição recebida ainda.</div>';
       return;
