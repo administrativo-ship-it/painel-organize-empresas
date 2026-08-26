@@ -1203,7 +1203,7 @@ tbody tr:hover{background:var(--off);}
 
 <script>
 // ═══════════════ STATE ═══════════════
-const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIiwiZnVUb2tlbiI6ImFQb3c5c0ZFYWhTMFBvdzFyT25KM3Y5ZWdnbC0yRXdZcl8tenFTYnBRVU51OE1fOVpGZUptN3kxaElWQ2d6NzQ1RHNtY0JCbE5XRkZ1TmkzMDE1NW1FOENjN3REbU1UY3ZBWG1rSi1LWDJlVkZCUnE3VktBQ1FqSzhkQUxFSUlYTzl4RGxWc3BjRHoycTdOb2pxSHQxQ1Y1a2tNbnBEWW1sMGlDNkJUbXl6V2RTaGxENnZrbExRcVF5T3dIUE42bUZpLURzWUktSDVrZFRqMHdpNHdmYUZjTGVJODNvX0dLTGQxMHFJNmFhbDZlREdyS3ZjMVdmcXdoZC1JMU5Ma0dMTW5FTWciLCJmdVRva2VuRXhwIjoxODE5MzA3MzQzOTExfQ=='));}catch(e){return {};}})();
+const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIiwicEtleSI6IndYUHlGMmVTRG1oSnB6MDNrUXJwOUFsZkFQbnphQ0hfNVhVdGJRRm5CV1UifQ=='));}catch(e){return {};}})();
 const S = {
   projects: [], tasks: [], members: [], boards: [],
   trelloBoards: [], trelloCards: [], trelloLists: [],
@@ -7623,13 +7623,15 @@ async function rgcDownloadPDF() {
 
 var _portalLogoData = '';
 var _portalEditId = null;
-var PORTAL_REPO = 'administrativo-ship-it/painel-organize-empresas';
-var PORTAL_BRANCH = 'main';
 var PORTAL_PAGES = 'https://administrativo-ship-it.github.io/painel-organize-empresas';
-var PORTAL_TOKEN_KEY = 'organize_gh_token';
+var PORTAL_WORKER = 'https://organize-inscricoes.administrativo-2a8.workers.dev';
 
-function portalGhToken() { return localStorage.getItem(PORTAL_TOKEN_KEY) || ''; }
-function portalGhHeaders(t) { return { Authorization: 'token ' + (t || portalGhToken()), Accept: 'application/vnd.github+json' }; }
+// Todas as operações de portal (listar/criar/editar/excluir) passam pelo Worker,
+// que guarda o token do GitHub no servidor — o navegador nunca precisa de um token
+// próprio, então isso funciona em qualquer dispositivo sem configuração alguma.
+function portalHeaders(extra) {
+  return Object.assign({ 'X-Admin-Key': (_DC && _DC.pKey) || '' }, extra || {});
+}
 
 function switchPortalTab(tab, el) {
   document.getElementById('portal-tab-form').style.display = tab === 'form' ? '' : 'none';
@@ -7640,10 +7642,6 @@ function switchPortalTab(tab, el) {
 }
 
 function renderPortalPage() {
-  if (!portalGhToken()) {
-    var t = prompt('Cole o token GitHub para gerenciar portais:');
-    if (t) { localStorage.setItem(PORTAL_TOKEN_KEY, t); }
-  }
   portalUpdatePreview();
 }
 
@@ -7729,7 +7727,6 @@ function portalShowResult2(link, empresa, editando) {
 async function portalCreate() {
   var empresa = (document.getElementById('p-empresa').value || '').trim();
   if (!empresa) { portalShowMsg('Informe o nome da empresa.', 'err'); return; }
-  if (!portalGhToken()) { var t = prompt('Cole o token GitHub:'); if (t) localStorage.setItem(PORTAL_TOKEN_KEY, t); else return; }
 
   var editando = !!_portalEditId;
   var id = _portalEditId || portalBuildId(document.getElementById('p-servico').value, empresa);
@@ -7756,19 +7753,13 @@ async function portalCreate() {
   portalShowMsg(editando ? 'Salvando alterações...' : 'Salvando portal no servidor...', 'info');
 
   try {
-    var path = 'clientes/' + id + '.json';
-    var g = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/' + path + '?ref=' + PORTAL_BRANCH, { headers: portalGhHeaders() });
-    var sha = g.ok ? (await g.json()).sha : null;
-    if (sha && !editando) {
-      portalShowMsg('Já existe um portal para "' + id + '". Use Editar na lista para alterá-lo.', 'err');
-      btn.disabled = false; btn.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 4v16m8-8H4"/></svg> Criar portal do cliente';
-      return;
-    }
-    var content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-    var body = { message: (editando ? 'edita' : 'cria') + ' portal: ' + empresa, content: content, branch: PORTAL_BRANCH };
-    if (sha) body.sha = sha;
-    var r = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/' + path, { method: 'PUT', headers: portalGhHeaders(), body: JSON.stringify(body) });
-    if (!r.ok) { var b = await r.json().catch(function() { return {}; }); throw new Error(b.message || ('HTTP ' + r.status)); }
+    var r = await fetch(PORTAL_WORKER + '/portal/save', {
+      method: 'PUT',
+      headers: portalHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ id: id, data: data, editing: editando })
+    });
+    var res = await r.json().catch(function() { return {}; });
+    if (!r.ok || !res.ok) throw new Error(res.error || ('HTTP ' + r.status));
     _portalEditId = id;
     portalShowEditBanner();
     var link = PORTAL_PAGES + '/' + id;
@@ -7819,14 +7810,13 @@ function portalCopyLink() {
 }
 
 async function portalEditClient(id) {
-  if (!portalGhToken()) { var t = prompt('Cole o token GitHub:'); if (t) localStorage.setItem(PORTAL_TOKEN_KEY, t); else return; }
   portalShowMsg('Carregando portal para edição...', 'info');
   switchPortalTab('form', document.getElementById('ptab-form'));
   try {
-    var r = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/clientes/' + id + '.json?ref=' + PORTAL_BRANCH, { headers: portalGhHeaders() });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    var info = await r.json();
-    var d = JSON.parse(decodeURIComponent(escape(atob((info.content || '').replace(/\n/g, '')))));
+    var r = await fetch(PORTAL_WORKER + '/portal/get?id=' + encodeURIComponent(id), { headers: portalHeaders() });
+    var res = await r.json().catch(function() { return {}; });
+    if (!r.ok || !res.ok) throw new Error(res.error || ('HTTP ' + r.status));
+    var d = res.data;
     document.getElementById('p-empresa').value = d.empresa || '';
     document.getElementById('p-servico').value = d.servico || '';
     document.getElementById('p-responsavel').value = d.responsavel || '';
@@ -7854,19 +7844,12 @@ async function portalEditClient(id) {
 }
 
 async function portalDeleteClient(id) {
-  if (!portalGhToken()) return;
   if (!confirm('Tem certeza que deseja EXCLUIR o portal "' + id + '"?\n\nO link deixará de funcionar.')) return;
   portalShowMsg('Excluindo portal...', 'info');
   try {
-    var path = 'clientes/' + id + '.json';
-    var g = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/' + path + '?ref=' + PORTAL_BRANCH, { headers: portalGhHeaders() });
-    if (!g.ok) throw new Error('Portal não encontrado (HTTP ' + g.status + ')');
-    var sha = (await g.json()).sha;
-    var r = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/contents/' + path, {
-      method: 'DELETE', headers: portalGhHeaders(),
-      body: JSON.stringify({ message: 'exclui portal: ' + id, sha: sha, branch: PORTAL_BRANCH })
-    });
-    if (!r.ok) { var b = await r.json().catch(function() { return {}; }); throw new Error(b.message || ('HTTP ' + r.status)); }
+    var r = await fetch(PORTAL_WORKER + '/portal/delete?id=' + encodeURIComponent(id), { method: 'DELETE', headers: portalHeaders() });
+    var res = await r.json().catch(function() { return {}; });
+    if (!r.ok || !res.ok) throw new Error(res.error || ('HTTP ' + r.status));
     if (_portalEditId === id) portalResetForm();
     portalShowMsg('Portal "' + id + '" excluído.', 'info');
     portalListClients();
@@ -7876,16 +7859,13 @@ async function portalDeleteClient(id) {
 async function portalListClients() {
   var box = document.getElementById('portal-client-list');
   if (!box) return;
-  if (!portalGhToken()) { box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Conecte o GitHub para listar os portais. <button class="f-clr" onclick="var t=prompt(\'Cole o token GitHub:\');if(t){localStorage.setItem(\'organize_gh_token\',t);portalListClients();}">Conectar</button></div>'; return; }
   box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Carregando portais...</div>';
   try {
-    var r = await fetch('https://api.github.com/repos/' + PORTAL_REPO + '/git/trees/' + PORTAL_BRANCH + '?recursive=1', { headers: portalGhHeaders() });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    var tree = (await r.json()).tree || [];
-    var ids = tree.filter(function(t) { return t.type === 'blob' && t.path.indexOf('clientes/') === 0 && t.path.endsWith('.json'); })
-      .map(function(t) { return t.path.slice('clientes/'.length, -5); });
+    var r = await fetch(PORTAL_WORKER + '/portal/list', { headers: portalHeaders() });
+    var res = await r.json().catch(function() { return {}; });
+    if (!r.ok || !res.ok) throw new Error(res.error || ('HTTP ' + r.status));
+    var ids = res.ids || [];
     if (!ids.length) { box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Nenhum portal criado ainda.</div>'; return; }
-    ids.sort();
     box.innerHTML = ids.map(function(id) {
       var link = PORTAL_PAGES + '/' + id;
       return '<div class="portal-list-item">' +
@@ -8274,21 +8254,10 @@ function inscToggleInscritos(formId, btn) {
 async function inscLoadInscritos(formId, box) {
   box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Carregando inscrições...</div>';
   try {
-    // Contents API (não passa por CDN cacheado como raw.githubusercontent — sempre atual)
-    var apiUrl = 'https://api.github.com/repos/' + PORTAL_REPO + '/contents/inscricoes/' + formId + '.json?ref=' + PORTAL_BRANCH + '&t=' + Date.now();
-    var apiHeaders = portalGhToken() ? portalGhHeaders() : { Accept: 'application/vnd.github+json' };
-    var r = await fetch(apiUrl, { headers: apiHeaders });
-    if (r.status === 404) {
-      box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Nenhuma inscrição recebida ainda.</div>';
-      return;
-    }
-    if (r.status === 403 && !portalGhToken()) {
-      box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Limite de acesso sem login atingido. <button class="f-clr" onclick="var t=prompt(\'Cole o token GitHub:\');if(t){localStorage.setItem(\'organize_gh_token\',t);}">Conectar GitHub</button> e tente de novo.</div>';
-      return;
-    }
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    var fileData = await r.json();
-    var list = JSON.parse(decodeURIComponent(escape(atob(fileData.content.replace(/\n/g,'')))));
+    var r = await fetch(PORTAL_WORKER + '/portal/inscricoes?formId=' + encodeURIComponent(formId), { headers: portalHeaders() });
+    var res = await r.json().catch(function() { return {}; });
+    if (!r.ok || !res.ok) throw new Error(res.error || ('HTTP ' + r.status));
+    var list = res.list || [];
     if (!Array.isArray(list) || !list.length) {
       box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Nenhuma inscrição recebida ainda.</div>';
       return;
