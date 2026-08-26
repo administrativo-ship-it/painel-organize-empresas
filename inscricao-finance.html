@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Imersão Organize Finance — Organize Empresas</title>
+<meta name="description" content="Inscrição para a Imersão Organize Finance da Organize Empresas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#000080; --navy-ink:#000060; --cyan:#8BD4E0; --cyan-dark:#3DBBCC; --slate:#41546A;
+  --paper:#F4F6FB; --surface:#FFFFFF; --surface-2:#F7F9FC; --border:#E2E8F4;
+  --ink:#0D1526; --ink-soft:#41546A; --muted:#8A9BB5;
+  --danger:#C0392B; --danger-bg:#FDF0EE; --green:#1A7A4A; --green-bg:#E8F5EE;
+  --radius:14px; --radius-sm:9px;
+  --shadow:0 4px 16px rgba(27,43,107,.08);
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Montserrat',-apple-system,'Segoe UI',sans-serif;font-size:15.5px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:1040px;margin:0 auto;padding:clamp(20px,4vw,52px) clamp(16px,4vw,32px) 60px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:clamp(20px,4vw,36px);flex-wrap:wrap;}
+.logo{height:52px;display:block;}
+.logo-chip{display:inline-flex;background:#fff;border-radius:10px;padding:8px 14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+.logo-chip img{height:36px;display:block;}
+.topbar .logo-chip{margin-bottom:0;}
+.count-badge{font-family:'DM Mono',ui-monospace,monospace;font-size:12px;color:var(--navy);background:rgba(139,212,224,.25);border:1px solid var(--cyan);padding:6px 12px;border-radius:100px;white-space:nowrap;}
+.info-box{background:rgba(139,212,224,.2);border:1px solid var(--cyan);color:var(--navy);border-radius:var(--radius-sm);padding:14px 16px;font-size:13.5px;margin-bottom:18px;}
+.err-box{background:var(--danger-bg);border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-sm);padding:14px 16px;font-size:13.5px;margin-bottom:18px;}
+.grid{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:clamp(16px,3vw,24px);align-items:start;}
+@media (max-width:840px){.grid{grid-template-columns:1fr;}}
+.ticket{background:var(--navy);color:#fff;border-radius:var(--radius);padding:clamp(24px,4vw,32px) clamp(22px,4vw,28px);box-shadow:var(--shadow);}
+.ticket h1{font-family:'Montserrat',sans-serif;font-weight:800;font-size:clamp(22px,3vw,28px);line-height:1.18;margin:0 0 8px;}
+.ticket .tagline{font-style:italic;font-weight:500;font-size:13px;color:var(--cyan);margin:0 0 18px;}
+.ticket .lead{color:rgba(255,255,255,.82);font-size:13.5px;margin:0 0 20px;}
+.info-list{display:flex;flex-direction:column;border-top:1px solid rgba(255,255,255,.18);}
+.info-row{display:flex;flex-direction:column;gap:3px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.18);}
+.info-row .k{font-family:'DM Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--cyan);}
+.info-row .v{font-size:13.5px;color:#fff;font-weight:600;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(22px,4vw,30px);box-shadow:var(--shadow);}
+.panel h2{font-weight:800;font-size:18px;margin:0 0 6px;color:var(--navy);}
+.panel .sub{color:var(--ink-soft);font-size:13px;margin:0 0 22px;}
+.field{margin-bottom:16px;}
+.field-label{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.field-label .num{font-family:'DM Mono',ui-monospace,monospace;font-size:10.5px;color:var(--navy);background:rgba(139,212,224,.3);border-radius:5px;padding:1px 6px;}
+.field-label .opt{font-weight:400;color:var(--muted);font-size:11.5px;}
+input[type=text],input[type=email],input[type=tel],select,textarea{
+  width:100%;font-family:'Montserrat',sans-serif;font-size:14.5px;color:var(--ink);
+  background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:10px 12px;transition:border-color .15s,box-shadow .15s;
+}
+textarea{min-height:76px;resize:vertical;font-family:inherit;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(139,212,224,.35);}
+.field.has-error input,.field.has-error select{border-color:var(--danger);}
+.err-msg{display:none;font-size:12px;color:var(--danger);margin-top:5px;}
+.field.has-error .err-msg{display:block;}
+select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:32px;}
+.plan-options{display:grid;gap:10px;}
+@media (min-width:500px){.plan-options{grid-template-columns:1fr 1fr;}}
+.plan-card{position:relative;display:block;border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 13px 13px 36px;cursor:pointer;background:var(--surface-2);}
+.plan-card input{position:absolute;left:13px;top:16px;margin:0;width:auto;}
+.plan-card .price{font-family:'DM Mono',ui-monospace,monospace;font-weight:600;color:var(--navy);font-size:14px;}
+.plan-card .label{font-weight:700;font-size:13.5px;margin:2px 0 4px;color:var(--ink);}
+.plan-card .desc{font-size:12px;color:var(--ink-soft);line-height:1.4;}
+.plan-card.is-selected{border-color:var(--cyan-dark);background:rgba(139,212,224,.18);}
+.slate-hero{background:var(--slate);}
+.slate-hero .tagline{color:var(--cyan);}
+.pix-box{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:11px;}
+.pix-box-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.pix-box-label{font-family:'DM Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.pix-box-value{font-family:'DM Mono',ui-monospace,monospace;font-size:13.5px;color:var(--navy);word-break:break-all;}
+.pix-box-amount{margin-top:9px;padding-top:9px;border-top:1px solid var(--border);font-size:13px;color:var(--ink-soft);}
+.pix-box-amount strong{color:var(--navy);font-family:'DM Mono',ui-monospace,monospace;}
+.copied-flash{color:var(--green);font-size:11px;margin-left:8px;}
+.btn{appearance:none;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:14.5px;border-radius:100px;padding:12px 24px;display:inline-flex;align-items:center;gap:8px;transition:transform .12s,opacity .12s;text-decoration:none;}
+.btn:active{transform:scale(0.98);}
+.btn-primary{background:var(--navy);color:#fff;width:100%;justify-content:center;margin-top:2px;}
+.btn-primary:disabled{opacity:.55;cursor:default;}
+.btn-secondary{background:var(--navy);color:#fff;padding:8px 16px;font-size:12.5px;}
+.btn-whatsapp{background:#1A7A4A;color:#fff;width:100%;justify-content:center;margin-bottom:12px;}
+.checkbox-row{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--ink);cursor:pointer;line-height:1.45;}
+.checkbox-row input{width:auto;margin-top:3px;flex:none;}
+.privacy-note{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5;}
+.footer{margin-top:clamp(26px,5vw,44px);display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;padding-top:18px;border-top:1px solid var(--border);}
+.footer-brand{font-style:italic;font-size:12.5px;color:var(--ink-soft);}
+.footer-contact{display:flex;flex-wrap:wrap;gap:15px;align-items:center;font-size:12.5px;}
+.footer-contact a{color:var(--navy);text-decoration:none;border-bottom:1px solid var(--cyan);}
+.footer-contact a:hover{border-color:var(--navy);}
+.thanks{text-align:center;padding:clamp(36px,7vw,64px) clamp(20px,5vw,36px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+.check{width:52px;height:52px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:22px;}
+.thanks h2{font-weight:800;font-size:22px;margin:0 0 10px;color:var(--navy);}
+.thanks p{color:var(--ink-soft);max-width:460px;margin:0 auto 8px;font-size:13.5px;}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+window.__LOGO_DATA_URI__ = ''; // preenchido no deploy (logo embutido como asset separado — ver assets/logo-organize.png)
+var CONFIG = {
+  formId: 'finance',
+  registerUrl: 'https://organize-inscricoes.administrativo-2a8.workers.dev/register',
+  logoSrc: 'assets/logo-organize-finance.png',
+  logoAlt: 'Organize Finance',
+  slateHero: true,
+  courseTitle: 'Imersão Organize Finance',
+  heroLead: 'Imersão prática para você organizar as finanças da sua empresa: entender seus números, estruturar controles financeiros e tomar decisões com mais segurança.',
+  infoRows: [
+    {label:'Formato', value:'100% on-line, pelo Google Meet'},
+    {label:'Data e horário', value:'12/09/2026, às 13h (horário de Brasília)'},
+    {label:'Investimento', value:'R$ 57,90 (somente inscrição) ou R$ 97,90 (inscrição completa)'},
+    {label:'Vagas', value:'Sem limite de vagas'},
+    {label:'Prazo de inscrição', value:'Até 11/09/2026, às 00h'}
+  ],
+  hasPlanChoice: true,
+  planOptions: [
+    {value:'basico', label:'Somente inscrição', price:'R$ 57,90', desc:'Acesso ao encontro ao vivo pelo Google Meet'},
+    {value:'completo', label:'Inscrição completa', price:'R$ 97,90', desc:'Acesso ao vivo + apostila + planilha + gravação'}
+  ],
+  pixKey: 'administrativo@organizementoring.com',
+  contactPhoneDigits: '5569993518755',
+  contactPhoneDisplay: '(69) 9 9351-8755',
+  contactEmail: 'administrativo@organizementoring.com'
+};
+
+function esc(s){ s=(s===undefined||s===null)?'':String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function fmtWhatsApp(v){ var d=String(v||'').replace(/\D/g,'').slice(0,11); if(d.length<=2)return d; if(d.length<=7)return '('+d.slice(0,2)+') '+d.slice(2); return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7); }
+function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function planPrice(v){ var list=CONFIG.planOptions||[]; for(var i=0;i<list.length;i++){ if(list[i].value===v) return list[i].price; } return ''; }
+function planLabel(v){ var list=CONFIG.planOptions||[]; for(var i=0;i<list.length;i++){ if(list[i].value===v) return list[i].label+' — '+list[i].price; } return v||'—'; }
+
+var VIEW = {mode:'form', locked:false, banner:null, values:{}, errors:{}};
+
+function collect(form){
+  var v = {};
+  ['nome','whatsapp','email','empresa','cargo','colaboradores','faturamento','observacao'].forEach(function(k){
+    var el = form.elements[k];
+    v[k] = el ? String(el.value||'').trim() : '';
+  });
+  if (CONFIG.hasPlanChoice) {
+    var pl = form.querySelector('input[name="plano"]:checked');
+    v.plano = pl ? pl.value : '';
+  }
+  var cc = form.elements['comprovante_confirmado'];
+  v.comprovante_confirmado = !!(cc && cc.checked);
+  return v;
+}
+function validate(v){
+  var e = {};
+  if(!v.nome) e.nome = 'Informe seu nome completo.';
+  var digits = String(v.whatsapp||'').replace(/\D/g,'');
+  if(digits.length<10) e.whatsapp = 'Informe um WhatsApp válido, com DDD.';
+  if(!v.email || !validEmail(v.email)) e.email = 'Informe um e-mail válido.';
+  if(!v.empresa) e.empresa = 'Informe o nome da empresa.';
+  if(!v.cargo) e.cargo = 'Informe seu cargo ou função.';
+  if(!v.colaboradores) e.colaboradores = 'Selecione uma opção.';
+  if(!v.faturamento) e.faturamento = 'Selecione uma opção.';
+  if(CONFIG.hasPlanChoice && !v.plano) e.plano = 'Escolha uma opção de inscrição.';
+  if(!v.comprovante_confirmado) e.comprovante_confirmado = 'Confirme que realizou o pagamento via Pix e enviará o comprovante pelo WhatsApp.';
+  return e;
+}
+
+function renderTicket(){
+  var rows = (CONFIG.infoRows||[]).map(function(r){
+    return '<div class="info-row"><div class="k">'+esc(r.label)+'</div><div class="v">'+esc(r.value)+'</div></div>';
+  }).join('');
+  return '<div class="ticket'+(CONFIG.slateHero?' slate-hero':'')+'">' +
+    '<div class="logo-chip"><img src="'+esc(CONFIG.logoSrc)+'" alt="'+esc(CONFIG.logoAlt||'Organize Empresas')+'"></div>' +
+    '<h1>'+esc(CONFIG.courseTitle)+'</h1>' +
+    '<p class="tagline">Organizar para crescer, estruturar para prosperar.</p>' +
+    '<p class="lead">'+esc(CONFIG.heroLead)+'</p>' +
+    '<div class="info-list">'+rows+'</div>' +
+  '</div>';
+}
+
+function renderPixSection(n, v, errs, locked){
+  var amount = CONFIG.hasPlanChoice ? (planPrice(v.plano) || 'Selecione uma opção acima') : (CONFIG.pixAmountStatic||'');
+  var waMsg = 'Olá! Me chamo ' + (v.nome||'[seu nome]') + ' e estou enviando o comprovante do pagamento via Pix da minha inscrição em ' + CONFIG.courseTitle + '.';
+  var waHref = 'https://wa.me/' + CONFIG.contactPhoneDigits + '?text=' + encodeURIComponent(waMsg);
+  return '<div class="field'+(errs.comprovante_confirmado?' has-error':'')+'">' +
+    '<label class="field-label"><span class="num">0'+n+'</span>Pagamento via Pix</label>' +
+    '<div class="pix-box">' +
+      '<div class="pix-box-row">' +
+        '<div><div class="pix-box-label">Chave Pix (e-mail)</div><div class="pix-box-value" id="pixKeyValue">'+esc(CONFIG.pixKey)+'</div></div>' +
+        '<button type="button" class="btn btn-secondary" id="pixCopyBtn">Copiar chave<span class="copied-flash" id="pixCopiedFlash" style="display:none;">Copiado!</span></button>' +
+      '</div>' +
+      '<div class="pix-box-amount">Valor a pagar: <strong id="pixAmountValue">'+esc(amount)+'</strong></div>' +
+    '</div>' +
+    '<a class="btn btn-whatsapp" id="waComprovanteBtn" href="'+esc(waHref)+'" target="_blank" rel="noopener">Enviar comprovante pelo WhatsApp</a>' +
+    '<label class="checkbox-row">' +
+      '<input type="checkbox" id="f_comprovante_confirmado" name="comprovante_confirmado"'+(v.comprovante_confirmado?' checked':'')+' '+(locked?'disabled':'')+'>' +
+      '<span>Já realizei o pagamento via Pix e vou enviar (ou já enviei) o comprovante pelo WhatsApp acima. Entendo que minha inscrição fica sujeita à confirmação após a identificação do pagamento.</span>' +
+    '</label>' +
+    '<div class="err-msg" style="display:'+(errs.comprovante_confirmado?'block':'none')+';">'+esc(errs.comprovante_confirmado||'')+'</div>' +
+  '</div>';
+}
+
+function renderFormPanel(){
+  var v = VIEW.values || {};
+  var errs = VIEW.errors || {};
+  var locked = VIEW.locked;
+  function fv(k){ return esc(v[k]||''); }
+  function fld(n,key,label,type,ph){
+    return '<div class="field'+(errs[key]?' has-error':'')+'">' +
+      '<label class="field-label" for="f_'+key+'"><span class="num">0'+n+'</span>'+label+'</label>' +
+      '<input type="'+type+'" id="f_'+key+'" name="'+key+'" placeholder="'+esc(ph)+'" value="'+fv(key)+'" '+(locked?'disabled':'')+'>' +
+      '<div class="err-msg">'+esc(errs[key]||'')+'</div>' +
+    '</div>';
+  }
+  function sel(n,key,label,options){
+    var opts = '<option value="">Selecione…</option>' + options.map(function(o){
+      return '<option value="'+esc(o)+'"'+(v[key]===o?' selected':'')+'>'+esc(o)+'</option>';
+    }).join('');
+    return '<div class="field'+(errs[key]?' has-error':'')+'">' +
+      '<label class="field-label" for="f_'+key+'"><span class="num">0'+n+'</span>'+label+'</label>' +
+      '<select id="f_'+key+'" name="'+key+'" '+(locked?'disabled':'')+'>'+opts+'</select>' +
+      '<div class="err-msg">'+esc(errs[key]||'')+'</div>' +
+    '</div>';
+  }
+  var n = 0;
+  var html = '';
+  html += fld(++n,'nome','Nome completo','text','Seu nome completo');
+  html += fld(++n,'whatsapp','WhatsApp','tel','(69) 90000-0000');
+  html += fld(++n,'email','E-mail','email','voce@empresa.com.br');
+  html += fld(++n,'empresa','Empresa','text','Nome da empresa');
+  html += fld(++n,'cargo','Cargo / função','text','Ex.: Diretor(a), Gerente, Sócio(a)');
+  html += sel(++n,'colaboradores','Número de colaboradores',['Só eu','2 a 5','6 a 10','11 a 20','Mais de 20']);
+  html += sel(++n,'faturamento','Faturamento médio mensal',['Até R$ 10 mil','R$ 10 mil a R$ 30 mil','R$ 30 mil a R$ 60 mil','R$ 60 mil a R$ 100 mil','Acima de R$ 100 mil']);
+  if (CONFIG.hasPlanChoice) {
+    n++;
+    var cards = (CONFIG.planOptions||[]).map(function(p){
+      var checked = v.plano===p.value;
+      return '<label class="plan-card'+(checked?' is-selected':'')+'"><input type="radio" name="plano" value="'+esc(p.value)+'"'+(checked?' checked':'')+' '+(locked?'disabled':'')+'>' +
+        '<div class="price">'+esc(p.price)+'</div><div class="label">'+esc(p.label)+'</div><div class="desc">'+esc(p.desc)+'</div></label>';
+    }).join('');
+    html += '<div class="field'+(errs.plano?' has-error':'')+'">' +
+      '<label class="field-label"><span class="num">0'+n+'</span>Qual opção de inscrição você deseja?</label>' +
+      '<div class="plan-options">'+cards+'</div>' +
+      '<div class="err-msg">'+esc(errs.plano||'')+'</div>' +
+    '</div>';
+  }
+  n++;
+  html += renderPixSection(n, v, errs, locked);
+  n++;
+  html += '<div class="field">' +
+    '<label class="field-label" for="f_observacao"><span class="num">0'+n+'</span>Outro ponto em que podemos ajudar<span class="opt">opcional</span></label>' +
+    '<textarea id="f_observacao" name="observacao" placeholder="Conte rapidamente, se quiser." '+(locked?'disabled':'')+'>'+fv('observacao')+'</textarea>' +
+  '</div>';
+  html += '<button type="submit" class="btn btn-primary" '+(locked?'disabled':'')+'>'+(locked?'Enviando…':'Registrar inscrição')+'</button>';
+  html += '<p class="privacy-note">Seus dados são usados apenas pela equipe da Organize Empresas para tratar esta inscrição.</p>';
+  return '<div class="panel"><h2>Formulário de inscrição</h2><p class="sub">Preencha os dados, pague via Pix e confirme o envio do comprovante — nossa equipe valida o pagamento e confirma sua vaga.</p><form id="regform" novalidate>'+html+'</form></div>';
+}
+
+function renderThanks(entry){
+  return '<div class="topbar"><div class="logo-chip"><img src="assets/logo-organize.png" alt="Organize Empresas"></div></div>' +
+    '<div class="thanks"><div class="check">&#10003;</div><h2>Inscrição confirmada</h2>' +
+    '<p>'+esc(entry.nome)+', sua inscrição para <strong>'+esc(CONFIG.courseTitle)+'</strong> foi registrada.</p>' +
+    '<p>Recebemos a confirmação do seu pagamento via Pix. Nossa equipe vai validar o comprovante enviado pelo WhatsApp e confirmar sua vaga em breve.</p>' +
+    '</div>' +
+    '<div class="footer"><div class="footer-brand">Organizar para crescer, estruturar para prosperar.</div>' +
+    '<div class="footer-contact"><a href="https://wa.me/'+CONFIG.contactPhoneDigits+'" target="_blank" rel="noopener">WhatsApp '+esc(CONFIG.contactPhoneDisplay)+'</a><a href="mailto:'+CONFIG.contactEmail+'">'+esc(CONFIG.contactEmail)+'</a></div></div>';
+}
+
+function render(){
+  var app = document.getElementById('app');
+  var html;
+  if (VIEW.mode === 'thanks') {
+    html = '<div class="wrap">'+renderThanks(VIEW.entry)+'</div>';
+  } else {
+    html = '<div class="wrap">' +
+      '<div class="topbar"><div class="logo-chip"><img src="assets/logo-organize.png" alt="Organize Empresas"></div></div>' +
+      (VIEW.banner ? '<div class="'+(VIEW.banner.type==='error'?'err-box':'info-box')+'">'+esc(VIEW.banner.text)+'</div>' : '') +
+      '<div class="grid">'+renderTicket()+renderFormPanel()+'</div>' +
+      '<div class="footer"><div class="footer-brand">Organizar para crescer, estruturar para prosperar.</div><div class="footer-contact">' +
+      '<a href="https://wa.me/'+CONFIG.contactPhoneDigits+'" target="_blank" rel="noopener">WhatsApp '+esc(CONFIG.contactPhoneDisplay)+'</a>' +
+      '<a href="mailto:'+CONFIG.contactEmail+'">'+esc(CONFIG.contactEmail)+'</a>' +
+      '</div></div>' +
+    '</div>';
+  }
+  app.innerHTML = html;
+  bind();
+}
+
+function updatePixAmount(planValue){
+  var amountEl = document.getElementById('pixAmountValue');
+  if (!amountEl) return;
+  amountEl.textContent = planPrice(planValue) || 'Selecione uma opção acima';
+}
+function updateWaLink(){
+  var waBtn = document.getElementById('waComprovanteBtn');
+  if (!waBtn) return;
+  var nomeEl = document.getElementById('f_nome');
+  var nome = (nomeEl && nomeEl.value) ? nomeEl.value : '[seu nome]';
+  var msg = 'Olá! Me chamo ' + nome + ' e estou enviando o comprovante do pagamento via Pix da minha inscrição em ' + CONFIG.courseTitle + '.';
+  waBtn.setAttribute('href', 'https://wa.me/' + CONFIG.contactPhoneDigits + '?text=' + encodeURIComponent(msg));
+}
+function fallbackCopy(text){
+  try{
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }catch(_e){}
+}
+
+function bind(){
+  var form = document.getElementById('regform');
+  if (form) form.addEventListener('submit', submitHandler);
+  var wa = document.getElementById('f_whatsapp');
+  if (wa) wa.addEventListener('input', function(){ wa.value = fmtWhatsApp(wa.value); });
+  var nomeEl = document.getElementById('f_nome');
+  if (nomeEl) nomeEl.addEventListener('input', updateWaLink);
+  var pcards = document.querySelectorAll('.plan-card input[type=radio]');
+  for (var i=0;i<pcards.length;i++){
+    pcards[i].addEventListener('change', function(ev){
+      var all = document.querySelectorAll('.plan-card');
+      for (var j=0;j<all.length;j++){ all[j].classList.remove('is-selected'); }
+      ev.target.closest('.plan-card').classList.add('is-selected');
+      updatePixAmount(ev.target.value);
+    });
+  }
+  var copyBtn = document.getElementById('pixCopyBtn');
+  if (copyBtn) copyBtn.addEventListener('click', function(){
+    var key = CONFIG.pixKey;
+    function flash(){
+      var f = document.getElementById('pixCopiedFlash');
+      if (f){ f.style.display='inline'; setTimeout(function(){ f.style.display='none'; }, 2000); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(key).then(flash).catch(function(){ fallbackCopy(key); flash(); });
+    } else {
+      fallbackCopy(key); flash();
+    }
+  });
+}
+
+function submitHandler(e){
+  e.preventDefault();
+  if (VIEW.locked) return;
+  var form = e.target;
+  var v = collect(form);
+  var errs = validate(v);
+  VIEW.values = v;
+  VIEW.errors = errs;
+  if (Object.keys(errs).length){ render(); return; }
+  VIEW.locked = true;
+  VIEW.banner = {type:'info', text:'Enviando sua inscrição…'};
+  render();
+
+  var entry = {nome:v.nome, whatsapp:fmtWhatsApp(v.whatsapp), email:v.email, empresa:v.empresa, cargo:v.cargo, colaboradores:v.colaboradores, faturamento:v.faturamento, comprovante_confirmado:v.comprovante_confirmado, observacao:v.observacao};
+  if (CONFIG.hasPlanChoice) entry.plano = v.plano;
+
+  fetch(CONFIG.registerUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ formId: CONFIG.formId, entry: entry })
+  }).then(function(r){ return r.json().then(function(d){ return {ok:r.ok, data:d}; }); })
+    .then(function(res){
+      if (!res.ok || !res.data.ok) throw new Error(res.data.error || 'Falha ao registrar.');
+      VIEW = {mode:'thanks', entry: entry};
+      render();
+    })
+    .catch(function(err){
+      VIEW.locked = false;
+      VIEW.banner = {type:'error', text: 'Não foi possível registrar agora. Toque em "Registrar inscrição" para tentar de novo.'};
+      render();
+    });
+}
+
+render();
+</script>
+</body>
+</html>
