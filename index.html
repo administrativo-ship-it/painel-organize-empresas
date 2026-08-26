@@ -8294,10 +8294,12 @@ async function inscLoadInscritos(formId, box) {
       return;
     }
     var hasPlano = list.some(function(e){ return e.plano; });
+    var hasFormaPagamento = list.some(function(e){ return e.forma_pagamento; });
     var rows = list.slice().reverse().map(function(e) {
       var ts = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR') + ' ' + new Date(e.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '—';
       var comprovante = (e.comprovante_confirmado === true || e.comprovante_confirmado === 'true') ? '✓ Confirmado' : '—';
       var plano = e.plano === 'completo' ? 'Inscrição completa' : (e.plano === 'basico' ? 'Somente inscrição' : (e.plano || ''));
+      var formaPagamento = e.forma_pagamento === 'cartao' ? 'Cartão de crédito' : (e.forma_pagamento === 'pix' ? 'Pix' : (e.forma_pagamento || ''));
       return '<tr>' +
         '<td>' + esc(ts) + '</td>' +
         '<td>' + esc(e.nome || '—') + '</td>' +
@@ -8308,13 +8310,15 @@ async function inscLoadInscritos(formId, box) {
         '<td>' + esc(e.colaboradores || '—') + '</td>' +
         '<td>' + esc(e.faturamento || '—') + '</td>' +
         (hasPlano ? '<td>' + esc(plano || '—') + '</td>' : '') +
+        (hasFormaPagamento ? '<td>' + esc(formaPagamento || '—') + '</td>' : '') +
         '<td>' + comprovante + '</td>' +
         '<td>' + esc(e.observacao || '—') + '</td>' +
       '</tr>';
     }).join('');
     var planoHeader = hasPlano ? '<th>Plano</th>' : '';
+    var formaPagamentoHeader = hasFormaPagamento ? '<th>Forma de Pagamento</th>' : '';
     box.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">' + list.length + ' inscrição(ões) recebida(s)</div>' +
-      '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Empresa</th><th>Cargo</th><th>Colaboradores</th><th>Faturamento</th>' + planoHeader + '<th>Comprovante</th><th>Observação</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Empresa</th><th>Cargo</th><th>Colaboradores</th><th>Faturamento</th>' + planoHeader + formaPagamentoHeader + '<th>Comprovante</th><th>Observação</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   } catch (e) {
     box.innerHTML = '<div style="color:var(--red);font-size:12.5px;padding:8px 0;">Erro ao carregar inscrições: ' + esc(e.message) + '</div>';
   }
