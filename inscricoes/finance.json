@@ -96,5 +96,19 @@
     "comprovante_confirmado": "true",
     "id": "rmtbpjzcieyq79q",
     "ts": "2026-08-27T15:59:08.466Z"
+  },
+  {
+    "nome": "Marcelly Teixeira de Oliveira",
+    "whatsapp": "(69) 99394-0272",
+    "email": "marcelly.jrengenharia@gmail.com",
+    "empresa": "JR CONSTRUCOES E IMOBILIARIA LTDA",
+    "cargo": "Assistente Administrativo",
+    "colaboradores": "11 a 20",
+    "faturamento": "Acima de R$ 100 mil",
+    "plano": "basico",
+    "observacao": "",
+    "comprovante_confirmado": "true",
+    "id": "rmtbupzfdlw627x",
+    "ts": "2026-08-27T18:23:46.585Z"
   }
 ]
