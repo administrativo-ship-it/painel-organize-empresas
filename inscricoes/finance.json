@@ -68,5 +68,19 @@
     "comprovante_confirmado": "true",
     "id": "rmtbop675v8ez3o",
     "ts": "2026-08-27T15:35:11.009Z"
+  },
+  {
+    "nome": "Thais Caroline Oliveira da Silva",
+    "whatsapp": "(69) 99315-6139",
+    "email": "thais.jrengenharia@gmail.com",
+    "empresa": "Jr construções e Imobiliária LTDA",
+    "cargo": "Financeiro",
+    "colaboradores": "11 a 20",
+    "faturamento": "Acima de R$ 100 mil",
+    "plano": "basico",
+    "observacao": "",
+    "comprovante_confirmado": "true",
+    "id": "rmtbp6o8zd83agc",
+    "ts": "2026-08-27T15:48:47.555Z"
   }
 ]
