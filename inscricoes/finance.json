@@ -82,5 +82,19 @@
     "comprovante_confirmado": "true",
     "id": "rmtbp6o8zd83agc",
     "ts": "2026-08-27T15:48:47.555Z"
+  },
+  {
+    "nome": "VINICIUS DOS ANJOS ALMEIDA",
+    "whatsapp": "(69) 99315-3084",
+    "email": "viniciusbuyudosanjos@gmail.com",
+    "empresa": "JR Construções e imobiliária",
+    "cargo": "Assistente Financeiro",
+    "colaboradores": "11 a 20",
+    "faturamento": "Acima de R$ 100 mil",
+    "plano": "basico",
+    "observacao": "",
+    "comprovante_confirmado": "true",
+    "id": "rmtbpjzcieyq79q",
+    "ts": "2026-08-27T15:59:08.466Z"
   }
 ]
