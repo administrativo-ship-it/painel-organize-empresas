@@ -40,5 +40,19 @@
     "comprovante_confirmado": "true",
     "id": "rmtatlu522lvzup",
     "ts": "2026-08-27T01:04:47.318Z"
+  },
+  {
+    "nome": "ALINE NOGUEIRA SILVA",
+    "whatsapp": "(69) 99999-5824",
+    "email": "nogueiraalines@gmail.com",
+    "empresa": "JR CONSTRUÇÕES",
+    "cargo": "Gerente Administrativo",
+    "colaboradores": "11 a 20",
+    "faturamento": "Acima de R$ 100 mil",
+    "plano": "basico",
+    "observacao": "",
+    "comprovante_confirmado": "true",
+    "id": "rmtbomunetwqkld",
+    "ts": "2026-08-27T15:33:22.730Z"
   }
 ]
