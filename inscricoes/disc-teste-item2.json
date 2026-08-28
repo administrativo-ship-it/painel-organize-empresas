@@ -1,0 +1,17 @@
+[
+  {
+    "nome": "Teste Item2 APAGAR",
+    "whatsapp": "11999999999",
+    "email": "teste@teste.com",
+    "empresa": "Empresa Teste",
+    "cargo": "Cargo Teste",
+    "colaboradores": "5",
+    "faturamento": "100mil",
+    "observacao": "registro de teste - apagar",
+    "comprovante_confirmado": "true",
+    "forma_pagamento": "pix",
+    "valor": "R$ 497,00",
+    "id": "rmtcznzasud48dk",
+    "ts": "2026-08-28T13:29:57.364Z"
+  }
+]
