@@ -8433,6 +8433,25 @@ function inscToggleInscritos(formId, btn) {
   inscLoadInscritos(formId, box);
 }
 
+var _inscCache = {}; // { formId: [entries...] } - usado pelo modal de detalhes
+
+function inscLabelFor(key) {
+  var labels = {
+    nome:'Nome', whatsapp:'WhatsApp', email:'E-mail', empresa:'Empresa', cargo:'Cargo',
+    colaboradores:'Colaboradores', faturamento:'Faturamento', plano:'Plano',
+    forma_pagamento:'Forma de pagamento', valor:'Valor da inscrição',
+    comprovante_confirmado:'Comprovante', observacao:'Observação'
+  };
+  return labels[key] || key;
+}
+function inscFormatValue(key, e) {
+  if (key === 'plano') return e.plano === 'completo' ? 'Inscrição completa' : (e.plano === 'basico' ? 'Somente inscrição' : (e.plano || '-'));
+  if (key === 'forma_pagamento') return e.forma_pagamento === 'cartao' ? 'Cartão de crédito' : (e.forma_pagamento === 'pix' ? 'Pix' : (e.forma_pagamento || '-'));
+  if (key === 'comprovante_confirmado') return (e.comprovante_confirmado === true || e.comprovante_confirmado === 'true') ? '✓ Confirmado' : 'Não confirmado';
+  if (key === 'whatsapp') return e.whatsapp ? ('<a href="https://wa.me/55' + esc((e.whatsapp||'').replace(/\D/g,'')) + '" target="_blank" rel="noopener" style="color:var(--navy)">' + esc(e.whatsapp) + '</a>') : '-';
+  return esc(e[key] || '-');
+}
+
 async function inscLoadInscritos(formId, box) {
   box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Carregando inscrições...</div>';
   try {
@@ -8440,39 +8459,47 @@ async function inscLoadInscritos(formId, box) {
     var res = await r.json().catch(function() { return {}; });
     if (!r.ok || !res.ok) throw new Error(res.error || ('HTTP ' + r.status));
     var list = res.list || [];
+    _inscCache[formId] = list;
     if (!Array.isArray(list) || !list.length) {
       box.innerHTML = '<div style="color:var(--muted);font-size:12.5px;padding:8px 0;">Nenhuma inscrição recebida ainda.</div>';
       return;
     }
-    var hasPlano = list.some(function(e){ return e.plano; });
-    var hasFormaPagamento = list.some(function(e){ return e.forma_pagamento; });
     var rows = list.slice().reverse().map(function(e) {
       var ts = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR') + ' ' + new Date(e.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '-';
-      var comprovante = (e.comprovante_confirmado === true || e.comprovante_confirmado === 'true') ? '✓ Confirmado' : '-';
-      var plano = e.plano === 'completo' ? 'Inscrição completa' : (e.plano === 'basico' ? 'Somente inscrição' : (e.plano || ''));
-      var formaPagamento = e.forma_pagamento === 'cartao' ? 'Cartão de crédito' : (e.forma_pagamento === 'pix' ? 'Pix' : (e.forma_pagamento || ''));
-      return '<tr>' +
-        '<td>' + esc(ts) + '</td>' +
-        '<td>' + esc(e.nome || '-') + '</td>' +
-        '<td><a href="https://wa.me/55' + esc((e.whatsapp||'').replace(/\D/g,'')) + '" target="_blank" rel="noopener" style="color:var(--navy)">' + esc(e.whatsapp || '-') + '</a></td>' +
-        '<td>' + esc(e.email || '-') + '</td>' +
-        '<td>' + esc(e.empresa || '-') + '</td>' +
-        '<td>' + esc(e.cargo || '-') + '</td>' +
-        '<td>' + esc(e.colaboradores || '-') + '</td>' +
-        '<td>' + esc(e.faturamento || '-') + '</td>' +
-        (hasPlano ? '<td>' + esc(plano || '-') + '</td>' : '') +
-        (hasFormaPagamento ? '<td>' + esc(formaPagamento || '-') + '</td>' : '') +
-        '<td>' + comprovante + '</td>' +
-        '<td>' + esc(e.observacao || '-') + '</td>' +
+      var comprovanteOk = (e.comprovante_confirmado === true || e.comprovante_confirmado === 'true');
+      return '<tr style="cursor:pointer;" onclick="openInscricaoDetail(\''+esc(formId)+'\',\''+esc(e.id||'')+'\')" title="Clique para ver todos os dados">' +
+        '<td style="white-space:nowrap;">' + esc(ts) + '</td>' +
+        '<td style="font-weight:600;color:var(--navy);">' + esc(e.nome || '-') + '</td>' +
+        '<td>' + (comprovanteOk ? '<span style="color:var(--green);">✓ Comprovante</span>' : '<span style="color:var(--muted);">Pendente</span>') + '</td>' +
+        '<td style="color:var(--muted);font-size:12px;">Ver detalhes →</td>' +
       '</tr>';
     }).join('');
-    var planoHeader = hasPlano ? '<th>Plano</th>' : '';
-    var formaPagamentoHeader = hasFormaPagamento ? '<th>Forma de Pagamento</th>' : '';
-    box.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">' + list.length + ' inscrição(ões) recebida(s)</div>' +
-      '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Empresa</th><th>Cargo</th><th>Colaboradores</th><th>Faturamento</th>' + planoHeader + formaPagamentoHeader + '<th>Comprovante</th><th>Observação</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    box.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">' + list.length + ' inscrição(ões) recebida(s) - clique numa linha para ver todos os dados</div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Nome</th><th>Comprovante</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   } catch (e) {
     box.innerHTML = '<div style="color:var(--red);font-size:12.5px;padding:8px 0;">Erro ao carregar inscrições: ' + esc(e.message) + '</div>';
   }
+}
+
+function openInscricaoDetail(formId, entryId) {
+  var list = _inscCache[formId] || [];
+  var e = list.find(function(x){ return String(x.id) === String(entryId); });
+  if (!e) return;
+  var order = ['nome','whatsapp','email','empresa','cargo','colaboradores','faturamento','plano','forma_pagamento','valor','comprovante_confirmado','observacao'];
+  var ts = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR') + ' ' + new Date(e.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '-';
+  var rowsHtml = order.filter(function(k){ return e[k] !== undefined && e[k] !== ''; }).map(function(k){
+    return '<div class="modal-field"><label>' + esc(inscLabelFor(k)) + '</label><div style="font-size:13.5px;">' + inscFormatValue(k, e) + '</div></div>';
+  }).join('');
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'insc-detail-modal';
+  overlay.innerHTML = '<div class="modal-box">' +
+    '<h3>' + esc(e.nome || 'Inscrição') + '</h3>' +
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Inscrito em ' + esc(ts) + '</div>' +
+    rowsHtml +
+    '<div class="modal-actions"><button class="btn-cancel" onclick="document.getElementById(\'insc-detail-modal\').remove()">Fechar</button></div>' +
+  '</div>';
+  document.body.appendChild(overlay);
 }
 function esc(s) { s = (s===undefined||s===null) ? '' : String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
