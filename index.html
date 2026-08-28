@@ -534,6 +534,10 @@ tbody tr:hover{background:var(--off);}
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
     Links de Inscrição
   </div>
+  <div class="nav-item" onclick="showPage('formularios',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17h6m-6-4h6m-7 8h8a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-3.414-3.414A1 1 0 0013.586 3H8a2 2 0 00-2 2v14a2 2 0 002 2z"/><path d="M13 3v4a1 1 0 001 1h4"/></svg>
+    Formulários
+  </div>
   <div class="sidebar-footer">
     <button class="cfg-btn" onclick="openLogoConfig()">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -1030,8 +1034,25 @@ tbody tr:hover{background:var(--off);}
           <div class="insc-flow-step"><span>5</span>Envia comprovante no WhatsApp</div>
           <div class="insc-flow-step"><span>6</span>Confirma a inscrição</div>
         </div>
-        <div class="portal-hint" style="margin-top:12px;">A inscrição fica sujeita à confirmação da equipe após identificação do pagamento. Para ver os inscritos, abra o link e clique em "Acesso da equipe" no rodapé, usando o código de acesso de cada formulário.</div>
+        <div class="portal-hint" style="margin-top:12px;">A inscrição fica sujeita à confirmação da equipe após identificação do pagamento. Para ver os inscritos, clique em "Ver inscritos" em cada card acima.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- FORMULÁRIOS (Google Forms usados na mentoria) -->
+  <div class="page" id="page-formularios">
+    <div class="portal-shell">
+      <div class="portal-header">
+        <div>
+          <h2 class="portal-h2">Formulários</h2>
+          <p class="portal-sub">Formulários do Google usados no processo de mentoria (diagnóstico, planejamento, mapeamento etc.), agrupados por serviço. Detectados automaticamente - qualquer formulário novo aparece aqui sem precisar cadastrar.</p>
+        </div>
+        <button class="sync-btn" onclick="renderFormulariosPage(true)" title="Buscar formulários novamente no Google Drive">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Atualizar
+        </button>
+      </div>
+      <div id="formularios-list" class="portal-list-wrap"></div>
     </div>
   </div>
 
@@ -8329,7 +8350,7 @@ function rptTrello() {
     boardsHtml +
     rptFooter();
 }
-const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Quadros do Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', rgc:'Relatório Gerencial Comercial', curriculos:'Análise Inteligente de Currículos', portal:'Portal do Cliente', inscricoes:'Links de Inscrição', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
+const pageTitles = { overview:'Visão Geral', projects:'Projetos (FlowUp)', tasks:'Tarefas', trello:'Quadros do Trello', members:'Responsáveis', dashboard:'Dashboard Executivo', alerts:'Pontos de Atenção', reports:'Emitir Relatórios', rgc:'Relatório Gerencial Comercial', curriculos:'Análise Inteligente de Currículos', portal:'Portal do Cliente', inscricoes:'Links de Inscrição', formularios:'Formulários', mensal:'Relatório Mensal de Resultados', encerramento:'Relatório de Encerramento de Módulo' };
 function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -8337,12 +8358,13 @@ function showPage(name, el) {
   if (el) el.classList.add('active');
   document.getElementById('page-title').textContent = pageTitles[name]||name;
   var fb = document.querySelector('.filter-bar');
-  if (fb) fb.style.display = (name === 'portal' || name === 'reports' || name === 'curriculos' || name === 'inscricoes') ? 'none' : '';
+  if (fb) fb.style.display = (name === 'portal' || name === 'reports' || name === 'curriculos' || name === 'inscricoes' || name === 'formularios') ? 'none' : '';
   var tbr = document.querySelector('.topbar-right');
-  if (tbr) tbr.style.display = (name === 'portal' || name === 'inscricoes') ? 'none' : '';
+  if (tbr) tbr.style.display = (name === 'portal' || name === 'inscricoes' || name === 'formularios') ? 'none' : '';
   if (name === 'reports') renderReports();
   if (name === 'portal') renderPortalPage();
   if (name === 'inscricoes') renderInscricoesPage();
+  if (name === 'formularios') renderFormulariosPage();
 }
 
 // ═══════════════ LINKS DE INSCRIÇÃO ═══════════════
@@ -8453,6 +8475,106 @@ async function inscLoadInscritos(formId, box) {
   }
 }
 function esc(s) { s = (s===undefined||s===null) ? '' : String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ═══════════════ FORMULÁRIOS DO GOOGLE (usados na mentoria) ═══════════════
+// Detecta automaticamente os Google Forms da conta conectada e organiza por serviço.
+// Não precisa cadastrar nada manualmente - formulário novo criado no Google Forms
+// aparece aqui sozinho na próxima vez que a aba for aberta (ou em "Atualizar").
+var FORM_SERVICOS_ORDEM = ['ORGANIZE MENTORING','ORGANIZE MASTER','ORGANIZE MARKETING E VENDAS','ORGANIZE ESTRATÉGICO','ORGANIZE FINANCE','ORGANIZE EMPRESAS','OUTROS'];
+var FORM_SERVICO_LABELS = {
+  'ORGANIZE MENTORING': 'Organize Mentoring',
+  'ORGANIZE MASTER': 'Organize Master',
+  'ORGANIZE MARKETING E VENDAS': 'Organize Marketing e Vendas',
+  'ORGANIZE ESTRATÉGICO': 'Organize Estratégico',
+  'ORGANIZE FINANCE': 'Organize Finance',
+  'ORGANIZE EMPRESAS': 'Organize Empresas (interno)',
+  'OUTROS': 'Outros'
+};
+// Canal de Denúncia - Fazenda Maia: não é formulário do processo de mentoria, fica de fora por pedido explícito.
+var FORM_EXCLUIR_IDS = ['1I---BlTGgIuhOG-zTNft8hbpxWj6MOqvMI56Y6Nx8r4'];
+var _formulariosCache = null;
+
+function fpParseServico(titulo) {
+  var t = (titulo || '').trim();
+  var conhecidos = ['ORGANIZE MARKETING E VENDAS','ORGANIZE MASTER','ORGANIZE MENTORING','ORGANIZE ESTRATÉGICO','ORGANIZE FINANCE','ORGANIZE EMPRESAS'];
+  var partes = t.split(/\s+[-–]\s+/);
+  if (partes.length > 1) {
+    var ultima = partes[partes.length - 1].trim().toUpperCase();
+    for (var i = 0; i < conhecidos.length; i++) {
+      if (ultima.indexOf(conhecidos[i]) !== -1) return conhecidos[i];
+    }
+  }
+  var upper = t.toUpperCase();
+  for (var j = 0; j < conhecidos.length; j++) {
+    if (upper.indexOf(conhecidos[j]) !== -1) return conhecidos[j];
+  }
+  return 'OUTROS';
+}
+
+async function renderFormulariosPage(forceRefresh) {
+  var box = document.getElementById('formularios-list');
+  if (!box) return;
+  if (!_gToken) {
+    box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Conecte sua conta Google (mesmo login do painel) para listar os formulários automaticamente.</div>';
+    return;
+  }
+  if (_formulariosCache && !forceRefresh) { fpRenderList(_formulariosCache); return; }
+  box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Buscando formulários no Google Drive...</div>';
+  try {
+    var url = 'https://www.googleapis.com/drive/v3/files?' +
+      'q=' + encodeURIComponent("mimeType='application/vnd.google-apps.form' and trashed=false") +
+      '&fields=' + encodeURIComponent('files(id,name,modifiedTime)') +
+      '&pageSize=200&orderBy=name';
+    var r = await fetch(url, { headers: { Authorization: 'Bearer ' + _gToken } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var data = await r.json();
+    var files = (data.files || []).filter(function(f){ return FORM_EXCLUIR_IDS.indexOf(f.id) === -1; });
+    _formulariosCache = files;
+    fpRenderList(files);
+  } catch (e) {
+    box.innerHTML = '<div style="color:var(--red);font-size:13px;padding:20px 0;">Erro ao buscar formulários: ' + esc(e.message) + '</div>';
+  }
+}
+
+function fpRenderList(files) {
+  var box = document.getElementById('formularios-list');
+  if (!box) return;
+  if (!files.length) {
+    box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Nenhum formulário encontrado.</div>';
+    return;
+  }
+  var grupos = {};
+  files.forEach(function(f) {
+    var serv = fpParseServico(f.name);
+    if (!grupos[serv]) grupos[serv] = [];
+    grupos[serv].push(f);
+  });
+  var ordem = FORM_SERVICOS_ORDEM.filter(function(s){ return grupos[s]; })
+    .concat(Object.keys(grupos).filter(function(s){ return FORM_SERVICOS_ORDEM.indexOf(s) === -1; }));
+  box.innerHTML = ordem.map(function(serv) {
+    var lista = grupos[serv];
+    var itens = lista.map(function(f) {
+      var viewUrl = 'https://docs.google.com/forms/d/' + f.id + '/viewform';
+      var editUrl = 'https://docs.google.com/forms/d/' + f.id + '/edit';
+      var respUrl = 'https://docs.google.com/forms/d/' + f.id + '/edit#responses';
+      return '<div class="portal-list-item">' +
+        '<div class="portal-list-item-name">' +
+          '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 17h6m-6-4h6m-7 8h8a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-3.414-3.414A1 1 0 0013.586 3H8a2 2 0 00-2 2v14a2 2 0 002 2z"/><path d="M13 3v4a1 1 0 001 1h4"/></svg>' +
+          esc(f.name) +
+        '</div>' +
+        '<div class="portal-list-item-actions">' +
+          '<a href="' + viewUrl + '" target="_blank" class="portal-list-link">Responder ↗</a>' +
+          '<a href="' + editUrl + '" target="_blank" class="portal-list-link">Editar ↗</a>' +
+          '<a href="' + respUrl + '" target="_blank" class="portal-list-link">Ver respostas ↗</a>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    return '<div class="portal-card" style="margin-bottom:16px;">' +
+      '<div class="portal-card-h">' + esc(FORM_SERVICO_LABELS[serv] || serv) + '<span style="font-weight:400;color:var(--muted);font-size:12px;margin-left:8px;">' + lista.length + ' formulário(s)</span></div>' +
+      '<div style="margin-top:10px;">' + itens + '</div>' +
+    '</div>';
+  }).join('');
+}
 
 function inscCopyLink(idx) {
   var el = document.getElementById('insc-url-' + idx);
