@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.7.0/mammoth.browser.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 :root{--navy:#1B2B6B;--navy-light:#2A3F8F;--teal:#5CC8D4;--teal-dark:#3DBBCC;--slate:#41546A;--white:#fff;--off:#f4f6fb;--border:#e2e8f4;--txt:#0d1526;--txt2:#41546A;--muted:#8a9bb5;--green:#1a7a4a;--green-bg:#e8f5ee;--yellow:#b45309;--yellow-bg:#fef3cd;--red:#c0392b;--red-bg:#fdf0ee;--orange:#d35400;--orange-bg:#fef0e6;--trello:#0052CC;--trello-bg:#e8f0ff;--sh:0 4px 16px rgba(27,43,107,.08);--r:12px;--r2:8px;}
@@ -1084,6 +1085,10 @@ tbody tr:hover{background:var(--off);}
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
           Enc. de Módulo
         </button>
+        <button class="rpt-type-btn" id="rtype-encerramento-mentoria" onclick="selectReportType('encerramento-mentoria',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+          Enc. de Mentoria
+        </button>
       </div>
       <div class="rpt-actions-row">
         <div class="rpt-filters-row" id="rpt-filters"></div>
@@ -1236,7 +1241,7 @@ tbody tr:hover{background:var(--off);}
 
 <script>
 // ═══════════════ STATE ═══════════════
-const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIiwicEtleSI6IndYUHlGMmVTRG1oSnB6MDNrUXJwOUFsZkFQbnphQ0hfNVhVdGJRRm5CV1UiLCJmdVRva2VuIjoiS2twcDRjZU1OMUFOWHZYNTRYUUlpLU5JNkxGUTdhREVva3cyVW9pOE9tMTFyemh2ZGVQOVdCb2pqc3p4X19uU2Y5UDBmUnlCQkxMTEJZZ2xPU2t0dE8tQjV3YXVBR1ljRmV5QnFnMWRoSDhId3cxR0VHc3dRMjM4S3EtejhIS1BsLVVnbm1lYU9yNVd2ejZKdzhlS21vdTZuSks5U2VzeUhGVXVpZ2dMZ0NzdnB3QU1GazFHUS1qQ1FlY3Zha0lsSXdLdXNUbE15N3ZtVFRzOVB4WWJQSDdZaUFCQnM1ZDUwcU1BU20zLXhPQ1VyX3JKM0YtQmJmUUlfM3lJVmx5c0JUeUpMUSIsImZ1VG9rZW5FeHAiOjE4MTk0OTA0MTY4Nzl9'));}catch(e){return {};}})();
+const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIiwicEtleSI6IndYUHlGMmVTRG1oSnB6MDNrUXJwOUFsZkFQbnphQ0hfNVhVdGJRRm5CV1UiLCJmdVRva2VuIjoiYnFmLWduS2hZOHpiVTc1NnMwclRGQVZHWTVRRldGY2cxVHRtekRLZDJSeGQ1QktiNU1kT2pRQk1zblREWjhlNWx3c1NMSzItUXFjQThFOVlDS3pmSWhubDBKVzg4R2VyT3dHR2Q1RV9YM2trNXBZbWZBdVpTQXE0bDhtOEVnTGtwSUdvVXY4ZHlMazlUeWYwZWhTZEFydmJEempYS2xTMFlaTEJVUjZhTnZ3bkk4TkRHa1Rkb3BfeWlLS2JMeVJFTFNaTHRrOUVxWUF2cmUxb0JHTDdsMUQxMEJFd0VvWFFSTW9EWkZLYUY5VWhpUUdLbEd1dTFXazduakpRTlBubkt4aDVRQSIsImZ1VG9rZW5FeHAiOjE4MTk0ODkyMjAwNjd9'));}catch(e){return {};}})();
 const S = {
   projects: [], tasks: [], members: [], boards: [],
   trelloBoards: [], trelloCards: [], trelloLists: [],
@@ -4750,6 +4755,16 @@ function rptAnalysisSection(analise, proximos) {
   return html;
 }
 
+// Seção de comentário INSERIDO MANUALMENTE — nunca preenchida/sobrescrita pela IA.
+// Visualmente diferenciada (borda dourada + rótulo "manual") pra deixar claro que
+// não é uma análise gerada automaticamente.
+function rptManualCommentSection(texto) {
+  if (!texto || !texto.trim()) return '';
+  return '<div class="rpt-sec">Observações Adicionais <span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);font-size:10px;">(inserido manualmente)</span></div>' +
+    '<div class="rpt-analysis-box" style="border-left-color:#F4A800;background:#FFFBF0;">' +
+    '<p style="white-space:pre-line;">' + texto.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p></div>';
+}
+
 // ════════ CONFIG DE LINKS POR CLIENTE ════════
 
 var _clientLinks = JSON.parse(localStorage.getItem('organize_client_links') || '{}');
@@ -5946,6 +5961,13 @@ function rptGenerateMensal() {
     html += '<p style="font-size:10.5px;line-height:1.5;color:#2C3E50;text-align:justify;">'+_rmf.proximos.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
   }
 
+  // ── OBSERVAÇÕES ADICIONAIS (comentário manual — nunca gerado/sobrescrito pela IA) ──
+  if (_rmf.comentarios) {
+    html += '<div style="'+S_sec+';margin-top:14px;margin-bottom:8px;">Observações Adicionais <span style="font-weight:600;text-transform:none;letter-spacing:0;color:#8A94A8;font-size:9px;">(inserido manualmente)</span></div>';
+    html += '<div style="background:#FFFBF0;border:1px solid #F4A800;border-left:4px solid #F4A800;border-radius:8px;padding:12px 16px;margin-top:0;">';
+    html += '<p style="font-size:10.5px;line-height:1.5;color:#2C3E50;text-align:justify;white-space:pre-line;">'+_rmf.comentarios.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
+  }
+
   html += '</div>'; // fim body
 
   // ── FOOTER ──
@@ -6074,6 +6096,10 @@ function rptMensal() {
     '<div class="rpt-cfg-field"><label>Resumo Executivo do Mês</label><textarea id="rmf-analise" rows="4" oninput="_rmf.analise=this.value" placeholder="Descreva os principais resultados e destaques do mês...">'+(_rmf.analise||'')+'</textarea></div>' +
     '<div class="rpt-cfg-field"><label>Próximos Passos e Recomendações</label><textarea id="rmf-proximos" rows="4" oninput="_rmf.proximos=this.value" placeholder="Ações planejadas e foco para o próximo período...">'+(_rmf.proximos||'')+'</textarea></div>' +
     '</div>' +
+    '<div class="rpt-form-section">Comentário Adicional (opcional, não passa pela IA)</div>' +
+    '<div class="rpt-form-grid wide">' +
+    '<div class="rpt-cfg-field"><label>Observações Adicionais</label><textarea id="rmf-comentarios" rows="3" oninput="_rmf.comentarios=this.value" placeholder="Escreva aqui qualquer observação que queira incluir manualmente no relatório — este texto NUNCA é preenchido ou sobrescrito pela IA.">'+(_rmf.comentarios||'')+'</textarea></div>' +
+    '</div>' +
     '<div id="ai-diag-panel" style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12.5px;"></div>' +
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">'+
     '<button id="btn-gerar-ia" class="rpt-drive-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer;border:none;" onclick="generateAnalysisWithAI()">Gerar Relatório com IA</button>'+
@@ -6136,6 +6162,10 @@ function rptEncerramento() {
     '<div class="rpt-form-grid wide">' +
     '<div class="rpt-cfg-field"><label>Análise Executiva do Módulo</label><textarea id="ref-analise" rows="5" oninput="_ref.analise=this.value" placeholder="Será preenchida pela IA com base no desempenho do cliente.">'+(_ref.analise||'')+'</textarea></div>' +
     '<div class="rpt-cfg-field"><label>Próximos Passos e Foco do Próximo Módulo</label><textarea id="ref-proximos" rows="5" oninput="_ref.proximos=this.value" placeholder="Será preenchida pela IA com as atividades previstas e pontos de atenção.">'+(_ref.proximos||'')+'</textarea></div>' +
+    '</div>' +
+    '<div class="rpt-form-section">Comentário Adicional (opcional, não passa pela IA)</div>' +
+    '<div class="rpt-form-grid wide">' +
+    '<div class="rpt-cfg-field"><label>Observações Adicionais</label><textarea id="ref-comentarios" rows="3" oninput="_ref.comentarios=this.value" placeholder="Escreva aqui qualquer observação que queira incluir manualmente no relatório — este texto NUNCA é preenchido ou sobrescrito pela IA.">'+(_ref.comentarios||'')+'</textarea></div>' +
     '</div>' +
     '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:11.5px;color:#1E3A8A;">'+
     '<strong>Fontes da análise:</strong> FlowUp (tarefas do cliente), Trello (planejamento estratégico) e Drive (materiais entregues). A IA avalia o cumprimento das atividades - sem indicadores financeiros.'+
@@ -6223,7 +6253,7 @@ function rptGenerateEncerramento() {
   var flowSec = rptFlowUpSection(tasksPeriodo, 'Atividades do Cliente - Detalhamento');
   var trelloSec = rptTrelloSection(_ref.cliente, { dtIni: _ref.dtini, dtFim: _ref.dtfim });
 
-  var analysisSec = rptAnalysisSection(_ref.analise, _ref.proximos);
+  var analysisSec = rptAnalysisSection(_ref.analise, _ref.proximos) + rptManualCommentSection(_ref.comentarios);
 
   var modBadge = _ref.modnum ? '<div class="rpt-modulo-badge">Módulo ' + _ref.modnum + (_ref.modnom?' - '+_ref.modnom:'') + '</div>' : '';
   var periodoInfo = periodoStr ? '<div style="font-size:11.5px;color:var(--muted);margin-top:4px">Período: ' + periodoStr + '</div>' : '';
@@ -6272,6 +6302,521 @@ function rptGenerateEncerramento() {
 
   renderReportCharts(_ref, tasks, 'encerramento');
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// ═══════════ RELATÓRIO DE ENCERRAMENTO DE MENTORIA (FINAL) ═════════════
+// ═══════════════════════════════════════════════════════════════════════
+// Relatório final emitido ao término da mentoria. Diferente do "Encerramento
+// de Módulo" (que fecha 1 módulo específico), este analisa TODA a trajetória
+// do cliente, independente do programa, cruzando FlowUp + Google Agenda +
+// Drive + arquivos anexados manualmente (planilhas, PDFs, Word). Gerado como
+// apresentação em PDF PAISAGEM (rptDownloadPDFApresentacao), não A4 vertical.
+
+var _erm = {}; // form cache
+var _ermFiles = []; // [{name,size,category,kind:'text'|'pdf',content?,base64?}]
+
+function rptEncerramentoMentoria() {
+  var clients = getUniqueClients();
+  var cliOpts = '<option value="">Selecione o cliente</option>' + clients.map(function(c){ return '<option value="'+c+'"'+(_erm.cliente===c?' selected':'')+'>'+c+'</option>'; }).join('');
+  var progOpts = ['<option value="">Todos os programas</option>'].concat([['mentoring','Organize Mentoring'],['master','Organize Master'],['marketing','Organize Marketing e Vendas'],['estrategico','Organize Estratégico']].map(function(p){ return '<option value="'+p[0]+'"'+(_erm.programa===p[0]?' selected':'')+'>'+p[1]+'</option>'; })).join('');
+
+  var formHtml = '<div class="rpt-form-panel">' +
+    '<div class="rpt-form-title"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Configurar Relatório de Encerramento de Mentoria</div>' +
+    '<div class="rpt-form-grid">' +
+    '<div class="rpt-cfg-field"><label>Cliente</label><select id="erm-cliente" onchange="_erm.cliente=this.value;rptEncerramentoMentoria()">'+cliOpts+'</select></div>' +
+    '<div class="rpt-cfg-field"><label>Programa (opcional)</label><select id="erm-programa" onchange="_erm.programa=this.value">'+progOpts+'</select></div>' +
+    '<div class="rpt-cfg-field"><label>Início da Mentoria</label><input id="erm-dtini" type="date" value="'+(_erm.dtini||'')+'" oninput="_erm.dtini=this.value"></div>' +
+    '<div class="rpt-cfg-field"><label>Data de Encerramento</label><input id="erm-dtfim" type="date" value="'+(_erm.dtfim||'')+'" oninput="_erm.dtfim=this.value"></div>' +
+    '</div>' +
+    '<div class="rpt-form-section">Anexar Planilhas e Documentos (opcional)</div>' +
+    '<div style="font-size:11.5px;color:#41546A;margin-bottom:10px;">Anexe quantos arquivos quiser de uma vez — planilhas de indicadores comerciais/financeiros, fluxo de caixa, PDFs, documentos Word etc. A IA analisa todos e cruza com FlowUp, Agenda e Drive.</div>' +
+    '<div onclick="document.getElementById(\'erm-upload-input\').click()" ondragover="event.preventDefault();this.style.borderColor=\'#1B2B6B\';this.style.background=\'#fff\'" ondragleave="this.style.borderColor=\'#E0E5EE\';this.style.background=\'#fafbfd\'" ondrop="ermHandleDrop(event)" style="border:2px dashed #E0E5EE;border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:#fafbfd;margin-bottom:10px;">' +
+    '<div style="font-size:13px;font-weight:600;color:#1B2B6B;">Clique ou arraste arquivos aqui</div>' +
+    '<div style="font-size:11px;color:#8A94A8;margin-top:2px;">.xlsx .xls .csv .pdf .docx .txt — vários de uma vez</div>' +
+    '</div>' +
+    '<input type="file" id="erm-upload-input" multiple accept=".xlsx,.xls,.csv,.pdf,.doc,.docx,.txt" style="display:none" onchange="ermUploadFiles(event)">' +
+    '<div id="erm-uploads-list" style="margin-bottom:6px;"></div>' +
+    '<div class="rpt-form-section">Comentário Adicional (opcional)</div>' +
+    '<div class="rpt-form-grid wide">' +
+    '<div class="rpt-cfg-field"><label>Observações Adicionais</label><textarea id="erm-comentarios" rows="3" oninput="_erm.comentarios=this.value" placeholder="Escreva aqui qualquer observação que queira incluir manualmente no relatório — este texto NUNCA é preenchido ou sobrescrito pela IA, mas a IA o CONSIDERA na análise final.">'+(_erm.comentarios||'')+'</textarea></div>' +
+    '</div>' +
+    '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:11.5px;color:#1E3A8A;">'+
+    '<strong>Fontes da análise:</strong> todo o histórico de tarefas no FlowUp (independente do programa), mentorias realizadas no Google Agenda, materiais do Drive, arquivos anexados acima e o comentário manual.'+
+    '</div>'+
+    '<div id="ai-diag-panel-erm" style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12.5px;display:none;"></div>' +
+    '<div style="display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap;">' +
+    '<button id="btn-gerar-ia-erm" class="rpt-gen-btn" style="background:#7C3AED;color:#fff;font-size:14px;padding:12px 24px;font-weight:700;" onclick="generateAnalysisEncerramentoMentoria()">Gerar Relatório com IA</button>' +
+    '</div>' +
+    '</div>';
+
+  document.getElementById('rpt-filters').innerHTML = '';
+  document.getElementById('report-preview').innerHTML = formHtml + '<div id="rpt-prev"></div>';
+  setTimeout(function(){ ermRenderUploadList(); }, 50);
+
+  if (_erm.cliente && _erm.ai) rptGenerateEncerramentoMentoriaPreview();
+}
+
+function rptGenerateEncerramentoMentoriaPreview() {
+  var cliente = _erm.cliente || 'Cliente não selecionado';
+  var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas',estrategico:'Organize Estratégico'}[_erm.programa] || 'Programa de Mentoria';
+  var periodoStr = '';
+  if (_erm.dtini && _erm.dtfim) periodoStr = new Date(_erm.dtini+'T12:00:00').toLocaleDateString('pt-BR') + ' a ' + new Date(_erm.dtfim+'T12:00:00').toLocaleDateString('pt-BR');
+
+  var ai = _erm.ai || {};
+  var kpiHtml = '';
+  if (_erm.stats) {
+    var st = _erm.stats;
+    kpiHtml = '<div class="rpt-kpi-highlight">' +
+      '<div style="font-size:10.5px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:14px">Jornada da Mentoria — ' + programaLabel + '</div>' +
+      '<div class="rpt-kpi-highlight-grid">' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+st.tarefasTotal+'</div><div class="rpt-kpi-h-sub">Tarefas no Histórico</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val" style="color:#86EFAC">'+st.tarefasConcl+'</div><div class="rpt-kpi-h-sub">Concluídas</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+st.mentoriasRealizadas+'</div><div class="rpt-kpi-h-sub">Mentorias Realizadas</div></div>' +
+      '<div class="rpt-kpi-h"><div class="rpt-kpi-h-val">'+st.materiaisDrive+'</div><div class="rpt-kpi-h-sub">Materiais no Drive</div></div>' +
+      '</div></div>';
+  }
+
+  function sec(titulo, texto, borda) {
+    if (!texto) return '';
+    return '<div class="rpt-sec">'+titulo+'</div><div class="rpt-analysis-box"'+(borda?' style="border-left-color:'+borda+'"':'')+'><p style="white-space:pre-line">'+String(texto).replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
+  }
+  var secResumo = sec('Resumo Executivo da Jornada', ai.resumoExecutivo);
+  var secJornada = sec('A Jornada', ai.jornada, 'var(--teal-dark)');
+  var secEntregas = sec('Principais Entregas', ai.principaisEntregas, 'var(--teal-dark)');
+  var secResultados = sec('Resultados e Impacto', ai.resultadosImpacto);
+  var secRecom = sec('Recomendações Finais', ai.recomendacoesFinais, 'var(--teal-dark)');
+  var secComentario = rptManualCommentSection(_erm.comentarios);
+
+  var actionBar = '<div class="rpt-action-bar">' +
+    '<button class="rpt-pdf-btn" onclick="rptDownloadPDFApresentacao()">' +
+    '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>Baixar PDF (Apresentação)</button>' +
+    '</div>';
+
+  var content = rptHeader('RELATÓRIO DE ENCERRAMENTO DE MENTORIA', programaLabel + ' | ' + cliente + (periodoStr?' | '+periodoStr:'')) +
+    kpiHtml + secResumo + secJornada + secEntregas + secResultados + secRecom + secComentario + rptFooter();
+
+  var prev = document.getElementById('rpt-prev');
+  if (prev) prev.innerHTML = actionBar + content;
+  else document.getElementById('report-preview').innerHTML = actionBar + content;
+}
+
+// ── Upload de arquivos (planilhas, PDF, Word, CSV/TXT) para o Encerramento de Mentoria ──
+function _ermArrayBufferToBase64(buffer) {
+  var binary = ''; var bytes = new Uint8Array(buffer); var chunk = 0x8000;
+  for (var i=0; i<bytes.length; i+=chunk) { binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk)); }
+  return btoa(binary);
+}
+
+async function ermUploadFiles(ev) {
+  var files = Array.from((ev.target && ev.target.files) || []);
+  if (!files.length) return;
+  var el = document.getElementById('erm-uploads-list');
+  if (el) el.innerHTML = '<div style="font-size:12px;color:#41546A;">⏳ Processando ' + files.length + ' arquivo(s)...</div>';
+
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    var ext = (f.name.split('.').pop() || '').toLowerCase();
+    try {
+      if (ext === 'xlsx' || ext === 'xls') {
+        if (!window.XLSX) { console.warn('[ERM] SheetJS ainda carregando, pulei ' + f.name); continue; }
+        var ab = await f.arrayBuffer();
+        var tabs = oeParseXLSX(ab);
+        var maxChars = 9000, total = 0, parts = [];
+        Object.keys(tabs).forEach(function(t){
+          var block = '--- ABA: ' + t + ' ---\n' + tabs[t];
+          if (total + block.length > maxChars) return;
+          parts.push(block); total += block.length;
+        });
+        _ermFiles.push({ name: f.name, size: f.size, category: oeClassificarArquivo(f.name) || 'outras', kind: 'text', content: parts.join('\n\n') });
+      } else if (ext === 'csv' || ext === 'txt') {
+        var txt = await f.text();
+        _ermFiles.push({ name: f.name, size: f.size, category: oeClassificarArquivo(f.name) || 'outras', kind: 'text', content: txt.slice(0, 12000) });
+      } else if (ext === 'pdf') {
+        var ab2 = await f.arrayBuffer();
+        _ermFiles.push({ name: f.name, size: f.size, category: oeClassificarArquivo(f.name) || 'outras', kind: 'pdf', base64: _ermArrayBufferToBase64(ab2) });
+      } else if (ext === 'docx') {
+        if (!window.mammoth) { alert('Conversor de Word ainda carregando — aguarde alguns segundos e tente novamente.'); continue; }
+        var ab3 = await f.arrayBuffer();
+        var result = await window.mammoth.extractRawText({ arrayBuffer: ab3 });
+        _ermFiles.push({ name: f.name, size: f.size, category: oeClassificarArquivo(f.name) || 'outras', kind: 'text', content: (result.value || '').slice(0, 12000) });
+      } else if (ext === 'doc') {
+        alert('Formato .doc antigo não é suportado — salve como .docx e envie novamente. (' + f.name + ')');
+      } else {
+        console.warn('[ERM] tipo de arquivo não suportado:', f.name);
+      }
+    } catch(e) { console.warn('[ERM Upload]', f.name, e); }
+  }
+  ermRenderUploadList();
+  if (ev.target) ev.target.value = '';
+}
+
+function ermHandleDrop(ev) {
+  ev.preventDefault();
+  ev.currentTarget.style.borderColor = '#E0E5EE';
+  ev.currentTarget.style.background = '#fafbfd';
+  ermUploadFiles({ target: { files: ev.dataTransfer.files, value: '' } });
+}
+
+function ermRemoveFile(idx) { _ermFiles.splice(idx, 1); ermRenderUploadList(); }
+function ermClearFiles() { _ermFiles = []; ermRenderUploadList(); }
+
+function ermRenderUploadList() {
+  var el = document.getElementById('erm-uploads-list');
+  if (!el) return;
+  if (!_ermFiles.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#8A94A8;font-style:italic;padding:8px 0;">Nenhum arquivo anexado ainda.</div>';
+    return;
+  }
+  var html = '<div style="font-size:11px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">✓ ' + _ermFiles.length + ' arquivo(s) anexado(s)</div>';
+  _ermFiles.forEach(function(f, i){
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #E0E5EE;border-radius:6px;margin-bottom:6px;background:#fafbfd;">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2B6B" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>' +
+      '<div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:600;color:#1B2B6B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + f.name + '</div>' +
+      '<div style="font-size:10.5px;color:#8A94A8;">' + (f.kind === 'pdf' ? 'PDF (lido diretamente pela IA)' : 'Texto extraído') + ' · ' + oeFormatBytes(f.size || 0) + '</div></div>' +
+      '<button onclick="ermRemoveFile(' + i + ')" style="background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:11px;padding:4px 8px;">Remover</button>' +
+      '</div>';
+  });
+  html += '<button onclick="ermClearFiles()" style="margin-top:4px;background:transparent;color:#ef4444;border:1px solid #f3c9c2;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">✕ Limpar todos</button>';
+  el.innerHTML = html;
+}
+
+// ── Chamada à IA (Claude) suportando anexos PDF nativos (document blocks) ──
+async function callClaudeDocs(apiKey, userPrompt, maxTokens, systemPrompt, forceJSON, pdfFiles) {
+  var contentArr = [];
+  (pdfFiles || []).forEach(function(p){
+    contentArr.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: p.base64 } });
+  });
+  contentArr.push({ type: 'text', text: userPrompt });
+  var messages = [{ role: 'user', content: contentArr }];
+  if (forceJSON) messages.push({ role: 'assistant', content: '{' });
+  var body = { model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens || 4000, temperature: 0, messages: messages };
+  if (systemPrompt) body.system = systemPrompt;
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey, 'anthropic-version': '2023-06-01',
+      'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!resp.ok) {
+    var err = await resp.json().catch(function(){ return {}; });
+    throw new Error((err.error && err.error.message) || 'Erro na API: ' + resp.status);
+  }
+  var data = await resp.json();
+  var text = (data.content[0].text || '').trim();
+  if (forceJSON && text.charAt(0) !== '{') text = '{' + text;
+  return text;
+}
+
+async function generateAnalysisEncerramentoMentoria() {
+  var apiKey = _anthropicKey;
+  if (!apiKey) {
+    apiKey = prompt('Cole aqui sua chave da API Anthropic (Claude):\n(será salva localmente para uso futuro)');
+    if (!apiKey) return;
+    setAnthropicKey(apiKey.trim());
+    apiKey = apiKey.trim();
+  }
+
+  var elCli = document.getElementById('erm-cliente');
+  if (elCli) _erm.cliente = elCli.value;
+  if (!_erm.cliente) { alert('Selecione um cliente antes de gerar o relatório.'); return; }
+
+  if (typeof _gToken === 'undefined' || !_gToken) {
+    alert('Para ler a Agenda e o Drive do cliente, é necessário conectar o Google.\n\nAo clicar OK, abrirá o popup do Google. Após autorizar, clique novamente em "Gerar Relatório com IA".');
+    gDriveSignIn(function(){ setTimeout(function(){ generateAnalysisEncerramentoMentoria(); }, 500); });
+    return;
+  }
+
+  var btn = document.getElementById('btn-gerar-ia-erm');
+  var cliente = _erm.cliente;
+  var ctx = buildAIContextForClient(cliente);
+
+  if (btn) { btn.textContent = 'Contando mentorias na Agenda...'; btn.disabled = true; }
+  var mentoriasCalendar = { count: 0, events: [] };
+  try { mentoriasCalendar = await oeCountMentoriasInPeriod(cliente, _erm.dtini, _erm.dtfim); } catch(e) { console.warn('[ERM] erro Calendar:', e); }
+
+  if (btn) { btn.textContent = 'Buscando materiais no Drive...'; }
+  var materiaisDrive = [];
+  if (_gToken && ctx.links.drive) {
+    try {
+      var folderId = oeExtractFolderId(ctx.links.drive);
+      materiaisDrive = await oeListDriveDocsInPeriod(folderId, _erm.dtini, _erm.dtfim, 0);
+    } catch(e) { console.warn('[ERM] erro Drive:', e); }
+  }
+
+  var textFiles = _ermFiles.filter(function(f){ return f.kind === 'text'; });
+  var pdfFiles = _ermFiles.filter(function(f){ return f.kind === 'pdf'; });
+
+  _erm.stats = {
+    tarefasTotal: ctx.flowup.total, tarefasConcl: ctx.flowup.concluidas,
+    mentoriasRealizadas: mentoriasCalendar.count, materiaisDrive: materiaisDrive.length
+  };
+
+  var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas',estrategico:'Organize Estratégico'}[_erm.programa] || 'Programa de Mentoria (não especificado)';
+  var periodoStr = (_erm.dtini && _erm.dtfim) ? (_erm.dtini + ' a ' + _erm.dtfim) : '(período não informado pela equipe — considere todo o histórico disponível nas fontes)';
+
+  var sysPrompt = 'Você é um CONSULTOR SÊNIOR da Organize Empresas responsável por redigir o RELATÓRIO FINAL DE ENCERRAMENTO DE MENTORIA de um cliente — o documento mais importante da jornada, que consolida TUDO que foi feito ao longo de TODO o programa (não um módulo isolado) e será apresentado diretamente ao cliente em uma reunião de encerramento.\n\n' +
+    'Você recebe dados de MÚLTIPLAS fontes (FlowUp, Google Agenda, Google Drive, planilhas e documentos anexados, e um comentário manual da equipe) e deve cruzá-los para produzir uma narrativa coesa, factual e valorosa — mostrando ao cliente o caminho percorrido e o valor entregue.\n\n' +
+    'REGRAS OBRIGATÓRIAS:\n' +
+    '1. NUNCA invente números, entregas ou eventos que não estejam nas fontes fornecidas.\n' +
+    '2. Se um dado não existir em nenhuma fonte, não mencione — não preencha com algo genérico.\n' +
+    '3. Considere OBRIGATORIAMENTE o "COMENTÁRIO MANUAL DA EQUIPE" abaixo, se houver — incorpore o que for relevante na análise final.\n' +
+    '4. Tom: profissional, valorizando as conquistas do cliente ao longo de toda a mentoria, mas honesto sobre pendências relevantes.\n' +
+    '5. Responda APENAS com JSON válido — sem markdown, sem texto antes/depois, sem comentários.';
+
+  var promptParts = [];
+  promptParts.push('═══════════ DADOS DO CLIENTE ═══════════\nCLIENTE: "' + cliente + '"\nPROGRAMA: "' + programaLabel + '"\nPERÍODO DA MENTORIA: ' + periodoStr + '\n');
+  promptParts.push('═══════════ TAREFAS FLOWUP (TODO O HISTÓRICO, INDEPENDENTE DO PROGRAMA) ═══════════\n' +
+    'Total: ' + ctx.flowup.total + ' | Concluídas: ' + ctx.flowup.concluidas + ' | Em andamento: ' + ctx.flowup.andamento + ' | Atrasadas: ' + ctx.flowup.atrasadas + '\n' +
+    'Concluídas (amostra): ' + ctx.flowup.concluidasNomes.join('; ') + '\n');
+  promptParts.push('═══════════ MENTORIAS REALIZADAS (GOOGLE AGENDA) ═══════════\n' +
+    'Total de mentorias no período: ' + mentoriasCalendar.count + '\n' +
+    (mentoriasCalendar.events.length ? mentoriasCalendar.events.map(function(e){ return '- ' + (e.start||'').substring(0,10) + ' · ' + e.title; }).join('\n') : '(sem eventos localizados no período informado)') + '\n');
+  promptParts.push('═══════════ PLANEJAMENTO ESTRATÉGICO (TRELLO) ═══════════\n' +
+    'Quadros: ' + ctx.trello.boards + ' | Cards: ' + ctx.trello.cards + ' | Concluídos: ' + ctx.trello.concluidos + ' | Vencidos: ' + ctx.trello.vencidos + '\n');
+  promptParts.push('═══════════ MATERIAIS NO DRIVE ═══════════\n' + oeFormatMateriaisDrive(materiaisDrive) + '\n');
+  if (textFiles.length) {
+    promptParts.push('═══════════ ARQUIVOS ANEXADOS PELA EQUIPE (planilhas/docs/texto) ═══════════\n' +
+      textFiles.map(function(f){ return '### ' + f.name + ' ###\n' + f.content; }).join('\n\n') + '\n');
+  }
+  if (pdfFiles.length) {
+    promptParts.push('═══════════ PDFs ANEXADOS (enviados para leitura direta) ═══════════\n' +
+      pdfFiles.length + ' arquivo(s): ' + pdfFiles.map(function(f){ return f.name; }).join(', ') + '\n');
+  }
+  promptParts.push('═══════════ COMENTÁRIO MANUAL DA EQUIPE (considere na análise) ═══════════\n' + (_erm.comentarios ? _erm.comentarios : '(nenhum comentário adicional inserido)') + '\n');
+  promptParts.push('═══════════ INSTRUÇÕES ═══════════\n' +
+    '1. Produza um relatório de ENCERRAMENTO FINAL DA MENTORIA — considere TODA a jornada, não um recorte mensal ou de um módulo isolado.\n' +
+    '2. Se houver dados financeiros/comerciais nos arquivos anexados ou no Drive, extraia indicadores-chave (ex.: faturamento inicial vs. final, crescimento, principais KPIs) no campo "indicadores". Se não houver, retorne "indicadores":{"resumo":"","itens":[]}.\n' +
+    '3. "principaisEntregas": liste em texto (com quebras de linha) os principais materiais/entregas produzidos, com base no Drive, FlowUp e anexos.\n' +
+    '4. Responda no formato JSON abaixo, preenchendo todos os campos aplicáveis (use "" quando realmente não houver dado suficiente):\n' +
+    '{"resumoExecutivo":"TEXTO","jornada":"TEXTO","principaisEntregas":"TEXTO_COM_QUEBRAS_DE_LINHA","indicadores":{"resumo":"TEXTO_OU_VAZIO","itens":[{"label":"NOME","valor":"VALOR"}]},"resultadosImpacto":"TEXTO","recomendacoesFinais":"TEXTO"}');
+
+  var userPrompt = promptParts.join('\n');
+
+  if (btn) { btn.textContent = 'Gerando relatório final...'; }
+  try {
+    var text = await callClaudeDocs(apiKey, userPrompt, 4000, sysPrompt, true, pdfFiles);
+    var parsed = extractJSON(text);
+    _erm.ai = parsed;
+    if (btn) { btn.textContent = '✔ Relatório gerado pela IA'; btn.disabled = false; }
+    rptGenerateEncerramentoMentoriaPreview();
+  } catch(e) {
+    if (btn) { btn.textContent = '✗ Erro - tente novamente'; btn.disabled = false; }
+    console.error('Erro AI (Encerramento Mentoria):', e);
+    if (_isAnthropicAuthError(e.message)) {
+      var newKey = _promptForAnthropicKey();
+      if (newKey) { setTimeout(generateAnalysisEncerramentoMentoria, 100); return; }
+    }
+    alert('Erro ao gerar relatório: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PDF DE APRESENTAÇÃO (PAISAGEM) — Relatório de Encerramento de Mentoria
+// jsPDF nativo vetorial, em formato de SLIDES (não A4 vertical tradicional).
+// Cada seção = 1 slide; overflow de texto quebra em slide de "continuação"
+// (evita cortar informação no meio da página).
+// ═══════════════════════════════════════════════════════════════
+async function rptDownloadPDFApresentacao() {
+  if (!_erm.ai) { alert('Gere o relatório com IA primeiro.'); return; }
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF não carregado.'); return; }
+
+  var btn = document.querySelector('.rpt-pdf-btn');
+  var oldTxt = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Gerando apresentação...'; }
+
+  try {
+    var logoBase64 = (typeof S !== 'undefined' && S.logoConfig && S.logoConfig.img) ? S.logoConfig.img : (typeof LOGO_ORGANIZE_B64 !== 'undefined' ? LOGO_ORGANIZE_B64 : '');
+    var logoMime = (logoBase64.indexOf('image/jpeg') !== -1) ? 'JPEG' : 'PNG';
+    var logoImg = null;
+    if (logoBase64) {
+      logoImg = await new Promise(function(res){
+        var img = new Image();
+        img.onload = function(){ res(img); };
+        img.onerror = function(){ res(null); };
+        img.src = logoBase64;
+      });
+    }
+
+    var JsPDF = window.jspdf.jsPDF;
+    var doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape', compress: true });
+    var PW = 297, PH = 210;
+
+    var COL = {
+      navy: [0,0,128], navyDark: [10,10,60], teal: [139,212,224],
+      gold: [244,168,0], txt: [13,21,38], txtMuted: [65,84,106],
+      muted: [138,155,181], bg: [244,246,251], white: [255,255,255], border: [226,232,244]
+    };
+
+    function setFill(c){ doc.setFillColor(c[0],c[1],c[2]); }
+    function setText(c){ doc.setTextColor(c[0],c[1],c[2]); }
+    function rect(x,y,w,h,c,r){ setFill(c); if (r) doc.roundedRect(x,y,w,h,r,r,'F'); else doc.rect(x,y,w,h,'F'); }
+    function drawLogo(x,y,h){
+      if (!logoImg || !logoBase64) return 0;
+      var w = h * (logoImg.width/logoImg.height);
+      try { doc.addImage(logoBase64, logoMime, x, y, w, h, undefined, 'FAST'); } catch(e){}
+      return w;
+    }
+
+    var cliente = _erm.cliente || 'Cliente';
+    var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas',estrategico:'Organize Estratégico'}[_erm.programa] || 'Programa de Mentoria';
+    var periodoStr = (_erm.dtini && _erm.dtfim) ? (new Date(_erm.dtini+'T12:00:00').toLocaleDateString('pt-BR') + ' a ' + new Date(_erm.dtfim+'T12:00:00').toLocaleDateString('pt-BR')) : '';
+    var ai = _erm.ai || {};
+    var st = _erm.stats || { tarefasTotal:0, tarefasConcl:0, mentoriasRealizadas:0, materiaisDrive:0 };
+
+    var SLIDE_NUM = 0;
+    function slideFooter(){
+      SLIDE_NUM++;
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); setText(COL.muted);
+      doc.text('Organize Empresas · Relatório de Encerramento de Mentoria', 10, PH-6);
+      doc.text(String(SLIDE_NUM), PW-10, PH-6, {align:'right'});
+    }
+    function slideHeader(title){
+      rect(0,0,PW,22,COL.navy);
+      rect(0,20,PW,2,COL.teal);
+      var cx = 10;
+      if (logoImg) { var h=13; var w=drawLogo(cx,4.5,h); cx += w + 8; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(13); setText(COL.white);
+      doc.text(title, cx, 13.5);
+    }
+    // Quebra texto e pagina automaticamente se não couber no slide (evita corte de conteúdo)
+    function textBlock(text, x, y, maxWidth, opts) {
+      opts = opts || {};
+      var fs = opts.fontSize || 11.5, lh = opts.lineHeight || 6;
+      doc.setFont('helvetica', opts.bold?'bold':'normal'); doc.setFontSize(fs); setText(opts.color || COL.txt);
+      var lines = doc.splitTextToSize(String(text||''), maxWidth);
+      for (var li=0; li<lines.length; li++) {
+        if (y > PH - 20) {
+          slideFooter(); doc.addPage(); slideHeader(opts.continTitle || '');
+          y = 32; doc.setFont('helvetica', opts.bold?'bold':'normal'); doc.setFontSize(fs); setText(opts.color || COL.txt);
+        }
+        doc.text(lines[li], x, y); y += lh;
+      }
+      return y;
+    }
+
+    // ═══ SLIDE 1 — CAPA ═══
+    rect(0,0,PW,PH,COL.navyDark);
+    rect(0,0,PW,PH*0.7,COL.navy);
+    if (logoImg) { var capaH=34, capaW=capaH*(logoImg.width/logoImg.height); drawLogo((PW-capaW)/2, 46, capaH); }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); setText(COL.teal);
+    doc.text('RELATÓRIO DE ENCERRAMENTO DE MENTORIA', PW/2, 100, {align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(26); setText(COL.white);
+    doc.text(cliente, PW/2, 116, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(13); setText([200,210,230]);
+    doc.text(programaLabel + (periodoStr ? ' · ' + periodoStr : ''), PW/2, 128, {align:'center'});
+    doc.setFontSize(10); setText(COL.muted);
+    doc.text('Emitido em ' + new Date().toLocaleDateString('pt-BR'), PW/2, PH-15, {align:'center'});
+    slideFooter();
+
+    // ═══ SLIDE 2 — RESUMO EXECUTIVO + KPIs DA JORNADA ═══
+    doc.addPage();
+    slideHeader('Resumo Executivo da Jornada');
+    var y2 = 34;
+    var kpis = [
+      {label:'Tarefas no Histórico', val:String(st.tarefasTotal)},
+      {label:'Concluídas', val:String(st.tarefasConcl)},
+      {label:'Mentorias Realizadas', val:String(st.mentoriasRealizadas)},
+      {label:'Materiais no Drive', val:String(st.materiaisDrive)}
+    ];
+    var kpiW = (PW-20-3*6)/4, kpiX = 10;
+    kpis.forEach(function(k){
+      rect(kpiX, y2, kpiW, 26, COL.bg, 3);
+      doc.setDrawColor(COL.border[0],COL.border[1],COL.border[2]); doc.setLineWidth(0.2); doc.roundedRect(kpiX,y2,kpiW,26,3,3);
+      doc.setFont('helvetica','bold'); doc.setFontSize(18); setText(COL.navy);
+      doc.text(k.val, kpiX+kpiW/2, y2+13, {align:'center'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); setText(COL.txtMuted);
+      doc.text(k.label, kpiX+kpiW/2, y2+20, {align:'center', maxWidth:kpiW-4});
+      kpiX += kpiW + 6;
+    });
+    y2 += 38;
+    if (ai.resumoExecutivo) y2 = textBlock(ai.resumoExecutivo, 10, y2+4, PW-20, {fontSize:11.5, lineHeight:6.2, continTitle:'Resumo Executivo (continuação)'});
+    slideFooter();
+
+    // ═══ SLIDE 3 — A JORNADA / PRINCIPAIS ENTREGAS ═══
+    if (ai.jornada || ai.principaisEntregas) {
+      doc.addPage();
+      slideHeader('A Jornada e Principais Entregas');
+      var y3 = 34;
+      if (ai.jornada) {
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); setText(COL.navy);
+        doc.text('A Jornada', 10, y3); y3 += 7;
+        y3 = textBlock(ai.jornada, 10, y3, PW-20, {fontSize:11, lineHeight:6, continTitle:'A Jornada (continuação)'});
+        y3 += 6;
+      }
+      if (ai.principaisEntregas) {
+        if (y3 > PH-40) { slideFooter(); doc.addPage(); slideHeader('Principais Entregas'); y3 = 34; }
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); setText(COL.navy);
+        doc.text('Principais Entregas', 10, y3); y3 += 7;
+        y3 = textBlock(ai.principaisEntregas, 10, y3, PW-20, {fontSize:11, lineHeight:6, continTitle:'Principais Entregas (continuação)'});
+      }
+      slideFooter();
+    }
+
+    // ═══ SLIDE 4 — INDICADORES (se a IA encontrou dados financeiros/comerciais) ═══
+    if (ai.indicadores && ((ai.indicadores.itens && ai.indicadores.itens.length) || ai.indicadores.resumo)) {
+      doc.addPage();
+      slideHeader('Indicadores');
+      var y4 = 34;
+      if (ai.indicadores.resumo) { y4 = textBlock(ai.indicadores.resumo, 10, y4, PW-20, {fontSize:11, lineHeight:6, continTitle:'Indicadores (continuação)'}); y4 += 8; }
+      if (ai.indicadores.itens && ai.indicadores.itens.length) {
+        var cols = 3, cw = (PW-20-(cols-1)*6)/cols, cxI = 10, rowH = 24, colI = 0;
+        ai.indicadores.itens.forEach(function(it){
+          if (y4 + rowH > PH-16) { slideFooter(); doc.addPage(); slideHeader('Indicadores (continuação)'); y4 = 34; colI = 0; cxI = 10; }
+          rect(cxI, y4, cw, rowH, COL.bg, 3);
+          doc.setDrawColor(COL.border[0],COL.border[1],COL.border[2]); doc.roundedRect(cxI,y4,cw,rowH,3,3);
+          doc.setFont('helvetica','bold'); doc.setFontSize(14); setText(COL.navy);
+          doc.text(String(it.valor||''), cxI+6, y4+13);
+          doc.setFont('helvetica','normal'); doc.setFontSize(8.5); setText(COL.txtMuted);
+          doc.text(String(it.label||''), cxI+6, y4+19, {maxWidth:cw-10});
+          colI++;
+          if (colI >= cols) { colI = 0; cxI = 10; y4 += rowH + 6; } else { cxI += cw + 6; }
+        });
+      }
+      slideFooter();
+    }
+
+    // ═══ SLIDE 5 — RESULTADOS E IMPACTO ═══
+    if (ai.resultadosImpacto) {
+      doc.addPage();
+      slideHeader('Resultados e Impacto');
+      textBlock(ai.resultadosImpacto, 10, 34, PW-20, {fontSize:12, lineHeight:6.5, continTitle:'Resultados e Impacto (continuação)'});
+      slideFooter();
+    }
+
+    // ═══ SLIDE 6 — OBSERVAÇÕES ADICIONAIS (comentário manual) ═══
+    if (_erm.comentarios && _erm.comentarios.trim()) {
+      doc.addPage();
+      slideHeader('Observações Adicionais');
+      rect(10,28,PW-20,4,COL.gold,2);
+      doc.setFont('helvetica','italic'); doc.setFontSize(9); setText(COL.txtMuted);
+      doc.text('Conteúdo inserido manualmente pela equipe', 10, 40);
+      textBlock(_erm.comentarios, 10, 48, PW-20, {fontSize:11.5, lineHeight:6.2, continTitle:'Observações Adicionais (continuação)'});
+      slideFooter();
+    }
+
+    // ═══ SLIDE FINAL — RECOMENDAÇÕES / ENCERRAMENTO ═══
+    doc.addPage();
+    rect(0,0,PW,PH,COL.navyDark);
+    rect(0,0,PW,PH,COL.navy);
+    doc.setFont('helvetica','bold'); doc.setFontSize(16); setText(COL.teal);
+    doc.text('RECOMENDAÇÕES FINAIS', PW/2, 30, {align:'center'});
+    if (ai.recomendacoesFinais) textBlock(ai.recomendacoesFinais, 24, 46, PW-48, {fontSize:12.5, lineHeight:7, color:COL.white, continTitle:'Recomendações Finais (continuação)'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); setText(COL.white);
+    doc.text('Obrigado pela confiança, ' + cliente + '!', PW/2, PH-30, {align:'center'});
+    if (logoImg) { var fH=16, fW=fH*(logoImg.width/logoImg.height); drawLogo((PW-fW)/2, PH-24, fH); }
+    slideFooter();
+
+    doc.save('Encerramento_Mentoria_' + cliente.replace(/[^a-zA-Z0-9]/g,'_') + '.pdf');
+  } catch(e) {
+    console.error('[ERM PDF]', e);
+    alert('Erro ao gerar PDF: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = oldTxt; }
+  }
+}
+
 // ═══════════════ REPORTS ═══════════════
 let _rptType = 'summary';
 
@@ -8071,6 +8616,7 @@ function renderReports() {
   else if (_rptType === 'trello') rptTrello();
   else if (_rptType === 'mensal') rptMensal();
   else if (_rptType === 'encerramento') rptEncerramento();
+  else if (_rptType === 'encerramento-mentoria') rptEncerramentoMentoria();
 }
 
 function printReport() { window.print(); }
