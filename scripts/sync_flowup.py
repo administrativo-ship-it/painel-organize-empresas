@@ -89,10 +89,11 @@ def api_call(method, path, body=None):
 def fetch_all_pages(extra_filter=None):
     """
     Busca todas as paginas de EP_QUERY_TASKS com PAGE_SIZE itens por pagina.
-    Pagina 1 sequential (obtem Count), restantes em paralelo com ThreadPoolExecutor.
+    A API do FlowUp pagina a partir de 0 (nao de 1). Pagina 0 sequencial (obtem
+    Count), restantes (1..total_pages-1) em paralelo com ThreadPoolExecutor.
     """
     flt = extra_filter or {}
-    body1 = {'PageSize': PAGE_SIZE, 'CurrentPage': 1, 'Filter': flt}
+    body1 = {'PageSize': PAGE_SIZE, 'CurrentPage': 0, 'Filter': flt}  # API pagina a partir de 0
     d1    = api_call('POST', EP_QUERY_TASKS, body1)
     items1 = d1.get('Result') or []
     count  = d1.get('Count', 0)
@@ -112,7 +113,7 @@ def fetch_all_pages(extra_filter=None):
             return []
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futs = {ex.submit(fetch_page, pg): pg for pg in range(2, total_pages + 1)}
+        futs = {ex.submit(fetch_page, pg): pg for pg in range(1, total_pages)}  # pagina 0 ja obtida acima
         for fut in as_completed(futs):
             all_items.extend(fut.result())
 
