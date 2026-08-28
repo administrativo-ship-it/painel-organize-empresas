@@ -1812,7 +1812,83 @@ function oeCheckAuth() {
     return false;
   }
   oeRenderUserInfo();
+  oeStartGoogleSessionMonitor();
   return true;
+}
+
+// ═══ Monitor de sessão Google: desloga automaticamente se a conexão com o Google cair ═══
+// Verifica periodicamente (e sempre que a aba volta a ficar visível) se o acesso Google
+// ainda está válido. Só desloga em sinal EXPLÍCITO de desconexão (erro confirmado ao
+// tentar renovar o token) - em caso de ambiguidade (timeout, exceção), mantém o usuário
+// logado, pra não derrubar sessões ativas por instabilidade passageira de rede.
+var _oeGoogleMonitorTimer = null;
+var _oeGoogleMonitorClient = null;
+var _oeRefreshInFlight = false;
+
+function oeStartGoogleSessionMonitor() {
+  if (_oeGoogleMonitorTimer) return; // já iniciado nesta sessão da página
+  _oeGoogleMonitorTimer = setInterval(oeVerifyGoogleSessionSilently, 5 * 60 * 1000); // a cada 5 min
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') oeVerifyGoogleSessionSilently();
+  });
+}
+
+function oeVerifyGoogleSessionSilently() {
+  var user = oeGetUser();
+  if (!user) return; // já deslogado, nada a checar
+  if (!_gToken) { oeTrySilentGoogleRefresh(); return; }
+  // 1) Confere se o token que já temos em mãos ainda é válido
+  fetch('https://oauth2.googleapis.com/tokeninfo?access_token=' + encodeURIComponent(_gToken))
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error('token inválido')); })
+    .then(function(){ /* token ainda válido - sessão OK, nada a fazer */ })
+    .catch(function(){ oeTrySilentGoogleRefresh(); }); // expirado - tenta renovar antes de concluir que desconectou
+}
+
+function oeTrySilentGoogleRefresh() {
+  if (!window.google || !window.google.accounts) return; // biblioteca do Google ainda não carregou - tenta na próxima verificação
+  if (_oeRefreshInFlight) return;
+  _oeRefreshInFlight = true;
+  var settled = false;
+  var timeoutId = setTimeout(function() {
+    if (settled) return;
+    settled = true;
+    _oeRefreshInFlight = false;
+    console.warn('[Auth] Verificação de sessão Google não respondeu a tempo - mantendo sessão por segurança.');
+  }, 8000);
+  try {
+    if (!_oeGoogleMonitorClient) {
+      _oeGoogleMonitorClient = google.accounts.oauth2.initTokenClient({
+        client_id: gClientId(),
+        scope: 'email profile openid https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/calendar.readonly',
+        callback: function(resp) {
+          if (settled) return;
+          settled = true; clearTimeout(timeoutId); _oeRefreshInFlight = false;
+          if (resp && resp.access_token) { _gToken = resp.access_token; }
+          else { oeForceLogoutDisconnected(); }
+        },
+        error_callback: function() {
+          if (settled) return;
+          settled = true; clearTimeout(timeoutId); _oeRefreshInFlight = false;
+          oeForceLogoutDisconnected();
+        }
+      });
+    }
+    _oeGoogleMonitorClient.requestAccessToken({ prompt: '' });
+  } catch (e) {
+    if (!settled) { settled = true; clearTimeout(timeoutId); _oeRefreshInFlight = false; }
+    console.warn('[Auth] Erro ao verificar sessão Google:', e.message);
+  }
+}
+
+function oeForceLogoutDisconnected() {
+  console.warn('[Auth] Sessão do Google perdida - encerrando acesso ao painel automaticamente.');
+  if (_oeGoogleMonitorTimer) { clearInterval(_oeGoogleMonitorTimer); _oeGoogleMonitorTimer = null; }
+  _gToken = null;
+  localStorage.removeItem('oe_user');
+  oeShowLoginScreen();
+  if (typeof oeShowLoginError === 'function') {
+    oeShowLoginError('Sua sessão do Google foi encerrada (desconectado ou acesso revogado). Entre novamente para continuar.');
+  }
 }
 
 // ═══════════════ AUDIT DE SAÚDE DAS APIS (Fase 2) ═══════════════
