@@ -300,7 +300,7 @@ function jsonp(url){
     script.onerror = ()=>{ if(!done){ cleanup(); reject(new Error('Falha ao carregar dados.')); } };
     script.src = url + (url.includes('?')?'&':'?') + 'callback=' + cbName;
     document.body.appendChild(script);
-    setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('Tempo esgotado ao carregar.')); } }, 15000);
+    setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('Tempo esgotado ao carregar.')); } }, 45000);
   });
 }
 function backendUrl(params){
@@ -538,10 +538,7 @@ function recordingsOf(e){
   return recs;
 }
 function meetLink(e){
-  if(e.hangoutLink) return e.hangoutLink;
-  const ep=(e.conferenceData&&e.conferenceData.entryPoints)||[];
-  const v=ep.find(p=>p.entryPointType==='video');
-  return v?v.uri:null;
+  return e.meetLink || (e.hangoutLink) || null;
 }
 
 /* ---------- render agenda ---------- */
