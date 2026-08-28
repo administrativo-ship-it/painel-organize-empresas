@@ -169,9 +169,7 @@ footer .org{color:var(--navy);font-weight:700}
   <div class="topbar-in">
     <div class="org-logo-box"><img class="org-logo" src="organize-logo.png" alt="Organize Empresas"></div>
     <div class="topbar-right">
-      <span class="gauth-state" id="authState"><span class="gdot" id="authDot"></span><span id="authLabel">Agenda não conectada</span></span>
-      <button class="btn btn-teal" id="connectBtn" style="display:none" onclick="connectGoogle()">Conectar agenda</button>
-      <button class="btn btn-ghost" id="signoutBtn" style="display:none;background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)" onclick="signOut()">Sair</button>
+      <span class="gauth-state"><span class="gdot on"></span><span>Sincronizado automaticamente</span></span>
     </div>
   </div>
 </div>
@@ -221,12 +219,7 @@ footer .org{color:var(--navy);font-weight:700}
       <div id="agendaActions"></div>
     </div>
     <div id="agendaContent">
-      <div class="gate" id="agendaGate">
-        <div class="ic"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zM9 8V6a3 3 0 016 0v2z"/></svg></div>
-        <h3>Conecte sua agenda</h3>
-        <p>Para sua privacidade, o calendário da mentoria é exibido somente após você entrar com a conta Google autorizada.</p>
-        <button class="btn btn-primary btn-lg" onclick="connectGoogle()"><svg class="ico-i" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> Conectar com Google</button>
-      </div>
+      <div class="loading"><span class="spin"></span>Carregando agenda…</div>
     </div>
   </div>
 
@@ -236,12 +229,7 @@ footer .org{color:var(--navy);font-weight:700}
       <div><h2><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg> Mentorias Gravadas</h2><p>Histórico completo das suas mentorias gravadas, em um só lugar.</p></div>
     </div>
     <div id="gravacoesContent">
-      <div class="gate">
-        <div class="ic"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zM9 8V6a3 3 0 016 0v2z"/></svg></div>
-        <h3>Conecte sua agenda</h3>
-        <p>As gravações são vinculadas aos eventos da mentoria. Conecte sua conta Google para visualizá-las.</p>
-        <button class="btn btn-primary btn-lg" onclick="connectGoogle()"><svg class="ico-i" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> Conectar com Google</button>
-      </div>
+      <div class="loading"><span class="spin"></span>Carregando gravações…</div>
     </div>
   </div>
 
@@ -283,14 +271,14 @@ footer .org{color:var(--navy);font-weight:700}
   <div id="footNote" style="margin-top:4px"></div>
 </footer>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 /* ============================================================
    CONFIG GLOBAL — Organize Empresas
    ============================================================ */
-const GOOGLE_CLIENT_ID = '317582081175-hq9fhp12dnv67odbp1lamnb34e3ngvrn.apps.googleusercontent.com';
-const CAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/drive.readonly';
-const CAL_OK_KEY = 'organize_cal_ok';   // lembra que o cliente já conectou (login persistente)
+// backend sem login — roda na conta da Organize, entrega só os dados DESTE portal
+// (o backend decide o que mostrar a partir do "id" do link, nunca confia em filtros vindos do navegador)
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwz-ktUH6owf15x6CnGhP147FxI5T83wz2216VNSLfBzIlfmUte0vomIxZhu9kZ1ISK/exec';
+const APPS_SCRIPT_TOKEN = 'organize2026';
 // base do site (funciona em produção e no preview local)
 const REPO_BASE = location.pathname.indexOf('/painel-organize-empresas/')===0 ? '/painel-organize-empresas/' : '/';
 const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -298,9 +286,27 @@ const MES_FULL = ['janeiro','fevereiro','março','abril','maio','junho','julho',
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 
 let CLIENT = null;       // dados do cliente (JSON)
-let TOKEN = null;        // access token Google
-let tokenClient = null;
 let EVENTS = [];         // eventos carregados
+
+/* ---------- JSONP (evita bloqueio de CORS do Apps Script) ---------- */
+let _jsonpN = 0;
+function jsonp(url){
+  return new Promise((resolve, reject)=>{
+    const cbName = '_jsonp_cb_'+(_jsonpN++)+'_'+Date.now();
+    const script = document.createElement('script');
+    let done = false;
+    function cleanup(){ delete window[cbName]; script.remove(); }
+    window[cbName] = (data)=>{ done=true; cleanup(); resolve(data); };
+    script.onerror = ()=>{ if(!done){ cleanup(); reject(new Error('Falha ao carregar dados.')); } };
+    script.src = url + (url.includes('?')?'&':'?') + 'callback=' + cbName;
+    document.body.appendChild(script);
+    setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('Tempo esgotado ao carregar.')); } }, 15000);
+  });
+}
+function backendUrl(params){
+  const p = new URLSearchParams({token:APPS_SCRIPT_TOKEN, ...params});
+  return APPS_SCRIPT_URL + '?' + p.toString();
+}
 
 /* ---------- identificar o cliente (URL limpa por caminho OU ?id=) ---------- */
 function getClientId(){
@@ -361,6 +367,8 @@ function renderClient(){
   // ferramentas
   renderTools();
   document.getElementById('footNote').textContent = CLIENT.responsavel ? `Mentoria conduzida por ${CLIENT.responsavel}` : '';
+  // agenda + gravações carregam sozinhas, sem precisar de login
+  loadCalendar();
 }
 
 /* ---------- ícones oficiais (mesmo tom — navy) ---------- */
@@ -417,13 +425,6 @@ function offCard(icon,title,desc){
 /* ============================================================
    NAVEGADOR DE DRIVE (Apostilas + Drive) — sincronizado ao vivo
    ============================================================ */
-function driveRef(url){
-  url=url||'';
-  let m=url.match(/folders\/([A-Za-z0-9_-]+)/); if(m) return {type:'folder',id:m[1]};
-  m=url.match(/file\/d\/([A-Za-z0-9_-]+)/); if(m) return {type:'file',id:m[1]};
-  m=url.match(/[?&]id=([A-Za-z0-9_-]+)/); if(m) return {type:'folder',id:m[1]};
-  return null;
-}
 /* ícones minimalistas (mesmo tom navy) */
 const ICO_FOLDER='<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>';
 const ICO_DOC='<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>';
@@ -443,16 +444,7 @@ function areaCfg(area){ return area==='drive'
 function initArea(area){
   const c=document.getElementById(area+'Content'); const cfg=areaCfg(area);
   if(!cfg.url){ c.innerHTML='<div class="tool-grid">'+offCard(cfg.ico, cfg.label+' ainda não disponível', cfg.empty)+'</div>'; return; }
-  if(!TOKEN){
-    c.innerHTML=`<div class="gate"><div class="ic"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></div><h3>Conecte para navegar</h3>
-      <p>Entre com sua conta Google para ver as pastas e arquivos aqui dentro, sempre atualizados.</p>
-      <button class="btn btn-primary btn-lg" onclick="connectGoogle()"><svg class="ico-i" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> Conectar com Google</button>
-      <div style="margin-top:12px"><a class="btn btn-ghost" href="${cfg.url}" target="_blank" rel="noopener">Ou abrir no Drive ↗</a></div></div>`;
-    return;
-  }
-  const ref=driveRef(cfg.url);
-  if(!ref){ c.innerHTML=`<div class="err-box">Link do Drive inválido.</div>`+extBtn(cfg.url); return; }
-  DRV[area]=[{id:ref.id, name:cfg.label}];
+  DRV[area]=[{id:null, name:cfg.label}]; // id null = raiz (o backend decide qual pasta é, com base no cliente)
   listArea(area);
 }
 async function listArea(area){
@@ -460,12 +452,12 @@ async function listArea(area){
   const cur=DRV[area][DRV[area].length-1];
   c.innerHTML=`<div class="loading"><span class="spin"></span>Carregando…</div>`;
   try{
-    const q=encodeURIComponent(`'${cur.id}' in parents and trashed=false`);
-    const url=`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,webViewLink,webContentLink)&orderBy=folder,name&pageSize=300&supportsAllDrives=true&includeItemsFromAllDrives=true`;
-    const r=await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
-    if(r.status===401||r.status===403){ c.innerHTML=`<div class="err-box"><b>Sem acesso a esta pasta.</b><br>Verifique se ela está compartilhada com a conta usada no login.</div>`+extBtn(areaCfg(area).url); return; }
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    renderArea(area,(await r.json()).files||[]);
+    const params = {action:'drive', id:getClientId(), area};
+    if(cur.id) params.folder = cur.id;
+    const data = await jsonp(backendUrl(params));
+    if(data.error) throw new Error(data.error);
+    if(!cur.id && data.folderId) DRV[area][0].id = data.folderId; // guarda a raiz real p/ navegação
+    renderArea(area, data.files||[]);
   }catch(e){ c.innerHTML=`<div class="err-box">Não foi possível carregar. ${e.message||''}</div>`+extBtn(areaCfg(area).url); }
 }
 function renderArea(area,files){
@@ -503,91 +495,14 @@ function previewDrive(id){ document.getElementById('apFrame').src=`https://drive
 function closePreview(){ document.getElementById('apModal').classList.remove('open'); document.getElementById('apFrame').src=''; }
 
 /* ============================================================
-   GOOGLE — autenticação + calendário
+   AGENDA — via backend (sem login do cliente)
    ============================================================ */
-function initGoogle(){
-  if(!window.google || !google.accounts){ setTimeout(initGoogle,300); return; }
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: CAL_SCOPE,
-    callback: (resp)=>{
-      if(resp && resp.access_token){
-        TOKEN = resp.access_token;
-        localStorage.setItem(CAL_OK_KEY,'1');   // lembra para reconectar sozinho
-        setAuthState(true);
-        loadCalendar();
-        initArea('apostilas');
-        initArea('drive');
-        scheduleTokenRefresh();
-      }
-    },
-    error_callback: ()=>{ setAuthState(false); }  // login silencioso falhou → mostra botão
-  });
-  document.getElementById('connectBtn').style.display='inline-flex';
-  // LOGIN PERSISTENTE: se já conectou neste navegador, reconecta sem pedir nada
-  if(localStorage.getItem(CAL_OK_KEY)){
-    document.getElementById('authLabel').textContent='Reconectando…';
-    try{ tokenClient.requestAccessToken({prompt:''}); }catch(e){}
-  }
-}
-// renova o token em silêncio antes de expirar (~55 min) para manter a sessão viva
-let _refreshTimer=null;
-function scheduleTokenRefresh(){
-  clearTimeout(_refreshTimer);
-  _refreshTimer=setTimeout(()=>{ if(localStorage.getItem(CAL_OK_KEY)){ try{ tokenClient.requestAccessToken({prompt:''}); }catch(e){} } }, 55*60*1000);
-}
-function connectGoogle(){
-  if(!tokenClient){ alert('Carregando login do Google… tente novamente em alguns segundos.'); return; }
-  tokenClient.requestAccessToken({prompt: TOKEN ? '' : 'consent'});
-}
-function signOut(){
-  if(TOKEN){ google.accounts.oauth2.revoke(TOKEN,()=>{}); }
-  TOKEN=null; EVENTS=[];
-  localStorage.removeItem(CAL_OK_KEY);   // esquece o login persistente
-  clearTimeout(_refreshTimer);
-  setAuthState(false);
-  // restaurar gates
-  document.getElementById('agendaContent').innerHTML = gateHTML('agenda');
-  document.getElementById('gravacoesContent').innerHTML = gateHTML('grav');
-  initArea('apostilas');
-  initArea('drive');
-  document.getElementById('nextStrip').style.display='none';
-}
-function setAuthState(on){
-  document.getElementById('authDot').classList.toggle('on',on);
-  document.getElementById('authLabel').textContent = on ? 'Agenda conectada' : 'Agenda não conectada';
-  document.getElementById('connectBtn').style.display = on ? 'none':'inline-flex';
-  document.getElementById('signoutBtn').style.display = on ? 'inline-flex':'none';
-}
-function gateHTML(which){
-  const txt = which==='agenda'
-    ? 'Para sua privacidade, o calendário é exibido somente após você entrar com a conta Google autorizada.'
-    : 'As gravações são vinculadas aos eventos da mentoria. Conecte sua conta Google para visualizá-las.';
-  return `<div class="gate"><div class="ic"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 007 6v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6 9a2 2 0 110-4 2 2 0 010 4zM9 8V6a3 3 0 016 0v2z"/></svg></div><h3>Conecte sua agenda</h3>
-    <p>${txt}</p><button class="btn btn-primary btn-lg" onclick="connectGoogle()"><svg class="ico-i" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> Conectar com Google</button></div>`;
-}
-
 async function loadCalendar(){
-  const calId = (CLIENT && CLIENT.calendarId) ? CLIENT.calendarId : 'primary';
   document.getElementById('agendaContent').innerHTML = `<div class="loading"><span class="spin"></span>Carregando agenda…</div>`;
-  const now = new Date();
-  const timeMin = new Date(now.getFullYear(), now.getMonth()-12, 1).toISOString();
-  const timeMax = new Date(now.getFullYear(), now.getMonth()+13, 1).toISOString();
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`
-    + `?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=2500`;
   try{
-    const r = await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
-    if(r.status===401||r.status===403){
-      const body = await r.json().catch(()=>({}));
-      document.getElementById('agendaContent').innerHTML =
-        `<div class="err-box"><b>Sem acesso a este calendário.</b><br>Verifique se a conta Google usada tem permissão de leitura na agenda da mentoria. ${body.error?'('+body.error.message+')':''}</div>`;
-      return;
-    }
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const data = await r.json();
-    EVENTS = (data.items||[])
-      .filter(e=>e.status!=='cancelled' && (e.start&&(e.start.dateTime||e.start.date)))
-      .filter(matchesClient);
+    const data = await jsonp(backendUrl({action:'events', id:getClientId()}));
+    if(data.error) throw new Error(data.error);
+    EVENTS = data.events || [];
     renderAgenda();
     renderGravacoes();
     renderNext();
@@ -595,34 +510,6 @@ async function loadCalendar(){
     document.getElementById('agendaContent').innerHTML =
       `<div class="err-box">Não foi possível carregar a agenda agora. ${e.message||''}</div>`;
   }
-}
-
-/* ---------- filtro RÍGIDO do cliente ----------
-   Regras (combinadas, todas obrigatórias):
-   1. EXCLUI qualquer evento com "Organize Empresas" no título (eventos internos).
-   2. O título precisa conter o NOME da empresa (filtro/empresa).
-   3. O título precisa seguir o padrão de programa: "Organize Mentoring/Master/
-      Estratégico/Marketing e Vendas - Nome da Empresa".
-   Assim, só aparecem agendas e gravações daquela empresa. */
-function norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
-const PROGRAMAS = ['organize mentoring','organize master','organize estrategico','organize marketing e vendas'];
-function clientEmails(){
-  return (CLIENT.clienteEmail||'').toLowerCase().split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean);
-}
-function matchesClient(e){
-  const title = norm(e.summary||'');
-  if(!title) return false;
-  // 1. eventos internos da Organize Empresas — nunca exibir
-  if(title.includes('organize empresas')) return false;
-  // 2. precisa ser um evento de programa de mentoria
-  if(!PROGRAMAS.some(p=>title.includes(p))) return false;
-  // 3a. mentoria individual: título contém o nome da empresa
-  const nome = norm(CLIENT.filtro || CLIENT.empresa || '');
-  if(nome && title.includes(nome)) return true;
-  // 3b. mentoria em GRUPO: o cliente é um dos convidados (aceita múltiplos e-mails)
-  const emails = clientEmails();
-  if(emails.length && (e.attendees||[]).some(a=>emails.includes((a.email||'').toLowerCase()))) return true;
-  return false;
 }
 
 /* ---------- parsing de gravações ---------- */
@@ -748,14 +635,14 @@ function renderNext(){
 function switchTab(t){
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));
-  if((t==='apostilas'||t==='drive') && TOKEN) initArea(t);
+  if(t==='apostilas'||t==='drive') initArea(t);
 }
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 /* ---------- atualização automática ----------
    Ao voltar para a aba (ou reabrir), recarrega a agenda/gravações ao vivo. */
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden && TOKEN){
+  if(!document.hidden && CLIENT){
     loadCalendar();
     const act=document.querySelector('.tab.active');
     if(act && (act.dataset.tab==='apostilas'||act.dataset.tab==='drive')) initArea(act.dataset.tab);
@@ -765,7 +652,6 @@ document.addEventListener('visibilitychange',()=>{
 /* ---------- boot ---------- */
 document.querySelector('.org-logo').src = REPO_BASE+'organize-logo.png';
 loadClient();
-initGoogle();
 </script>
 </body>
 </html>
