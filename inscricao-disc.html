@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Formação em DISC — Organize Empresas</title>
+<title>Formação em DISC - Organize Empresas</title>
 <meta name="description" content="Inscrição para o Curso de Formação em DISC da Organize Empresas.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -96,7 +96,7 @@ select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(
 <body>
 <div id="app"></div>
 <script>
-window.__LOGO_DATA_URI__ = ''; // preenchido no deploy (logo embutido como asset separado — ver assets/logo-organize.png)
+window.__LOGO_DATA_URI__ = ''; // preenchido no deploy (logo embutido como asset separado - ver assets/logo-organize.png)
 var CONFIG = {
   formId: 'disc',
   registerUrl: 'https://organize-inscricoes.administrativo-2a8.workers.dev/register',
@@ -105,11 +105,11 @@ var CONFIG = {
   heroLead: 'Curso para você aplicar a metodologia DISC na gestão da sua equipe: entender perfis comportamentais, melhorar a comunicação interna e tomar decisões mais assertivas de contratação e liderança.',
   infoRows: [
     {label:'Formato', value:'100% on-line, pelo Google Meet'},
-    {label:'Carga horária', value:'2 encontros de 2h — 4h no total'},
-    {label:'Data e horário', value:'A confirmar — você será avisado(a) por WhatsApp assim que a turma fechar'},
+    {label:'Carga horária', value:'2 encontros de 2h - 4h no total'},
+    {label:'Data e horário', value:'28 e 29 de setembro, às 18h (Brasília)'},
     {label:'Investimento', value:'R$ 297,00'},
     {label:'Vagas', value:'Vagas limitadas'},
-    {label:'Inscrições', value:'Abertas — sem prazo definido até o momento'}
+    {label:'Inscrições', value:'Abertas - sem prazo definido até o momento'}
   ],
   hasPlanChoice: false,
   planOptions: [],
@@ -125,7 +125,7 @@ function esc(s){ s=(s===undefined||s===null)?'':String(s); return s.replace(/&/g
 function fmtWhatsApp(v){ var d=String(v||'').replace(/\D/g,'').slice(0,11); if(d.length<=2)return d; if(d.length<=7)return '('+d.slice(0,2)+') '+d.slice(2); return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7); }
 function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 function planPrice(v){ var list=CONFIG.planOptions||[]; for(var i=0;i<list.length;i++){ if(list[i].value===v) return list[i].price; } return ''; }
-function planLabel(v){ var list=CONFIG.planOptions||[]; for(var i=0;i<list.length;i++){ if(list[i].value===v) return list[i].label+' — '+list[i].price; } return v||'—'; }
+function planLabel(v){ var list=CONFIG.planOptions||[]; for(var i=0;i<list.length;i++){ if(list[i].value===v) return list[i].label+' - '+list[i].price; } return v||'-'; }
 
 var VIEW = {mode:'form', locked:false, banner:null, values:{}, errors:{}};
 
@@ -272,8 +272,8 @@ function renderFormPanel(){
   html += '<button type="submit" class="btn btn-primary" '+(locked?'disabled':'')+'>'+(locked?'Enviando…':'Registrar inscrição')+'</button>';
   html += '<p class="privacy-note">Seus dados são usados apenas pela equipe da Organize Empresas para tratar esta inscrição.</p>';
   var subText = CONFIG.cardPaymentUrl
-    ? 'Preencha os dados, pague via Pix ou cartão de crédito (parcelado) e confirme o pagamento — nossa equipe valida e confirma sua vaga.'
-    : 'Preencha os dados, pague via Pix e confirme o envio do comprovante — nossa equipe valida o pagamento e confirma sua vaga.';
+    ? 'Preencha os dados, pague via Pix ou cartão de crédito (parcelado) e confirme o pagamento - nossa equipe valida e confirma sua vaga.'
+    : 'Preencha os dados, pague via Pix e confirme o envio do comprovante - nossa equipe valida o pagamento e confirma sua vaga.';
   return '<div class="panel"><h2>Formulário de inscrição</h2><p class="sub">'+subText+'</p><form id="regform" novalidate>'+html+'</form></div>';
 }
 
