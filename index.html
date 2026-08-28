@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Organize Empresas — Painel Gerencial</title>
+<title>Organize Empresas - Painel Organize</title>
 <link rel="icon" type="image/png" id="dynamic-favicon" href="">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -33,6 +33,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--txt);min
 .sidebar-footer{margin-top:auto;padding:14px 20px;border-top:1px solid rgba(92,200,212,.15);display:flex;flex-direction:column;gap:7px;}
 .cfg-btn{width:100%;background:rgba(92,200,212,.1);border:1px solid rgba(92,200,212,.2);color:var(--teal);padding:8px 12px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .2s;}
 .cfg-btn:hover{background:rgba(92,200,212,.2);}
+.cfg-advanced{width:100%;}
+.cfg-advanced summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.45);transition:all .2s;}
+.cfg-advanced summary::-webkit-details-marker{display:none;}
+.cfg-advanced summary:hover{color:var(--teal);background:rgba(92,200,212,.08);}
+.cfg-advanced[open] summary{color:var(--teal);margin-bottom:7px;}
+.cfg-advanced .cfg-btn{margin-top:7px;}
 
 /* MAIN */
 .main{margin-left:252px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
@@ -434,7 +440,7 @@ tbody tr:hover{background:var(--off);}
     <div style="background:linear-gradient(135deg,#1B2B6B 0%,#0a1a7a 100%);border-radius:16px;padding:20px 28px;display:inline-block;margin-bottom:22px;box-shadow:0 8px 24px rgba(27,43,107,.25);">
       <img src="organize-logo.png?v=2" style="height:52px;display:block;" onerror="this.outerHTML='<div style=\'color:#fff;font-family:Montserrat,Arial,sans-serif;font-weight:800;font-size:22px;letter-spacing:1px;\'>ORGANIZE<br><span style=\'color:#5CC8D4;font-size:13px;letter-spacing:3px;\'>EMPRESAS</span></div>'">
     </div>
-    <h2 style="color:#1B2B6B;font-size:20px;font-weight:800;margin-bottom:8px;">Painel Gerencial</h2>
+    <h2 style="color:#1B2B6B;font-size:20px;font-weight:800;margin-bottom:8px;">Painel Organize</h2>
     <p style="color:#41546A;font-size:13px;line-height:1.5;margin-bottom:24px;">Acesso exclusivo da equipe interna da Organize Empresas. Entre com seu e-mail corporativo Google.</p>
     <button onclick="oeGoogleLogin()" style="background:#1B2B6B;color:#fff;border:none;border-radius:10px;padding:14px 24px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:10px;width:100%;justify-content:center;">
       <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.2 5.2c-.4.4 6.7-4.9 6.7-14.9 0-1.3-.1-2.6-.4-3.9z"/></svg>
@@ -460,7 +466,7 @@ tbody tr:hover{background:var(--off);}
       <text x="62" y="44" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.72)" letter-spacing="3">EMPRESAS</text>
     </svg>
     <img id="logo-custom" style="display:none;max-width:175px;max-height:58px;object-fit:contain;" alt="Logo">
-    <div class="logo-tagline" id="logo-tagline">Painel Gerencial de Projetos</div>
+    <div class="logo-tagline" id="logo-tagline">Painel Organize</div>
   </div>
 
   <div class="nav-label">Principal</div>
@@ -471,22 +477,22 @@ tbody tr:hover{background:var(--off);}
   <div class="nav-item" onclick="showPage('projects',this)">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
     Projetos (FlowUp)
-    <span class="nav-badge" id="badge-active">—</span>
+    <span class="nav-badge" id="badge-active">-</span>
   </div>
   <div class="nav-item" onclick="showPage('tasks',this)">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
     Tarefas
-    <span class="nav-badge" id="badge-over">—</span>
+    <span class="nav-badge" id="badge-over">-</span>
   </div>
   <div class="nav-item" onclick="showPage('boards',this)">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="13" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
     Quadros FlowUp
-    <span class="nav-badge" id="badge-boards">—</span>
+    <span class="nav-badge" id="badge-boards">-</span>
   </div>
   <div class="nav-item" onclick="showPage('trello',this)">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
     Quadros do Trello
-    <span class="nav-badge blue" id="badge-trello">—</span>
+    <span class="nav-badge blue" id="badge-trello">-</span>
   </div>
   <div class="nav-item" onclick="showPage('members',this)">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
@@ -501,7 +507,7 @@ tbody tr:hover{background:var(--off);}
   <div class="nav-item" onclick="showPage('alerts',this)">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
     Pontos de Atenção
-    <span class="nav-badge" id="badge-alerts">—</span>
+    <span class="nav-badge" id="badge-alerts">-</span>
   </div>
 
 
@@ -529,22 +535,28 @@ tbody tr:hover{background:var(--off);}
     Links de Inscrição
   </div>
   <div class="sidebar-footer">
-    <button class="cfg-btn" onclick="openConfig('flowup')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
-      Config FlowUp
-    </button>
-    <button class="cfg-btn" onclick="openConfig('trello')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
-      Config Trello
-    </button>
-    <button class="cfg-btn" onclick="openConfig('ia')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-      Config IA
-    </button>
     <button class="cfg-btn" onclick="openLogoConfig()">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       Personalizar
     </button>
+    <details class="cfg-advanced">
+      <summary>
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+        Configurações avançadas
+      </summary>
+      <button class="cfg-btn" onclick="openConfig('flowup')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+        Config FlowUp
+      </button>
+      <button class="cfg-btn" onclick="openConfig('trello')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>
+        Config Trello
+      </button>
+      <button class="cfg-btn" onclick="openConfig('ia')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        Config IA
+      </button>
+    </details>
   </div>
 </aside>
 
@@ -568,14 +580,14 @@ tbody tr:hover{background:var(--off);}
 
   <div class="filter-bar">
     <select class="f-sel" id="f-status" onchange="applyFilters()">
-      <option value="">Todos — Status Projeto</option>
+      <option value="">Todos - Status Projeto</option>
       <option value="active">Ativo</option>
       <option value="done">Concluído</option>
       <option value="paused">Pausado</option>
       <option value="inactive">Inativo</option>
     </select>
     <select class="f-sel" id="f-task-status" onchange="applyFilters()">
-      <option value="">Todas — Tarefas</option>
+      <option value="">Todas - Tarefas</option>
       <option value="new">Novas Tarefas</option>
       <option value="active">Em Andamento</option>
       <option value="duetoday">Vencendo Hoje</option>
@@ -583,7 +595,7 @@ tbody tr:hover{background:var(--off);}
       <option value="done">Finalizadas</option>
     </select>
     <select class="f-sel" id="f-service" onchange="applyFilters()">
-      <option value="">Todos — Serviço</option>
+      <option value="">Todos - Serviço</option>
       <option value="Organize Master">Organize Master</option>
       <option value="Organize Mentoring">Organize Mentoring</option>
       <option value="Organize Estratégico">Organize Estratégico</option>
@@ -591,17 +603,17 @@ tbody tr:hover{background:var(--off);}
       <option value="Organize Marketing">Organize Marketing</option>
     </select>
     <select class="f-sel" id="f-risk" onchange="applyFilters()">
-      <option value="">Todos — Risco</option>
+      <option value="">Todos - Risco</option>
       <option value="low">Baixo</option>
       <option value="moderate">Moderado</option>
       <option value="high">Alto</option>
       <option value="critical">Crítico</option>
     </select>
     <select class="f-sel" id="f-member" onchange="applyFilters()">
-      <option value="">Todos — Responsável</option>
+      <option value="">Todos - Responsável</option>
     </select>
     <select class="f-sel" id="f-tag" onchange="applyFilters()">
-      <option value="">Todas — Tags</option>
+      <option value="">Todas - Tags</option>
     </select>
     <input class="f-inp" id="f-search" type="search" placeholder="Buscar projeto, cliente ou tarefa..." oninput="applyFilters()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="oe-no-autofill-search-x7k" data-lpignore="true" data-form-type="other">
     <button class="f-clr" onclick="clearFilters()">✕ Limpar</button>
@@ -619,7 +631,7 @@ tbody tr:hover{background:var(--off);}
         <div class="chart-wrap"><canvas id="ch-status"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-ttl">Execução por Quadro — Trello</div>
+        <div class="chart-ttl">Execução por Quadro - Trello</div>
         <div class="chart-sub">% de conclusão (apenas cards com data de entrega)</div>
         <div class="chart-wrap"><canvas id="ch-trello-lists"></canvas></div>
       </div>
@@ -692,7 +704,7 @@ tbody tr:hover{background:var(--off);}
         <div class="chart-wrap"><canvas id="ch-risk"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-ttl">Trello — Progresso por Cliente</div>
+        <div class="chart-ttl">Trello - Progresso por Cliente</div>
         <div class="chart-sub">Concluído x pendente por Área de Trabalho</div>
         <div class="chart-wrap"><canvas id="ch-trello-progress"></canvas></div>
       </div>
@@ -732,7 +744,7 @@ tbody tr:hover{background:var(--off);}
     <div style="padding:24px 28px;background:linear-gradient(135deg,#1B2B6B,#2A3F8F);color:#fff;border-radius:12px;margin-bottom:20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;">
         <div>
-          <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.75;margin-bottom:4px;">Organize Empresas — Indicadores Comerciais</div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.75;margin-bottom:4px;">Organize Empresas - Indicadores Comerciais</div>
           <h1 style="font-size:22px;font-weight:800;margin:0;">Relatório Gerencial Comercial</h1>
           <div style="font-size:12.5px;opacity:.85;margin-top:6px;line-height:1.5;">Faça upload das planilhas <strong>Indicadores Comerciais</strong> de cada cliente. O sistema identifica automaticamente a empresa e consolida os indicadores em um relatório único.</div>
         </div>
@@ -787,7 +799,7 @@ tbody tr:hover{background:var(--off);}
     <div style="padding:24px 28px;background:linear-gradient(135deg,#1B2B6B,#2A3F8F);color:#fff;border-radius:12px;margin-bottom:20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;">
         <div>
-          <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.75;margin-bottom:4px;">Organize Empresas — Recrutamento &amp; Seleção</div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.75;margin-bottom:4px;">Organize Empresas - Recrutamento &amp; Seleção</div>
           <h1 style="font-size:22px;font-weight:800;margin:0;">Análise Inteligente de Currículos</h1>
           <div style="font-size:12.5px;opacity:.85;margin-top:6px;line-height:1.5;">Descreva o perfil da vaga, faça upload dos currículos (PDF, DOCX ou TXT) e a IA analisa todos, gerando um ranking dos candidatos mais compatíveis.</div>
         </div>
@@ -891,7 +903,7 @@ tbody tr:hover{background:var(--off);}
               <div class="portal-field"><label>Nome da empresa *</label><input id="p-empresa" placeholder="Ex.: Padaria Pão Quente" oninput="portalUpdatePreview()"></div>
               <div class="portal-field"><label>Serviço contratado</label>
                 <select id="p-servico" onchange="portalUpdatePreview()">
-                  <option value="">— selecione —</option>
+                  <option value="">- selecione -</option>
                   <option>Organize Mentoring</option>
                   <option>Organize Master</option>
                   <option>Organize Marketing e Vendas</option>
@@ -949,7 +961,7 @@ tbody tr:hover{background:var(--off);}
           <!-- Resultado -->
           <div id="p-result" class="portal-result">
             <div class="portal-result-title" id="p-result-title">Portal criado com sucesso!</div>
-            <p class="portal-result-p">Link exclusivo do cliente — envie no WhatsApp:</p>
+            <p class="portal-result-p">Link exclusivo do cliente - envie no WhatsApp:</p>
             <div id="p-result-link" class="portal-result-link"></div>
             <div class="portal-result-actions">
               <button class="portal-btn portal-btn-ghost" onclick="portalCopyLink()">Copiar link</button>
@@ -1001,7 +1013,7 @@ tbody tr:hover{background:var(--off);}
       <div class="portal-header">
         <div>
           <h2 class="portal-h2">Links de Inscrição</h2>
-          <p class="portal-sub">Controle centralizado dos formulários públicos de inscrição — acesso direto, sem login, com pagamento via Pix.</p>
+          <p class="portal-sub">Controle centralizado dos formulários públicos de inscrição - acesso direto, sem login, com pagamento via Pix.</p>
         </div>
       </div>
 
@@ -1172,7 +1184,7 @@ tbody tr:hover{background:var(--off);}
       </div>
       <div class="cfg-field">
         <label class="cfg-lbl">Tagline / Subtítulo</label>
-        <input class="cfg-inp sans" id="lc-tagline" placeholder="Painel Gerencial de Projetos">
+        <input class="cfg-inp sans" id="lc-tagline" placeholder="Painel Organize">
       </div>
       <div class="cfg-field">
         <label class="cfg-lbl">Upload da Logo</label>
@@ -1215,7 +1227,7 @@ const S = {
   _logoPending: null
 };
 
-// ═══════════════ FLOWUP — API DIRETA (OAuth2 Bearer) ═══════════════
+// ═══════════════ FLOWUP - API DIRETA (OAuth2 Bearer) ═══════════════
 // Autenticação: POST /token com grant_type=password → Bearer token (~1 ano)
 // Endpoints: https://api.flowup.me/v1/...  (base correta desde jul/2026)
 var FLOWUP_BASE = 'https://api.flowup.me';
@@ -1285,7 +1297,7 @@ async function fuFetchAllPages(path, pageSize, extraBody) {
 }
 
 // Descobre TODOS os projetos via GetProjectInfo/{id} em lotes de 10 em paralelo.
-// Para após 10 IDs consecutivos sem resposta válida — tolerante a lacunas nos IDs.
+// Para após 10 IDs consecutivos sem resposta válida - tolerante a lacunas nos IDs.
 async function fuGetProjectInfos() {
   var results = [], consecutiveMisses = 0, id = 1;
   while (consecutiveMisses < 10) {
@@ -1294,7 +1306,7 @@ async function fuGetProjectInfos() {
     id += 10;
     var batchRes = await Promise.all(batch.map(function(bid) {
       return fuRequest('GET', '/v1/Project/GetProjectInfo/' + bid).catch(function(e) {
-        // Re-propaga erros de auth — 404 (ID inexistente) é tratado como miss normal
+        // Re-propaga erros de auth - 404 (ID inexistente) é tratado como miss normal
         if (e.message && (e.message.includes('HTTP 401') || e.message.includes('HTTP 403'))) throw e;
         return null;
       });
@@ -1310,11 +1322,11 @@ async function fuGetProjectInfos() {
 }
 
 // Busca todos os quadros ativos + enriquece com GetBoardInfo.
-// NUNCA lança erro — retorna [] em qualquer falha para não quebrar o sync principal.
+// NUNCA lança erro - retorna [] em qualquer falha para não quebrar o sync principal.
 // ATENÇÃO: GetActiveBoards usa snake_case (page_size/current_page), não PascalCase.
 async function fuGetBoardsWithInfo() {
   try {
-    // Busca paginada com snake_case — fuFetchAllPages usa PascalCase e retorna 0 neste endpoint
+    // Busca paginada com snake_case - fuFetchAllPages usa PascalCase e retorna 0 neste endpoint
     var boardsList = [];
     var page = 1, pageSize = 100;
     while (true) {
@@ -1339,7 +1351,7 @@ async function fuGetBoardsWithInfo() {
 async function loadFlowUpDataDirect() {
   // Projetos + tarefas + usuários em PARALELO (independentes entre si).
   // PageSize=50: equilibrio entre cobertura (~545 tasks) e velocidade (~11 requests).
-  // Boards em ramo paralelo isolado — falha nunca afeta os dados críticos.
+  // Boards em ramo paralelo isolado - falha nunca afeta os dados críticos.
   var [critical, boards] = await Promise.all([
     Promise.all([
       fuGetProjectInfos(),
@@ -1350,9 +1362,9 @@ async function loadFlowUpDataDirect() {
   ]);
   var projectInfos = critical[0], tasks = critical[1], usersResp = critical[2];
   var members = usersResp.Result || usersResp.Items || (Array.isArray(usersResp) ? usersResp : []);
-  // Dados vazios = falha silenciosa de auth ou API instável — não tratar como sucesso
+  // Dados vazios = falha silenciosa de auth ou API instável - não tratar como sucesso
   if (projectInfos.length === 0 && tasks.length === 0) {
-    throw new Error('FlowUp retornou dados vazios — verifique credenciais ou tente novamente');
+    throw new Error('FlowUp retornou dados vazios - verifique credenciais ou tente novamente');
   }
   return { projects: projectInfos, tasks: tasks, members: members, boards: boards,
            generatedAt: new Date().toISOString(), _meta: { source: 'direct' } };
@@ -1382,7 +1394,7 @@ async function loadFlowUpData() {
     try {
       // timeout 45s + 1 retry (2s delay): paralelo ~10-15s por tentativa
       data = await withTimeout(withRetry(function() { return loadFlowUpDataDirect(); }, 1, 2000), 45000);
-      // Só persiste se tiver dados reais — nunca salvar zeros no cache
+      // Só persiste se tiver dados reais - nunca salvar zeros no cache
       if (data.projects && data.projects.length > 0) {
         try { localStorage.setItem('oe_flowup_cache', JSON.stringify({ data: data, savedAt: new Date().toISOString() })); } catch(_) {}
       }
@@ -1405,7 +1417,7 @@ async function loadFlowUpData() {
         _flowupDataMeta.source = 'worker';
         _flowupDataMeta.cache = r.headers.get('x-cache') || '';
       } else {
-        console.warn('[FlowUp] Worker retornou dados vazios — ignorando, usando próximo fallback');
+        console.warn('[FlowUp] Worker retornou dados vazios - ignorando, usando próximo fallback');
       }
     } catch(e) {
       console.warn('[FlowUp] Worker indisponível, usando JSON estático:', e.message);
@@ -1428,7 +1440,7 @@ async function loadFlowUpData() {
         _flowupDataMeta.cache = 'stale:' + cached.savedAt;
         console.warn('[FlowUp] Usando cache localStorage de', cached.savedAt);
       } else if (cached) {
-        // Cache corrompido (zeros) — descarta para não bloquear o erro real
+        // Cache corrompido (zeros) - descarta para não bloquear o erro real
         try { localStorage.removeItem('oe_flowup_cache'); } catch(_) {}
         console.warn('[FlowUp] Cache descartado por conter dados vazios');
       }
@@ -1481,7 +1493,7 @@ function normFlowUpTask(t) {
     project: t.ProjectName || '', projectId: t.ProjectId || '',
     client: extractClient(t.ProjectName || ''),
     boardName: t.BoardName || '', boardId: t.BoardId || null,
-    responsible: t.UserName || '—',
+    responsible: t.UserName || '-',
     deadline: endDate, priority: 'medium',
     status: isDoneTask ? 'done' : (isOverTask ? 'overdue' : (isDueTodayTask ? 'duetoday' : 'active')),
     isDone: isDoneTask, isOver: isOverTask, isDueToday: isDueTodayTask,
@@ -1503,7 +1515,7 @@ function normFlowUpProject(p) {
     client: extractClient(p.ProjectName || ''),
     service: extractService([], p.ProjectName || ''),
     status: 'active',
-    responsible: '—',
+    responsible: '-',
     deadline: null, start: null,
     progress, risk: over > 0 ? 'high' : 'low',
     tasks: { total, done, over, today, pending: Math.max(0, total - done - over - today) },
@@ -1562,7 +1574,7 @@ function normProject(p) {
     client: p.client_name || p.client || extractClient(p.name || ''),
     service: extractService(p.tags || [], p.name || ''),
     status: normStatus(p.status || ''),
-    responsible: p.owner_name || p.owner || '—',
+    responsible: p.owner_name || p.owner || '-',
     deadline: p.due_date || p.end_date || null,
     start: p.start_date || p.created_at || null,
     progress, risk, tasks: { total, done, over, pending: total-done-over },
@@ -1576,7 +1588,7 @@ function normTask(t) {
     id: t.id, name: t.name || 'Sem nome',
     project: t.project_name || '', projectId: t.project || t.project_id || '',
     client: t.client_name || extractClient(t.project_name || ''),
-    responsible: t.assigned_to_name || t.owner || t.assignee || '—',
+    responsible: t.assigned_to_name || t.owner || t.assignee || '-',
     deadline: t.due_date || t.deadline || null,
     priority: normPrio(t.priority || ''),
     status: done ? 'done' : (over ? 'overdue' : normStatus(t.status || '')),
@@ -1589,7 +1601,7 @@ function normTask(t) {
 function normTrelloCard(card, board, listMap) {
   const due = card.due ? new Date(card.due) : null;
   const now = new Date();
-  const listName = listMap[card.idList] || '—';
+  const listName = listMap[card.idList] || '-';
   // Detecta conclusão pelo nome da lista (cards sem data nunca têm dueComplete=true)
   const listIsDone = /conclu[ií]|feito|finaliz|^done$|^fechad|encerrad|✓/i.test(listName);
   const dueComplete = !!card.dueComplete || listIsDone;
@@ -1847,7 +1859,7 @@ function abrirAuditAPIs() {
   var generated = _flowupDataMeta && _flowupDataMeta.generatedAt ? new Date(_flowupDataMeta.generatedAt) : null;
   var ageMin = generated ? Math.round((Date.now() - generated.getTime())/60000) : null;
   var ageTxt = ageMin === null ? '(sem timestamp no JSON)' : (ageMin < 60 ? ageMin + ' min atrás' : (ageMin/60).toFixed(1) + ' h atrás');
-  var staleWarn = ageMin !== null && ageMin > 1440 ? '<div style="color:#b45309;margin-top:4px;">⚠ Dados do FlowUp com mais de 24h — pode haver divergência com o sistema ao vivo.</div>' : '';
+  var staleWarn = ageMin !== null && ageMin > 1440 ? '<div style="color:#b45309;margin-top:4px;">⚠ Dados do FlowUp com mais de 24h - pode haver divergência com o sistema ao vivo.</div>' : '';
 
   var html = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:620px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">' +
     '<h3 style="color:#1B2B6B;font-size:17px;margin-bottom:14px;">Audit de Integrações</h3>' +
@@ -1907,7 +1919,7 @@ async function syncAll(forceLive = false) {
           }
         }
         if (!completed) {
-          console.warn('[syncAll] timeout esperando sync — continuando com dados disponíveis');
+          console.warn('[syncAll] timeout esperando sync - continuando com dados disponíveis');
         }
       } else {
         console.warn('[syncAll] dispatch falhou:', dispatch.error);
@@ -1983,7 +1995,7 @@ async function syncAll(forceLive = false) {
         if (r.status === 'fulfilled') {
           const { board, lists, cards, listMap } = r.value;
           S.trelloLists.push(...lists.map(l => ({...l, boardId: board.id, boardName: board.name})));
-          // Traz TODOS os cards (com ou sem data) — o painel exibe a estrutura completa do quadro
+          // Traz TODOS os cards (com ou sem data) - o painel exibe a estrutura completa do quadro
           S.trelloCards.push(...cards.map(c => normTrelloCard(c, board, listMap)));
         }
       });
@@ -2056,7 +2068,7 @@ async function forceLiveSync() {
       if (btn) { btn.disabled = false; btn.textContent = '⚡ Sync ao vivo'; }
       return;
     }
-    if (btn) btn.textContent = 'Sync iniciado — aguardando…';
+    if (btn) btn.textContent = 'Sync iniciado - aguardando…';
     // Polling a cada 15s até o run completar
     var attempts = 0;
     var maxAttempts = 60; // 15min
@@ -2067,7 +2079,7 @@ async function forceLiveSync() {
         if (btn) btn.textContent = 'Sincronizando… (' + (attempts*15) + 's)';
       } else if (st.ok && st.lastCompleted && st.lastCompleted.conclusion === 'success' && !st.inProgress) {
         clearInterval(interval);
-        if (btn) btn.textContent = '✓ Sync concluído — recarregando…';
+        if (btn) btn.textContent = '✓ Sync concluído - recarregando…';
         // Recarrega dados frescos do Worker
         await syncAll();
         if (btn) { btn.disabled = false; btn.textContent = '⚡ Sync ao vivo'; }
@@ -2088,20 +2100,20 @@ async function forceLiveSync() {
 
 function deriveMembers() {
   const m = {};
-  S.tasks.forEach(t => { if (t.responsible && t.responsible !== '—') m[t.responsible] = true; });
+  S.tasks.forEach(t => { if (t.responsible && t.responsible !== '-') m[t.responsible] = true; });
   return Object.keys(m).map(n => ({name:n, id:n}));
 }
 
 function populateMemberFilter() {
   const sel = document.getElementById('f-member');
-  sel.innerHTML = '<option value="">Todos — Responsável</option>';
-  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='—'&&!isUserInactive(r)))].sort();
+  sel.innerHTML = '<option value="">Todos - Responsável</option>';
+  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='-'&&!isUserInactive(r)))].sort();
   names.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
 }
 function populateTagFilter() {
   const sel = document.getElementById('f-tag');
   const allTags = [...new Set(S.tasks.flatMap(function(t){ return t.tags.map(function(tg){ return tg.name; }); }))].filter(Boolean).sort();
-  sel.innerHTML = '<option value="">Todas — Tags</option>' + allTags.map(function(tag){ return '<option value="'+tag+'">'+tag+'</option>'; }).join('');
+  sel.innerHTML = '<option value="">Todas - Tags</option>' + allTags.map(function(tag){ return '<option value="'+tag+'">'+tag+'</option>'; }).join('');
 }
 
 function updateBadges() {
@@ -2182,9 +2194,11 @@ function renderOverview() {
   const ps = filteredProjects(), ts = filteredTasks();
   const active = ps.filter(p=>p.status==='active').length;
   const done = ps.filter(p=>p.status==='done').length;
-  // Usa dados do GetProjectInfo (precisos) em vez de calcular da lista de tasks paginada
-  const over = S.projects.reduce(function(s,p){return s+(p.tasks.over||0);},0);
-  const dueToday = S.projects.reduce(function(s,p){return s+(p.tasks.today||0);},0);
+  // Mesma regra de cálculo da aba Tarefas (ts.isOver), pra nunca divergir entre as duas telas.
+  // Antes somava p.tasks.over (TasksDelayed do GetProjectInfo, calculado pelo próprio FlowUp) -
+  // um número diferente do calculado aqui no painel, causando divergência entre Visão Geral e Tarefas.
+  const over = ts.filter(function(t){return t.isOver;}).length;
+  const dueToday = ts.filter(function(t){return t.isDueToday;}).length;
   const taskDone = ts.filter(t=>t.isDone).length;
   const totalT = ts.length;
   // Conclusão Geral: usa dados do GetProjectInfo (precisos) em vez da lista paginada
@@ -2200,7 +2214,7 @@ function renderOverview() {
     ${kpi('Projetos Concluídos', done, 'green', 'Finalizados', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>')}
     ${kpi('Vencendo Hoje', dueToday, 'orange', 'Prazo hoje', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>')}
     ${kpi('Tarefas Atrasadas', over, 'red', 'Ação imediata', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01M10.29 3.86l-8.4 14.3A2 2 0 003.6 21h16.8a2 2 0 001.71-2.84l-8.4-14.3a2 2 0 00-3.42 0z"/></svg>')}
-    ${kpi('Conclusão Geral', projTotal>0?Math.round(projDone/projTotal*100)+'%':'—', 'navy', `${projDone} de ${projTotal} tarefas`, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5L5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>')}
+    ${kpi('Conclusão Geral', projTotal>0?Math.round(projDone/projTotal*100)+'%':'-', 'navy', `${projDone} de ${projTotal} tarefas`, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5L5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>')}
     ${kpi('Em Risco / Crítico', atRisk, 'orange', 'Projetos críticos', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c.5 4-3 6-3 10a5 5 0 0010 0c0-4-3-6-3-10M10 16a2 2 0 004 0"/></svg>')}
     ${kpi('Quadros Trello', S.trelloBoards.length, 'trello', 'Quadros ativos', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="13" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/></svg>')}
     ${kpi('Cards Trello', trCards, 'trello', `${trDone} concluídos`, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7h8M8 11h5"/></svg>')}
@@ -2221,7 +2235,7 @@ function renderOverview() {
     if (!c.due || c.dueComplete) return false;
     const days = Math.floor((new Date(c.due) - Date.now()) / 86400000);
     return days >= 0 && days <= 7;
-  }).forEach(c => upcoming.push({ name:c.name, project:c.boardName, responsible:c.members.join(', ')||'—', deadline:c.due, source:'trello', isOver:c.isOver }));
+  }).forEach(c => upcoming.push({ name:c.name, project:c.boardName, responsible:c.members.join(', ')||'-', deadline:c.due, source:'trello', isOver:c.isOver }));
 
   upcoming.sort((a,b) => new Date(a.deadline)-new Date(b.deadline));
   document.getElementById('upcoming-count').textContent = upcoming.length;
@@ -2249,7 +2263,7 @@ function renderOverview() {
     ['#1B2B6B','#1a7a4a','#41546A','#c0392b']
   );
 
-  // Trello — Execução por QUADRO (% de conclusão por board, considerando APENAS cards com data de entrega)
+  // Trello - Execução por QUADRO (% de conclusão por board, considerando APENAS cards com data de entrega)
   if (S.trelloBoards.length > 0) {
     var boardStats = S.trelloBoards.map(function(b){
       var cards = S.trelloCards.filter(function(c){ return c.boardId === b.id && c.due; });
@@ -2284,7 +2298,7 @@ function projCard(p) {
   const sC = {active:'b-active',done:'b-done',paused:'b-paused',inactive:'b-inactive'};
   const rL = {low:'Baixo',moderate:'Moderado',high:'Alto',critical:'Crítico'};
   const pColor = p.progress > 70 ? 'g' : (p.tasks.over > 0 && p.progress < 30 ? 'r' : '');
-  const dl = p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '—';
+  const dl = p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '-';
   return `<div class="proj-card risk-${p.risk}" onclick="openProjModal('${p.id}')">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
       <div><div class="proj-name">${p.name}</div><div class="proj-client">${p.client}</div></div>
@@ -2328,15 +2342,15 @@ function renderTasks() {
   const body = document.getElementById('tasks-body');
   if (!ts.length) { body.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">Nenhuma tarefa</td></tr>`; return; }
   body.innerHTML = ts.slice(0,300).map(t => {
-    const dl = t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '—';
+    const dl = t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '-';
     const tagHtml = t.tags.map(tg => `<span class="tag-chip" style="background:${tg.color||'#666'}">${tg.name}</span>`).join('');
     const boardLabel = t.boardName ? `<div style="font-size:11px;color:var(--muted)">${t.boardName}</div>` : '';
     return `<tr style="${t.isOver?'background:var(--red-bg)':''}${t.isDone?';opacity:.65':''}">
-      <td style="font-weight:600;color:var(--navy);max-width:280px">${t.name}</td>
+      <td style="font-weight:600;color:var(--navy);max-width:280px;cursor:pointer;" onclick="openTaskDetail(${t.id})" title="Ver detalhes da tarefa">${t.name}</td>
       <td><div style="font-size:12px">${t.project}</div>${boardLabel}</td>
       <td>${t.responsible}</td>
       <td style="color:${t.isOver?'var(--red)':'inherit'};white-space:nowrap">${dl}</td>
-      <td style="white-space:nowrap">${tagHtml||'—'}</td>
+      <td style="white-space:nowrap">${tagHtml||'-'}</td>
       <td><span class="badge ${t.isOver?'b-over':t.isDone?'b-done':'b-active'}">${t.isOver?'Atrasada':t.isDone?'Concluída':'Ativa'}</span></td>
       <td style="white-space:nowrap">
         ${!t.isDone ? `<button class="act-btn g" data-tid="${t.id}" onclick="fuActionMarkDone(this)" title="Marcar concluída">✓</button> ` : ''}
@@ -2384,7 +2398,7 @@ function renderBoards() {
       var pid = entry[0], group = entry[1];
       var totDel = group.boards.reduce(function(s,b){return s+b.delayed;},0);
       return '<div class="boards-group">' +
-        '<div class="boards-group-title">' + group.name + ' <span style="font-weight:400;color:var(--muted)">— ' + group.boards.length + ' quadro(s)' + (totDel > 0 ? ' · <span style="color:var(--red)">' + totDel + ' atrasada(s)</span>' : '') + '</span></div>' +
+        '<div class="boards-group-title">' + group.name + ' <span style="font-weight:400;color:var(--muted)">- ' + group.boards.length + ' quadro(s)' + (totDel > 0 ? ' · <span style="color:var(--red)">' + totDel + ' atrasada(s)</span>' : '') + '</span></div>' +
         '<div class="board-cards-grid">' + group.boards.map(function(b) {
           var riskBorder = b.delayed > 0 ? '2px solid var(--red)' : b.today > 0 ? '2px solid var(--orange)' : '1px solid var(--border)';
           return '<div class="board-card" style="border-top:' + riskBorder + '">' +
@@ -2451,33 +2465,98 @@ function openNewTaskModal() {
   overlay.innerHTML = '<div class="modal-box">' +
     '<h3>Nova Tarefa no FlowUp</h3>' +
     '<div class="modal-field"><label>Título *</label><input id="nt-title" type="text" placeholder="Descreva a tarefa..."></div>' +
-    '<div class="modal-field"><label>Quadro *</label><select id="nt-board"><option value="">— Selecione —</option>' + boardOptions + '</select></div>' +
-    '<div class="modal-field"><label>Responsável</label><select id="nt-user"><option value="">— Sem responsável —</option>' + memberOptions + '</select></div>' +
+    '<div class="modal-field"><label>Quadro *</label><select id="nt-board" onchange="ntLoadStatuses()"><option value="">- Selecione -</option>' + boardOptions + '</select></div>' +
+    '<div class="modal-field"><label>Etapa *</label><select id="nt-status" disabled><option value="">- Selecione o quadro primeiro -</option></select></div>' +
+    '<div class="modal-field"><label>Responsável</label><select id="nt-user"><option value="">- Sem responsável -</option>' + memberOptions + '</select></div>' +
+    '<div class="modal-field"><label>Descrição</label><textarea id="nt-desc" rows="3" placeholder="Detalhes da tarefa (opcional)..."></textarea></div>' +
     '<div class="modal-field"><label>Prazo</label><input id="nt-date" type="date"></div>' +
     '<div class="modal-actions">' +
       '<button class="btn-cancel" onclick="document.getElementById(\'new-task-modal\').remove()">Cancelar</button>' +
-      '<button class="btn-confirm" onclick="submitNewTask()">Criar Tarefa</button>' +
+      '<button class="btn-confirm" id="nt-submit-btn" onclick="submitNewTask()">Criar Tarefa</button>' +
     '</div></div>';
   document.body.appendChild(overlay);
   document.getElementById('nt-title').focus();
 }
 
+async function ntLoadStatuses() {
+  var boardId = document.getElementById('nt-board').value;
+  var statusSel = document.getElementById('nt-status');
+  if (!boardId) { statusSel.disabled = true; statusSel.innerHTML = '<option value="">- Selecione o quadro primeiro -</option>'; return; }
+  statusSel.disabled = true;
+  statusSel.innerHTML = '<option value="">Carregando etapas...</option>';
+  try {
+    var statuses = await fuRequest('GET', '/v1/status/getbyboard?boardId=' + boardId);
+    if (!Array.isArray(statuses) || !statuses.length) throw new Error('Nenhuma etapa encontrada neste quadro.');
+    statuses.sort(function(a,b){ return (a.Order||0) - (b.Order||0); });
+    statusSel.innerHTML = '<option value="">- Selecione -</option>' +
+      statuses.map(function(s){ return '<option value="'+s.StatusId+'">'+esc(s.Name)+'</option>'; }).join('');
+    statusSel.disabled = false;
+  } catch (e) {
+    statusSel.innerHTML = '<option value="">Erro ao carregar etapas</option>';
+    showToast('Erro ao carregar etapas do quadro: ' + e.message, 'err');
+  }
+}
+
 async function submitNewTask() {
   var title = (document.getElementById('nt-title').value || '').trim();
   var boardId = document.getElementById('nt-board').value;
+  var statusId = document.getElementById('nt-status').value;
   var userId = document.getElementById('nt-user').value;
+  var desc = (document.getElementById('nt-desc').value || '').trim();
   var date = document.getElementById('nt-date').value;
   if (!title) { alert('Informe o título da tarefa.'); return; }
   if (!boardId) { alert('Selecione o quadro.'); return; }
-  var payload = { Title: title, BoardId: parseInt(boardId) };
+  if (!statusId) { alert('Selecione a etapa da tarefa.'); return; }
+  var board = S.boards.find(function(b){ return String(b.id) === String(boardId); });
+  if (!board || !board.projectId) { alert('Não foi possível identificar o projeto deste quadro. Tente sincronizar novamente.'); return; }
+  var payload = {
+    Title: title,
+    ProjectId: board.projectId,
+    BoardId: parseInt(boardId),
+    StatusId: parseInt(statusId)
+  };
   if (userId) payload.UserId = parseInt(userId);
+  if (desc) payload.Description = desc;
   if (date) payload.EndDate = date + 'T00:00:00';
+  var btn = document.getElementById('nt-submit-btn');
+  btn.disabled = true; btn.textContent = 'Criando...';
   try {
-    await fuRequest('POST', '/v1/Task/Create', payload);
+    await fuRequest('POST', '/v1/task/create', payload);
     document.getElementById('new-task-modal').remove();
     showToast('Tarefa criada!', 'ok');
+    syncAll();
   } catch(e) {
     showToast('Erro ao criar: ' + e.message, 'err');
+    btn.disabled = false; btn.textContent = 'Criar Tarefa';
+  }
+}
+
+// ─── Visualizar detalhes de uma tarefa (item 6) ───
+async function openTaskDetail(taskId) {
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'task-detail-modal';
+  overlay.innerHTML = '<div class="modal-box"><h3>Carregando tarefa...</h3><div class="modal-actions"><button class="btn-cancel" onclick="document.getElementById(\'task-detail-modal\').remove()">Fechar</button></div></div>';
+  document.body.appendChild(overlay);
+  try {
+    var t = await fuRequest('GET', '/v1/task/gettask/' + taskId);
+    var descHtml = t.Description ? esc(t.Description).replace(/\n/g,'<br>') : '<span style="color:var(--muted)">Sem descrição.</span>';
+    var tagsHtml = (t.Tags||[]).map(function(tg){ return '<span style="display:inline-block;background:'+(tg.Color||'#999')+';color:#fff;font-size:11px;padding:2px 8px;border-radius:99px;margin:2px 4px 2px 0;">'+esc(tg.Name||'')+'</span>'; }).join('');
+    overlay.querySelector('.modal-box').innerHTML =
+      '<h3>' + esc(t.Title || 'Sem título') + '</h3>' +
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">#' + t.Id + ' - ' + esc(t.ProjectName||'') + (t.BoardName ? ' / ' + esc(t.BoardName) : '') + '</div>' +
+      '<div class="modal-field"><label>Etapa</label><div style="font-size:13.5px;">' + esc(t.StatusName || '-') + '</div></div>' +
+      '<div class="modal-field"><label>Responsável</label><div style="font-size:13.5px;">' + esc(t.UserName || '- Sem responsável -') + '</div></div>' +
+      '<div class="modal-field"><label>Prazo</label><div style="font-size:13.5px;">' + (t.EndDate ? new Date(t.EndDate).toLocaleDateString('pt-BR') : '-') + '</div></div>' +
+      (tagsHtml ? '<div class="modal-field"><label>Tags</label><div>' + tagsHtml + '</div></div>' : '') +
+      '<div class="modal-field"><label>Descrição</label><div style="font-size:13.5px;line-height:1.5;">' + descHtml + '</div></div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn-cancel" onclick="document.getElementById(\'task-detail-modal\').remove()">Fechar</button>' +
+      '</div>';
+  } catch (e) {
+    overlay.querySelector('.modal-box').innerHTML =
+      '<h3>Erro</h3><p style="color:var(--red);font-size:13px;">Não foi possível carregar a tarefa: ' + esc(e.message) + '</p>' +
+      '<div class="modal-actions"><button class="btn-cancel" onclick="document.getElementById(\'task-detail-modal\').remove()">Fechar</button></div>';
   }
 }
 
@@ -2579,7 +2658,7 @@ function openTrelloBoard(boardId) {
 }
 
 // ─── MEMBERS ───
-// Lista de usuários INATIVOS no FlowUp — não aparecem em responsáveis, gráficos nem filtros
+// Lista de usuários INATIVOS no FlowUp - não aparecem em responsáveis, gráficos nem filtros
 var FLOWUP_INACTIVE_USERS = (function(){
   try { return JSON.parse(localStorage.getItem('oe_flowup_inactive')||'["Roberto Andrade"]'); }
   catch(e) { return ['Roberto Andrade']; }
@@ -2594,7 +2673,7 @@ function isUserInactive(name) {
 }
 
 function renderMembers() {
-  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='—'&&!isUserInactive(r)))].sort();
+  const names = [...new Set(S.tasks.map(t=>t.responsible).filter(r=>r&&r!=='-'&&!isUserInactive(r)))].sort();
   const colors = ['#1B2B6B','#41546A','#3DBBCC','#2c4a7a','#1a7a4a','#d35400','#0052CC'];
   const grid = document.getElementById('member-grid');
   if (!names.length) { grid.innerHTML = empty('Nenhum responsável', 'Sincronize os dados do FlowUp.'); return; }
@@ -2698,7 +2777,7 @@ function renderAlerts() {
   const pC = {critical:'var(--red)',high:'var(--orange)',medium:'#e9c46a',low:'var(--green)'};
   const tbody = document.getElementById('over-body');
   tbody.innerHTML = over.slice(0,100).map(t => {
-    const dl = t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '—';
+    const dl = t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '-';
     return `<tr style="background:var(--red-bg)">
       <td style="font-weight:600">${t.name}</td><td>${t.project}</td><td>${t.responsible}</td>
       <td style="color:var(--red);font-weight:600">${dl}</td>
@@ -2725,9 +2804,9 @@ function renderAlertsList(projects, id, limit) {
   const el = document.getElementById(id);
   const alerts = [];
   projects.forEach(p => {
-    if (p.risk === 'critical') alerts.push({ level:'critical', title:`CRÍTICO — ${p.name}`, desc:`${p.tasks.over} tarefa(s) atrasada(s) · ${p.client} · ${p.responsible}` });
-    else if (p.risk === 'high') alerts.push({ level:'high', title:`ALTO RISCO — ${p.name}`, desc:`Pendências significativas · ${p.client} · Progresso: ${p.progress}%` });
-    else if (p.risk === 'moderate') alerts.push({ level:'moderate', title:`Atenção — ${p.name}`, desc:`${p.daysSince > 7 ? `Sem atualização há ${p.daysSince}d` : `${p.tasks.over} tarefa(s) em atraso`} · ${p.client}` });
+    if (p.risk === 'critical') alerts.push({ level:'critical', title:`CRÍTICO - ${p.name}`, desc:`${p.tasks.over} tarefa(s) atrasada(s) · ${p.client} · ${p.responsible}` });
+    else if (p.risk === 'high') alerts.push({ level:'high', title:`ALTO RISCO - ${p.name}`, desc:`Pendências significativas · ${p.client} · Progresso: ${p.progress}%` });
+    else if (p.risk === 'moderate') alerts.push({ level:'moderate', title:`Atenção - ${p.name}`, desc:`${p.daysSince > 7 ? `Sem atualização há ${p.daysSince}d` : `${p.tasks.over} tarefa(s) em atraso`} · ${p.client}` });
   });
   if (!alerts.length) { el.innerHTML = `<div style="padding:22px;text-align:center;color:var(--green);font-weight:600;font-size:14px">Nenhum alerta crítico identificado</div>`; return; }
   el.innerHTML = alerts.slice(0,limit).map(a => `
@@ -2766,8 +2845,8 @@ function openProjModal(id) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:18px">
         ${iRow('Status', `<span class="badge ${({active:'b-active',done:'b-done',paused:'b-paused',inactive:'b-inactive'})[p.status]||'b-active'}">${{active:'Ativo',done:'Concluído',paused:'Pausado',inactive:'Inativo'}[p.status]||p.status}</span>`)}
         ${iRow('Nível de Risco', `<span class="risk-badge rb-${p.risk}">● ${rL[p.risk]}</span>`)}
-        ${iRow('Início', p.start ? new Date(p.start).toLocaleDateString('pt-BR') : '—')}
-        ${iRow('Prazo', p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '—')}
+        ${iRow('Início', p.start ? new Date(p.start).toLocaleDateString('pt-BR') : '-')}
+        ${iRow('Prazo', p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '-')}
       </div>
       ${overTasks.length > 0 ? `<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--red);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">Tarefas Atrasadas (${overTasks.length})</div>
         ${overTasks.slice(0,8).map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--red-bg);border-radius:6px;margin-bottom:4px;font-size:12px">
@@ -2954,8 +3033,8 @@ function saveLogoConfig() {
 }
 function applyLogo() {
   const lc = S.logoConfig;
-  document.getElementById('logo-tagline').textContent = lc.tagline || 'Painel Gerencial de Projetos';
-  if (lc.name) document.title = lc.name + ' — Painel Gerencial';
+  document.getElementById('logo-tagline').textContent = lc.tagline || 'Painel Organize';
+  if (lc.name) document.title = lc.name + ' - Painel Organize';
   const svgEl = document.getElementById('logo-svg');
   const imgEl = document.getElementById('logo-custom');
   if (lc.img) { svgEl.style.display='none'; imgEl.src=lc.img; imgEl.style.display='block'; }
@@ -3290,7 +3369,7 @@ function oeClassificarArquivo(filename) {
 // Indexa TODA a pasta raiz: descobre subpastas (clientes) e suas planilhas
 async function oeIndexarDriveCompleto(rootIdOpt, onProgress) {
   var rootId = rootIdOpt || oeGetDriveRoot();
-  if (!_gToken) throw new Error('Drive não conectado — autorize primeiro.');
+  if (!_gToken) throw new Error('Drive não conectado - autorize primeiro.');
   if (onProgress) onProgress({ stage: 'listando-pasta-raiz', rootId: rootId });
 
   var children = await oeListChildren(rootId);
@@ -3303,7 +3382,7 @@ async function oeIndexarDriveCompleto(rootIdOpt, onProgress) {
 
   var index = { root: rootId, indexedAt: new Date().toISOString(), clientes: {}, rootStats: { subpastas: subfolders.length, arquivos: directFiles.length } };
 
-  // Caso 1: arquivos direto na raiz — todos são para "Organize" geral (sem subpastas)
+  // Caso 1: arquivos direto na raiz - todos são para "Organize" geral (sem subpastas)
   if (directFiles.length && !subfolders.length) {
     var entry = { folderId: rootId, folderName: '(raiz)', files: {} };
     directFiles.forEach(function(f){
@@ -3359,7 +3438,7 @@ function oeBuscarClienteNoIndice(clienteName) {
   return null;
 }
 
-// Baixa arquivo binário do Drive (para XLSX) — suporta Shared Drives
+// Baixa arquivo binário do Drive (para XLSX) - suporta Shared Drives
 async function oeDownloadFileBinary(fileId) {
   if (!_gToken) throw new Error('Drive não conectado');
   var url = 'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media&supportsAllDrives=true';
@@ -3441,7 +3520,7 @@ async function oeFindPlanilhasInFolder(folderId, depth, maxDepth) {
   return planilhas;
 }
 
-// ═══════════════ DRIVE — MATERIAIS PRODUZIDOS NO PERÍODO (Fase 2) ═══════════════
+// ═══════════════ DRIVE - MATERIAIS PRODUZIDOS NO PERÍODO (Fase 2) ═══════════════
 // Lista todos os arquivos (não-planilha) criados/modificados dentro de um período
 async function oeListDriveDocsInPeriod(folderId, dtIni, dtFim, depth) {
   if (!_gToken || !folderId) return [];
@@ -3576,7 +3655,7 @@ function oeUploadKey(tipo) {
 
 function oeSavePeriodUploads(tipo, data) {
   try {
-    // limita tamanho — só persiste se < 4MB (localStorage típico = 5-10MB)
+    // limita tamanho - só persiste se < 4MB (localStorage típico = 5-10MB)
     var json = JSON.stringify(data);
     if (json.length > 4000000) {
       console.warn('[Upload] Dados muito grandes para localStorage, não persistido:', json.length);
@@ -3697,7 +3776,7 @@ function oeAbrirUploadModal(tipo) {
   bg.style.cssText = 'position:fixed;inset:0;background:rgba(13,21,38,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
   bg.innerHTML = '<div style="background:#fff;border-radius:12px;padding:26px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);">' +
     '<h3 style="color:#1B2B6B;font-size:17px;margin-bottom:8px;">Upload Manual de Planilhas</h3>' +
-    '<p style="font-size:12.5px;color:#41546A;line-height:1.5;margin-bottom:14px;">Use este modo quando a pasta Drive do cliente estiver vazia ou inacessível. Faça upload de uma ou mais planilhas (.xlsx/.xls) — a IA irá lê-las localmente.</p>' +
+    '<p style="font-size:12.5px;color:#41546A;line-height:1.5;margin-bottom:14px;">Use este modo quando a pasta Drive do cliente estiver vazia ou inacessível. Faça upload de uma ou mais planilhas (.xlsx/.xls) - a IA irá lê-las localmente.</p>' +
     '<input type="file" id="oe-upload-files" accept=".xlsx,.xls" multiple style="width:100%;padding:14px;border:2px dashed #1B2B6B;border-radius:8px;background:#F5F7FA;cursor:pointer;font-size:13px;margin-bottom:12px;">' +
     '<div id="oe-upload-result" style="font-size:12px;color:#41546A;margin-bottom:14px;max-height:200px;overflow-y:auto;"></div>' +
     '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
@@ -3815,7 +3894,7 @@ function abrirModalIndexarDrive() {
   bg.id = 'oe-index-modal';
   bg.style.cssText = 'position:fixed;inset:0;background:rgba(13,21,38,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
   bg.innerHTML = '<div style="background:#fff;border-radius:12px;padding:26px;max-width:620px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto;">' +
-    '<h3 style="color:#1B2B6B;font-size:18px;margin-bottom:8px;">Drive Organize — Indexação Automática</h3>' +
+    '<h3 style="color:#1B2B6B;font-size:18px;margin-bottom:8px;">Drive Organize - Indexação Automática</h3>' +
     '<p style="font-size:12.5px;color:#41546A;line-height:1.5;margin-bottom:16px;">O painel busca automaticamente as planilhas de cada cliente dentro da pasta raiz do Drive da Organize, sem precisar de links manuais.</p>' +
     statusBox +
     '<label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#41546A;">ID ou link da pasta raiz no Drive</label>' +
@@ -3841,7 +3920,7 @@ async function oeExecutarIndexacao() {
   if (!rootId) { alert('Cole um link ou ID válido da pasta raiz.'); return; }
   oeSetDriveRoot(rootId);
   if (!_gToken) {
-    alert('Conecte o Google Drive primeiro — clique em "Conectar Drive agora" no topo do modal.');
+    alert('Conecte o Google Drive primeiro - clique em "Conectar Drive agora" no topo do modal.');
     return;
   }
   var btn = document.getElementById('oe-btn-indexar');
@@ -3886,7 +3965,7 @@ function oeMostrarIndexAtual() {
     var color = cats.length >= 3 ? '#22c55e' : (cats.length >= 1 ? '#eab308' : '#ef4444');
     html += '<div style="padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:11.5px;">' +
       '<span style="color:' + color + ';">●</span> <strong>' + name + '</strong> ' +
-      '<span style="color:#8A94A8;">— ' + cats.length + ' planilha(s): ' + cats.join(', ') + '</span></div>';
+      '<span style="color:#8A94A8;">- ' + cats.length + ' planilha(s): ' + cats.join(', ') + '</span></div>';
   });
   resultEl.innerHTML = html;
 }
@@ -3946,7 +4025,7 @@ async function gDriveSearchSheet(clienteName, keyword) {
   return files.length ? files[0].id : null;
 }
 
-// ═══════════════ GOOGLE CALENDAR — Buscar mentorias do cliente no período ═══════════════
+// ═══════════════ GOOGLE CALENDAR - Buscar mentorias do cliente no período ═══════════════
 // Conta eventos do Google Calendar primário que contenham o nome do cliente no título/descrição
 // e que tenham ocorrido entre dtini e dtfim (inclusive). Retorna { count, events: [...] }.
 async function oeCountMentoriasInPeriod(clienteName, dtini, dtfim) {
@@ -3972,7 +4051,7 @@ async function oeCountMentoriasInPeriod(clienteName, dtini, dtfim) {
     var data = await res.json();
     var items = data.items || [];
     // Filtro adicional: o título precisa MENCIONAR o cliente (a API faz busca em todos os campos
-    // mas queremos só eventos com o nome explícito no resumo) — mais conservador.
+    // mas queremos só eventos com o nome explícito no resumo) - mais conservador.
     var nameUp = cleanName.toUpperCase();
     var filtered = items.filter(function(ev){
       var txt = ((ev.summary||'') + ' ' + (ev.description||'')).toUpperCase();
@@ -4263,7 +4342,7 @@ function rptHorizBarChart(canvasId, labels, data, color) {
 }
 
 function renderReportCharts(cache, tasks, tipo) {
-  // Chart 1: Faturamento vs Meta (bar) — or DRE (horiz bar for master)
+  // Chart 1: Faturamento vs Meta (bar) - or DRE (horiz bar for master)
   setTimeout(function() {
     var programa = cache.programa || 'mentoring';
     if (programa === 'master') {
@@ -4380,14 +4459,14 @@ function rptDownloadPDF(tipo) {
   html2pdf().set(opt).from(el).save().then(function(){
     if (btn) { btn.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg> Baixar PDF'; btn.disabled = false; }
   }).catch(function(e){
-    if (btn) { btn.textContent = 'Erro — tente novamente'; btn.disabled = false; }
+    if (btn) { btn.textContent = 'Erro - tente novamente'; btn.disabled = false; }
   });
 }
 // ═══════════════ RELATÓRIO MENSAL + ENCERRAMENTO ═══════════════
 
 var _rmf = {}; // Relatório Mensal form cache
 
-// Limpa cache do cliente anterior ao trocar de cliente — evita gráfico/KPIs presos
+// Limpa cache do cliente anterior ao trocar de cliente - evita gráfico/KPIs presos
 function rmfResetForClient(novoCliente) {
   // Preserva apenas o programa, mês e ano se já escolhidos manualmente
   var keepPrograma = _rmf.programa;
@@ -4421,7 +4500,7 @@ function mesNomeStr(n) {
 }
 
 function fmtBRL(v) {
-  if (!v && v !== 0) return '—';
+  if (!v && v !== 0) return '-';
   var n = parseFloat(String(v).replace(/[^\d,.-]/g,'').replace(',','.'));
   if (isNaN(n)) return v;
   return 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
@@ -4440,16 +4519,16 @@ function rptFlowUpSection(tasks, label) {
   var overRows = '';
   over.forEach(function(t){
     overRows += '<tr><td style="font-size:12px;max-width:220px"><strong>' + t.name + '</strong></td>' +
-      '<td style="font-size:11px">' + (t.project||'—') + '</td>' +
+      '<td style="font-size:11px">' + (t.project||'-') + '</td>' +
       '<td style="font-size:12px">' + t.responsible + '</td>' +
-      '<td style="font-size:11px;color:var(--red);font-weight:700">' + (t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '—') + '</td>' +
+      '<td style="font-size:11px;color:var(--red);font-weight:700">' + (t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '-') + '</td>' +
       '<td style="font-size:11px;color:var(--red);font-weight:700">' + t.daysLate + 'd</td></tr>';
   });
 
   var doneRows = '';
   done.slice(0,15).forEach(function(t){
     doneRows += '<tr><td style="font-size:12px;max-width:260px">' + t.name + '</td>' +
-      '<td style="font-size:11px;color:var(--muted)">' + (t.project||'—') + '</td>' +
+      '<td style="font-size:11px;color:var(--muted)">' + (t.project||'-') + '</td>' +
       '<td style="font-size:12px">' + t.responsible + '</td></tr>';
   });
   if (done.length > 15) doneRows += '<tr><td colspan="3" style="text-align:center;color:var(--muted);font-size:11px">+ ' + (done.length-15) + ' atividades adicionais concluídas</td></tr>';
@@ -4535,7 +4614,7 @@ function rptTrelloSection(clienteName, opts) {
     allCards = allCards.filter(function(c){ return boardIds[c.boardId]; });
   }
   var boards = allBoards;
-  if (!boards.length) return '<div class="rpt-sec">Planejamento Estratégico — Trello</div><div style="font-size:11.5px;color:var(--muted);font-style:italic;margin-bottom:20px">Nenhum board Trello encontrado' + (clienteName ? ' para ' + clienteName : '') + '. Sincronize o painel para incluir esta seção.</div>';
+  if (!boards.length) return '<div class="rpt-sec">Planejamento Estratégico - Trello</div><div style="font-size:11.5px;color:var(--muted);font-style:italic;margin-bottom:20px">Nenhum board Trello encontrado' + (clienteName ? ' para ' + clienteName : '') + '. Sincronize o painel para incluir esta seção.</div>';
 
   var total = allCards.length;
   var over = allCards.filter(function(c){return c.isOver;}).length;
@@ -4554,7 +4633,7 @@ function rptTrelloSection(clienteName, opts) {
       '<td><div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="flex:1;height:4px;background:var(--border);border-radius:999px;overflow:hidden;min-width:50px"><div style="height:100%;width:' + pct + '%;background:' + (pct>=80?'var(--green)':'var(--navy)') + ';border-radius:999px"></div></div>' + pct + '%</div></td></tr>';
   });
 
-  return '<div class="rpt-sec">Planejamento Estratégico — Trello</div>' +
+  return '<div class="rpt-sec">Planejamento Estratégico - Trello</div>' +
     '<div class="rpt-ops-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">' +
     '<div class="rpt-ops-card"><div class="rpt-ops-val" style="color:var(--trello)">' + boards.length + '</div><div class="rpt-ops-lbl">Boards</div></div>' +
     '<div class="rpt-ops-card"><div class="rpt-ops-val" style="color:var(--green)">' + done + '</div><div class="rpt-ops-lbl">Cards Concluídos</div></div>' +
@@ -4602,7 +4681,7 @@ function setClientLink(cliente, key, val) {
 
 var LOGO_ORGANIZE_B64 = 'data:image/png;base64,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vLDwG/eE8/s3BCkeAAAACXBIWXMAAC4jAAAuIwF4pT92AAADbmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4NCjx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iPjxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+PHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9InV1aWQ6ZmFmNWJkZDUtYmEzZC0xMWRhLWFkMzEtZDMzZDc1MTgyZjFiIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iPjxkYzpjcmVhdG9yPjxyZGY6U2VxIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+PHJkZjpsaT5LYXJpbnkgTWFyaW5obzwvcmRmOmxpPjwvcmRmOlNlcT4NCgkJCTwvZGM6Y3JlYXRvcj48L3JkZjpEZXNjcmlwdGlvbj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOmV4aWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vZXhpZi8xLjAvIj48ZXhpZjpEYXRlVGltZU9yaWdpbmFsPjIwMjUtMDMtMThUMTA6MDE6MjMuNTIxPC9leGlmOkRhdGVUaW1lT3JpZ2luYWw+PC9yZGY6RGVzY3JpcHRpb24+PHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9InV1aWQ6ZmFmNWJkZDUtYmEzZC0xMWRhLWFkMzEtZDMzZDc1MTgyZjFiIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iPjx4bXA6Q3JlYXRlRGF0ZT4yMDI1LTAzLTE4VDEwOjAxOjIzLjUyMTwveG1wOkNyZWF0ZURhdGU+PC9yZGY6RGVzY3JpcHRpb24+PC9yZGY6UkRGPjwveDp4bXBtZXRhPg0KPD94cGFja2V0IGVuZD0ndyc/Pu7QSk4AAAAhdEVYdENyZWF0aW9uIFRpbWUAMjAyNTowMzoxOCAxMDowMToyM6/8UKoAAJypSURBVHhe7N15fFT1vf/xM0tmSTJZhuwJJBA0oaKAiiwuoFRZvBpcWsAN0Iu4VazYYtWr1KtVfq0bVaylirt464a2KFYFrAuISlDUoAQSyB6yb7PP74+xMZwsczI5M/PNzOv54NEHfs7QTM7MnPm+z3fTeDweCQAAAABEopUXAAAAACDcCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIh6ACAAAAQDgEFQAAAADCIagAAAAAEA5BBQAAAIBwCCoAAAAAhENQAQAAACAcggoAAAAA4RBUAAAAAAiHoAIAAABAOAQVAAAAAMIhqAAAAAAQDkEFAAAAgHAIKgAAAACEQ1ABAAAAIByCCgAAAADhEFQAAAAACIegAgAAAEA4BBUAAAAAwiGoAAAAABAOQQUAAACAcAgqAAAAAIRDUAEAAAAgHIIKAAAAAOEQVAAAAAAIR+PxeOQ1AAD6caDLdthm10qSVqPRSpJOo/H9xfe/Go2klTRajaSVNDqNr6jRaiSdRqORJI3vYd1HfY/0/cOj/g4AAEEFADAYm+sb329slldV9ceCMXT3AwD4LgAAiMXt9cpLAIDoQ1ABAIjFQ04BABBUAACicUskFQAAQQUAIBgPQ78AAAQVAMCghGABFjc5BQBAUAEAiIbJ9AAAggoAQDge5qgAAAgqAADRMPQLAEBQAQAIh6FfAACCCgBAOKz6BQAgqAAAhOOWFwAA0YigAgAYBG/wZ7oz9AsAQFABAAjHQ04BABBUAACioUcFAEBQAQAIh31UAAAEFQCAcNhHBQBAUAEACIfliQEABBUAwOCEIES4GfoFAJAkjcfjkdcAAOjHm3UN25ta5FVVXZKZdlJCvLyK4cPt9jY0dLW3Ozo7nZ2dTt9fXC6PyaT3/YmNjYmNjUlNjU1MNMr/MQD8B0EFADAIIQgqCzJST0m0yKsQT2ena//+xu+/b/j++4bDh1urqtp8f2pr2z0KFpl+442F559/rLwKAP9BUAEADEIIgsrF6SnTkhLkVQjA6fS88MLXX39d99VXtd9/31BR0eoNdCxgQoKxtvYWo1EnPwAA/8EcFQCAWLh/JqyYGO3WrWUPPfTp++8fOHy4JeCUIklSUVEhKQXAwAgqAACxsOqXyNaunTNqVKK8Oni/+MXP5CUAOBpBBQAA/Kix0fbaayW/+tU748c//s9//iA/LEmJicYNG4o0Go38wGAkJZnOOSdfXgWAozFHBQAwCJvqGj4M8hyV+WkjTk9W4Z49FGppsW/fXr51a9m2bWVffVXbPaArPT3+66+vTUkxy/+BJN1887sPP7xDXlVsyZKJTz11vrwKAEcjqAAABoGgEjGqq9s3bdr3+uslW7cedLn6bgxceOG4V175hbwqSTab+6ST/vrdd/XyA8p88slVU6dmy6sAcDSGfgEAEEX272/6058+PfXUDTk5D1133T//9a/S/lKKJEmvvfbds89+Ja9Kksmke+65C/T6QFoRJ52URUoBoEQglxgAQPQa0twEhE1DQ9fatZ9NnPjEscf++be//dennx5WuGbXjTe+XV7eRx/aiSdm3HnnDHlVgV/96hR5CQD6QlABAIhFUfMZyng80rvvHliw4NXs7Advuumdr76qlT/Cn9ZW+9Klm/ocJ37rradNmZIjrw4oJSV2wYLj5FUA6AtBBQCACHT4cOvdd3+Yn792zpzn//73bxwOt/wRim3bVvbII31MndfrNc88Mz82NkZ+oH9XX30S26cAUIigAgBA5HA6PX//+7dz5744evQjq1dvKy9vlj8iILfd9sG33x6RVyXp2GOtf/zj2fJqP4xG/XXXTZZXAaAfBBUAwGAwMEtUnZ2uRx/ddcwxf16w4JUtW/Z7PGq+VHa76/LLX3c6+xgBds01J8+ePVZe7cuyZSdmZcXLqwDQD4IKAADDW1OT7Z57/p2X9/CNN7596FAfE99VsXt39d13fyivSpJGIz355PnJyX1st9KTwaBbtepUeRUA+kdQAQBguKqqav/Nb97LzX34zju3HjnSKT+stvvv/2jHjkp5VZKysuIff/xcefVoV111Yna2RV4FgP4RVABgGPBKkt3jdXi9Tq/X5fW6JckTpkFYfQz9QTiUljZde+3m/Py1DzzwSXu7Q344ONxuz+LFb3R0OOUHJOmXv/zZokXHy6v/ERNDdwqAQWNnegAYBirtjgfLKuRVSZIkSaPRaCRJI0kajaSRNNof/67RSJLGK2m0kkbSSF5Jq5W0kler0f74YEkjaSSt5NVIWq1G0kjSz+JiZ6cky//fe3m9ruGjIO9MX5Q24gx2pu9fZWXb//zP1mef3aPuLBTlrrnm5HXr5smrktTUZDvhhL9UVrbKD0jS9def8uc/z5FXAWBA9KgAwPDm9Xo9Xq/b63V5vE6Px+7x2DyeLre70+3u8LjbXe42l6vN7Wpxupqc7gaH84jDWe9w1jkcdXZHjd1ZbbdX2uwVNnuT0yX/v4ZgOjqcq1dvLyh49Omni8OVUiRJ+stfPn/nnVJ5VZKSk01PPXW+vCpJiYmmu+4KZGtIAFGOoAIAkHxTopUJW/s4mrnd3qeeKi4oePTuu7d3dvYx8irErrrqzcZGm7wqSWefPeaGG+Qbz//ud6elpPiZag8AvTH0CwCGgQGGfqllSpLll+mp8movr9cd+aipj7E9KmLol8x77x285ZZ3A9hUvk+nn547Y0auXq/VajVarWb79vL33jvg9Q46f/7iF8e9/PJF8qokdXa6Tjrpr/v2/bjpSm5u0nffXW8ysckjgEEjqADAMBCCoDIt0XJxBkFFLN99d+S3v33vn//8Xn5g8Ewm/aJFx99ww+RJkzJkh8rKWjZsKH7iic/r6jpkhwb2/PMXXnLJeHlVkj77rOrUU59yuz2SJL344kULFx4nfwQAKMDQLwCAJA1m7BdCwGZz33771gkT/qJKSsnIiN+z55onnzyvd0qRJCkvL/H3v5+xa9eysWOt8mMDuuGGzRUVbfKqJJ1yStbtt58uSdL06SMXLCClAAgQQQUAIEmSpDCmDH6IEAbtww8PTZjwl/vu+7fLpcKohxEjYv/1r8uPOcZPCBk5MmH79iXjxvnvVevW3Gy78spNfb4l7rjjjKlTcx59dB75F0DACCoAAEl5UEFQtbTYly//58yZT//wQ4P8WEASEoz/+tflxx2nKH5kZsZv27Y4NzdJfqB/77134LHHdsmrkqTXa95774qJE9PlBwBAMYIKAEBi5JcI3nzz++OOW7d+/RfyA0NwzTUnDyotpKbG3nTTFHl1QKtWvVdS0kesio3Vy0sAMBgEFQCAJEmSVpg+lb5GEkW4mpqOBQtenT9/Y1VVH1M+huKqqybJS/4sXTopPt4gr/avq8u5ePEbLlcUvm4AgougAgBAOL388jfHHbfu73//Rn5gyM44I9fv1JTeEhIMixdPlFcHtGtX5b33fiivAsDQEFQAABJzVMKis9O1fPk/Fy16tampS35MDUVFBfKSMmefPUZe8ufee/+9d2+9vAoAQ0BQAQBIyueoeBU+LnIdOtR65ZVvvvLKd3a7W35sML75pv6UU9arOyNFRq8P8Fs+gH+Yn28dMyZZXgWAIRj0lQgAEJE09Kko8NFHhydPXv/008W//OXfs7MfXLFiS3FxIBvG/+1vu0855W/ffhvcLgi3O8B5Izrd4N4Mer32uecuYPY8AHURVABgGBhcszEgfB/49eSTu2fNera+/sft2xsbu/78550nnvjExIlPPPzwzvr6Tvk/6Etrq+OSS167+uq3urqc8mNq8+0NHwCtdnDvuDvvnHHyyZnyKgAMDV9MAABJCk0YGrZcLu+KFVuWLXvL6exjuNdXX9XefPOW7OwHL7jg/9588/sB1r/6/PPqk07668aNe+UHgiPgSSOffHJYXurf1Kk5t956mrwKAENGUAEASIPIKX3uQx7RGhttc+Y8/+c/75QfOJrL5dm0qWT+/I05OQ/+5jfv9Q4J69d/eeqpT5WWNsrqwbNx494jRwY9Td/jkZ56qlhe7UdcnOG55y7Q65W+fQBAOYIKAEBijkp/vv32yJQpf/vgg4PyA/2rq+t44IFPTjjh8dNO29DcbPfNFVm58l/Ll/+jzw6Z4LHbXQFM1v/Xv0oPH26RV/vx0EOz8/OZQw8gKAgqAABJkqRBzkqICm+99f20aU8G1gcyYkTsfffNSkoytrU5ioo2PvTQp/JHhMTjj3/e2emSV/vncHjuv/9jebUfCxeO/+//HvSGkgCgEEEFACAWERKT1yv94Q8fzZ//clubXX5MgYKClB07rjr99FFlZS2nnvrU5s0/yB8RKhUVrXPnvtDW5pAf6IvL5V206NXt28vkB/oyfnza+vXnyasAoB6CCgBAEiQeCKKz03XJJa/dcccH3oAm5Jx11uhPP70qPz/5448PT5nyt7176+SPCK1//7v87LOfa2qyyQ8cze32Ll78xuuvfyc/0JfERNNrry2Ii4uRHwAA9RBUAACSUHNUwvs8KiraZsx4+uWXA1yY66qrTnz77UuTkozPPfdVz7WMw+uzzyrPPPOZ/lYk83ikf/zjh1mznn3ppa/lx/qi0Wiee+6CsWOZmgIguDQeT4CLrAMAQqbK7nigrEJeVdW8VOssa5K82ssrtUc+bW6VV1V1QVrKackJ8mpIfPJJxUUX/V9tbbv8gAIajWbNmp/fcss0r1e6885t9977ofwRAsjMtCxZMvHcc4/RajUej9fl8nz5ZfVjj+0a1Dyc//mfGb///Qx5FQDURlABgGEgBEHl3FTrWWIElQvTU05NCkNQefrpPddc8w+HI5CFueLiDC+8cOH55x/r9Uo33vjOY499Jn9EpJg795i33lqkZUAGgODjSgMAiHYul/fXv373yis3BZZSsrIs27cvOf/8Yz0e6eqr/xHBKWXixIyXXrqIlAIgNLjYAADEEuI5Kk1NtnPPffGRR3bIDyiTm5v00UdXnnhihsvlveKK15988kv5IyLF6NHJmzdfmpBgkB8AgOAgqAAABiOghbAGJZRB5bvvjkyZ8rd//atUfkCZ0aOTt29fkpeX6HR6Fi169cUXFU1GH45SUmLffvvSjIw4+QEACBqCCgAgSm3evH/atCf37x/EPPKeRo9O3rp18ahRCXa7++KL//7qq9/KHxEpYmNj/vGPS4491io/AADBRFABAIhFqwlFn8r/+3+fnH/+S62tgeznKElSfr51+/Ylo0YldHW5ioo2vvXWPvkjIoVer/37339xyilZ8gMAEGQEFQDAIETASpE2m/uyy16/9db3PJ4Ah7Hl51u3bl2ck2Pp6nKde+6L774b4MixYeGJJ/5r7tyx8ioABB9BBQAgSZIUYJs9CILan1JV1T5jxtNDmUxyzDEjtm1bnJNjcbu9Cxe+um1bmfwREeTee89aunSivAoAIUFQAQCIJXhBZefOysmT1+/aVSk/oNixx47YunVxdrZFkqRrrvlnBI/4kiTpppum/u53p8mrABAqBBUAwGAEL0Z0C86PePbZr2bOfKa6uk1+QLGCgpStWxdnZcVLknTnndsieCViSZJ++9tTH3zwHHkVAEKIoAIAEItW7aTidnt/85v3lix5w253yY8pNmpU4nvvXZ6ZGS9J0uOPf37PPR/KHxFB7rxzxv33z5JXASC0NB5PBEyMBIBgqXc6m5wu3/YhPWdxeHvtJ+L1Sj0f4j16xxGPdNTRnv+Hx8XHmvzt9V1ldzxQViGvqmpeqnWWNUle7eX/aut3NgfeKaHEJZlpJyXEy6uBammxL1r06jvv7JcfGAyr1fzRR1cWFo6QJOm110p++cu/BzwRX3x/+MOsW289VV4FgJAjqADAQDbVN3zY2CKvquqWvJxMo5/dvqMqqFyamXaiSkFl376GoqKN33/fID8wGCaT/r33rpg+PUeSpA8/PDR79vND6ZkR3IMPzr7ppinyKgCEg597eACAYAvJriGq8ao9Lqs3tX7Ali2lU6c+OcSUotFonn/+Ql9K+frruqKijZGaUjQazWOPzSOlABAHQQUABhT8AT4a1VrmQxP831QpNc7Hgw/uOPfcF1tabPIDg/THP5594YWFkiTV1HTMm6fC/6GYtFrN3/523rXXniw/AADhQ1ABgDBTo1keUYaY3Ox295Ilm2655d2hTyNZunTSzTdP9f1/XnTR/1VWtsofEREMBt3zz1/IfikARENQAQAMhnwRAfUNJaZUV7fPmPH0s8/ukR8YvGnTRq5bN8/39xtuePvTTw/LHxERUlJi33//ioULj5MfAIBwI6gAQJgNpV0ekQI+IZ9/Xn3KKX/77LNB7Oeo0WiSk80FBSmnn557wQXjli076Xe/O/1Pfzrn6afnv/HGAqNRJ0nS+vVfRuqWKT/7WerOnf996qkj5QcAQACs+gUAA3m9ruGjpuCu+nXrmJGpMTHy6tFCsepXinXWCP+rfr1cU/9ZS3BX/VqclX6CJU5e9eeFF75etuwtm+2nme4mkz41NS4lJbb7T2pqbFraUZURI8w63UDJ6PPPq0877SmHwy0/MPzNnj1248aLEhON8gMAIAaCCgAMJARB5XdjRqYMn6CysaZ+V5CDypLs9OPjBxdUystbXnvtuxEjfowfaWlxaWlxsbF6+eMGqbnZftJJfz14sEl+YPi7/vpTHnpotl4/UEgDgPBi6BcAhB2NxaMEcDpycxN//eupV1xxwrx5Y085JSsvL3HoKUWSpGXL3oq8lKLTaf/857l//vMcUgoAwRFUAGBgQs8dV1HQf89BEOKUrF//5auvfiuvDnMJCcZ//GPR9ddPlh8AAPEQVAAAYhEhpuzb1/DrX2+RV4e5k07K+uKLq2fPzpcfAAAhEVQAIMxEaJcPQvB7XjThPiMul/eKK97o7HTKDwxnK1ZM/fjjK/Pzk+UHAEBUBBUACLNwN8uFE/YTct99/961axBrHAsuOdn8xhsLH3roHIOBL30AwwnXLAAYSPC3N1TUMFfwkKHyhqCvRJkQ/LID8HikJ5/cLa8OW9Omjdy9e/n55x8rPwAAwiOoAECYhbddPnghyDPhPCVarfT44+fKq8OQRqNZteq07duXjBqVID8GAMMBQQUAwi6c7fJuIcgfCoX9dMydO3b58pPl1WElLS1u8+ZL7rvvLNYgBjB8EVQAIMxoSMqEfTK9JEl/+tPZ+flWeXWYuPzyCd98cx2rewEY7ggqAABJ+Wwcj7wQmeLiYp59dr5WK0BmGozc3KR33rnsmWeKRowwy48BwHBDUAGAMBOkLawsp4SCIN9M06bl3HrrafKqqDQaza9+NeXrr68955wx8mMAMDwJ8nUAANFLhJFOggnFGfnhh8bHH//8wQd3PPzwzsce27VjR6XTKe8uuvPOGRMnZsiKAiosTPnwwyWPPDI7Pj5GfgwAhi2CCgAMxEuMCLngnXGvV9q2rXzlyn8VFDx23HHrXnnlu5YW+/jxaUuWTJw6NTsmRv6daDBon3vuAqNRL6uLQ6/X3n77Gbt3Lz/11JHyYwAwzMkvygCAEAteu3xQFO6jEoLgFqQf8fnn1aefvuGss5556KFPY2NjPvts2fvvX/7738/4+c9Hx8X12xFx3HGp9957lrwqhnPOyf/yy+X/+78zjUad/BgADH8EFQBAhKup6bjqqremTPnbJ58cjonRrV4987PP/nvixHT54/px001TZ87Mk1fD6rjj0jZvvvSddy4dPz5VfgwAIgVBBQAGpHAxrCHQiNGnEvTfUzF1v5neeuv7wsJHN2zY7fV609LiPvvsv++884zeo7wGoNVKGzYUJSQY5QfCIS0tbt26c4uLl8+Zw+rDACLcIK7UAIBIpiypeLwhiFXq/AivV7rnnn/Pn/9ya6tdkqSEBOM771w2YYLSjpSecnMTH3lkjrwaWiaT/vbbz/jhh19dc81JOp1GkiSPR/rhh0b54wAgUhBUACDMgjQlY/hS5YR0dDgXLHjlzju3er1eSZKMRv2mTQuVD/fqbfHiCRdcME5eDZVLLz2hpOSG//3fmRaLQZIkt9v74ot7Tzjh8Ycf3il/KABECoIKAEASaifHoeeUjg7n3LkvvPLKt77/1Gg0zz9/wYwZufLHDdJf/nJuWlqcvBpMOp320ktP2LPnmueemz9qVIIkSS6X9+mn94wb99hll7327bf1ggxIA4BgIKgAQJgNvV2Onjo7Xeed99JHHx3qrvzv/5550UUqdIakpsauX3+evBocRqN++fKT9+274bnn5h9/fJokSQ6H569//bKg4NErr9y0f/+PI758HSwAEJEIKgDE0tnpqq5ul1cjmiBBReHyxCEwlBPS1eUqKtq4bVtZdyU7O6G52XbuuS+NH//4hAlPnHzy+kWLXnv44Z2ff14dwEIJ55137FVXnSivqio+3vCb35x68OCKxx+fN2ZMkiRJNpt73brPjznmz9dc84+DB5t6PpigAiCCaTwecXr7AUDasKH4F784TpwNtl+tPfJJc6u8qqp7j8kzaf3cNqq2O/5UViGvqmqmNfG81BHyai8vVNd/2domr6rq17nZOaZARjTZ7e4LLnj5nXf2yw/049hjR1x55aQrrpiQkTGIAV1tbY6JE5+QBQZVpKTE3njjlOuvn5ycbPJVmpvtGzbs/tOfPq2u7vucb9hQtHjxBHkVACKCn69GAAixl1/+RpyUongprCERZXniEPyqymgCmk3vcHguvvjvylOKb3hVZ6ezoaFTfmBAFovhmWfma7WBPMn+TJqU+dhj8w4eXHHHHacnJ5u8XunDDw8tXrwpO/vBlSvf7S+lSJJksQSS6ABgWCCoABDIl1/WRNu4r2EnBCPEAkgATqdnwYJX/vnP7+UH+rFo0fHffXf9nj3LV6+ecdxxg94z8bTTRt5yy3R5dfASE03XXjv588+v/uKLZddee3JcXEx9feeDD+447rh1M2c+/dxze7q6nPJ/czSGfgGIYAQVAAL5y18+HzkyQV6NdAH1H6gv6PkjaNraHOefv3HTphL5gb6cckr2rl3LXnjhgoIC/+PcBnD33WeecELgix2ffnru00/Pr6y8+bHH5p54YobHI7377oEFC17NyXnollveLSk5Iv8H/aBHBUAEI6gAEEVrq+Oll/aOGZMsP4DQECMvDfaJVFS0nX76hi1b+hjxlZYWN358WlzcT30OF144btu2JSedlHnU4wJiMGifffYCg0EnPzCgtLS43/zm1JKSG7ZvX3zFFSfExuoPH269++4P8/PXzpnz/N///o3T6Zb/mwGxPDGACEZQASCK55//qqPDkZ8vWFAJ/tSNQbXLg0jhL6rwYUOgvIvpq6/qpk178quvarsrZnPM2Wfn33XXjBUrpo4Zk7x3b11Hh8N3aNGi419++WKTaXDRYgAnnJD2v/97przal+Rk89KlkzZvvrSi4uY1a2Yde6y1urr90Ud3zZjxTF7eI6tXbysvb5b/G2UY+gUggrHqFwBRTJjwxNdf17755qL/+q9j5MfC55Wa+k9b+p3KrIr7jx0d469tHoJVv85ITixK8z8a6vmqut1twZ1H9JvRIzMM/hdU2LWr6pZb/pWUZBo1KnHkyIScnIS8vKSTTsrctq1s8eI36uo6ej64oCDl88+XxcX5/78dFLfbe+aZz/Tcs6Wn0aOT5807pqioYMaM3JgYrSRJ33xTv3nzD2+8sW/HjgqvGhm4sXFVUhKdKgAiE0EFgBB++KGxoOBRSZK+/fb6wkL/zeWQCUFQWXPsaL0AQeW05MQLxAgqvx09Ml1BUOnN6fTcccfWP/3pk94ZYOfO/548OUtWVMXBg80TJvylvf3HfpvY2JgZM/LOPnvMnDlju9/J27eXP//81+++W3r4cMtR/3jInM7/0en8vHkAYJhi6BcAIXz66Y+t8Oxsi/xYWIXgXo4gyxOHYlCXMoGdjrq6ztNP3/DHP37cO6XMm3dMkFKKJEmjRyf9+c9zzz47//e/n/nhh0sbG1f985+LbrppSndKaWqyXXDBy08++aXqKSU2NoaUAiCCEVQACGHHjh+Dit0+uMnEkWCYNTXlMUB1AZyPzk7X+ee/9NlnlfIDkiRJ0m23nS4vBcrl6uPXX7x4wpYtl/7P/5xx2mkjDQb5F+t9933U3GyTFVXBkl8AIpv8egoAYdEdVLqnPkePANrlwdCrHyJs/I2Dk3O7vZdc8mp/KWXGjLzp03Pk1YB8/31jU1OXvDqgioq2Rx/9TF5Vydy5Y+UlAIggBBUA4dfR4fz667ruv8sPI+oMLqmsXPnum2/uk1f/4/bb++hO6ex0VVW1f/9945df1nz44aF33in98suatraBQvLBg83btpWlpsbKDwzorru22WwueXXIzjuv4Isvrn7qqfPlBwAgghBUAITfrl1VbvePk0G6JyWLYnBt5kAE/yeoyRv8pzuon/DBB2Vr1+6UV//j1FNH/fzno31/t9ncH3xQdvvtW6dMeTIh4b6cnAcLCx89+eS/zpz59Lx5L5x88l8TE+8fOfLhs89+/r77PpL9/9TWdtxww9tXXDFBVh/Yt98eeeaZYnl1aGbPHrtjx39v2rRg0qQM+TEAiCwEFQDh1z3uKzqHfkFmgKDi9R41RK2jw7ls2Vs9HyBz110zJEn6+uu6Cy74P6t1zc9//ux99/17165Kj6fvgW6Vla2Vla2XXXZCz+KuXVWnnbbh5punDnYPlttue7+/HxSAWbPGfPTRlW+/fckppwRrYQAAEApBBUD4HR1Uom7o1wDt8lDyDnZqSHDEaLUx2r6fyXvvHbzlln/1fJr/8z9bDx5s6vmYnk49ddS4cSlXXfXWpElPbNpUomQI1imnZP/730tHjkzw/afHI91//8ennvrUtGk5s2b92DOj0CefVAwwIG1Qzjgjd9u2Jf/612VqTbYBgGGBoAIg/CoqWrv/LtrQL68oOSL4wj2bPkarnZGceMeYkRadvOPik08qzjrr2XPOee7ii8d1F/furf/znweapx4Toy0oeHTDht0KuzXmzBn7/vtXjBhh9v1nZWXb2Wc/d9tt78+de8z69efJH+3PqlXvyUuDN336yPfeu2LbtsVnnDFKfgwAIh1BBUD49bzVPcANckSqGK32DGvi7WNGnp82Iv7olFJcXHveeRtPO+2pbdvKLrxw3LRpP3Up3HLLu91Tm/q0bVtZZ+dRHXQjRyZef/0pK1ZMHTcutWddo9HccMMpmzYt9G1dX1HR9rvffXD88Y9v3XpwwYLxr7zyC6NRnp0G9tZb33/8cd/b1St0yinZmzdf+tFHS886K09+DACiA0EFQPj1DCpbt5YddSzSaZQNuFL2qOFHr9Wclpx4+5iRRakjZB0pJSUNCxa8euKJT/zzn99LkqTXa//wh1ndR99+e/+775b2fPzARo5MXLfu3PXrz6uoaF27dud339V3Hzr55KwdO65au3ZOTIx2587KRYteGzPmkTVrPmputl155aTnn78gJmZw35Vut/e22z6QVxU78cTMN99ctGPHVXPm5MuPAUA0GdzFFwCCoecmjx9/fNjhGOg2eYSJ0ADin16rOTUp4bbRoy5Ik0eUsrKWpUvfHD9+3d///k138aabph57rNX3d5fLe8st//rpHwxIo9GsWnXav/+99Kmnds+Z8/ymTSU9t66PidGZTPobb3xn0qS/jhmzdtq0J19+ea/L5TEa9atXz1y//rwAtn5/7rmvvvnmx+W2B+WEE9Jfe23Brl3L/uu/jpEfA4DoQ1ABEH49e1S6upw7d/40tz78wj1zI2QU/p6eIa9PbNLpfj4i6X/GjLowPSVRf1REqapqv/76twsKHn3mmeKeE0tmzx7bszvlr3/9omeXyACysizvvnvZb34z/b/+68XPP6+SH5Ykp9P90UeHdu6s2LOnpqys2Vc899xj9+699s47zwigI8tmc9911zZ51Z9x41I3brz4yy+Xz59fEMAPBYCIRFABEH6y5Zg++OBgz/+MbFHVKE2K0Z+fNuLOMaPmplhlc1EaGrpWrXr/mGP+/Pjju5zOn3rYJEmaNCnz5Zcv1ut/PFXNzXaFSWDu3GOKi6855ZTsuXNf2LtXURfH2LHWN99c9NZbC/Pzk+XHlHnssc8OH26RV/t37LEjnn/+wq+/vvaXv/yZlu9kAOiBiyKA8JMFlWibpiKKYPYdZRoMizLTbh8zakZyovHo1YdbWx2rV28fM2btH//4cVeXfHHq668/5eOPr0xIMPj+s73dedFF/9fQ0Cl7mIxer73//p//4x+LUlLMV1315q5dlfJHHM1sjrn00hPefffykpIbhjLsqrnZ/oc/yDeL7M+YMclPPz3/m2+uu+SS8UQUAOiNSyOAMOvdPN6xo6Kz0/+WF6HR69mpTJweFYUTgwb7hI+JNV2Vk3HL6JyTE+JlXzmdna7/9/8+GTPmkbvv3t7WZj/6oCRJ0uLFE//85znd2yw2Ndl+/vNnt2710+E2blzq9u1Lfvvb6RqNtHt3zSuvfCt/xH+kpMRecMG49evPq65e+dxz83/+89FDDAz/7/993NTUJa/2kpub9Le/nV9ScsMVV5wQwBwYAIgSQ7skA8CQaTTS2LE/TpL2cTjc69d/0bMSySK0mWrUaqcnJ/529MhrRmb9LC5WdtTh8Dz66K78/LW33vpeY2O/LfvLLju++++1tR1nnvnMZ58N1DdiNsfcc89Zu3cv717FePXq7bLHZGTEL1gw/tFH53311bW1tbe8+uovrrpqUnePzVBUVbU/8shOefVoOTkJ69adu2/fDVdeObF7MBsAoE8EFQDhd9xxR21qIUnS/fd/LE6nSlBpxEkqKj2REYaY89NG3Jk/6qK0EemGGNlRl8v71FPFBQWP3njj27W17bKjPWk0mmnTRnb/55/+9On+/Y1HPaKHlJTYX/1qytdfX3vbbacZDD9+tX31Vd1bb/24N/y0aSMff/zcb7+9vqrq5pdeuvC6604ePz5V3Wnrv//99t5D17plZlrWrp37ww+/uuaak7qfIQBgABqPR2FvPwAEy+rV2+++W37n+09/Oufmm6fKiqG3sbp+V2ubvKqeGK32/mP87+hX43D88WBwF0ObkmT5Zbo8Mfb2dGXt1+0d8qokSZJUGGc+LTmxMC62z/Z/Z6fr+ee/evDBT7//vkF+rB9bty6eMSO3+z/tdve//33o7bf3+5ZbSEgwxscbUlNjL7xw3Ny5Y3vvdnL11f949tk9ixYd/6tfnXLiiRmyo+rat69h/PjH+9yAMi0t7re/PfXaa082m/XyYwCA/hFUAITfK69898tf/l1WTEuLKy290bdTeBgFO6gYtdo/iBFUTklKWJCeIq/20juoWPS6kxMsU5MsKTF9v1iHD7euW/f5+vVfDDDKq0833zztT386W15VxuXyPvbYZ5dccnxqqnzgWTBcfPHfX3vtO1lxxIjY3/xm+g03nBIbS0QBgEGT338CgNAbPz5NXpKkurqOdet2yasQhlajKYyPXZKdfmd+7n+lWvtMKR99dHjBglfHjFm7Zs1Hg00pkiQ9+OCnd921vfdyC0ro9ZoVK6aEJqXs3FkpSynJyeZ77jnr4MEVv/3tdFIKAASGoAIg/MaOtRoMR+2q4fPHP37S1GSTVyNLn6OkwkNxIEiK0Z89Ivm2MSOXZWccHx/X+4vE4fA8//zXkyf/7YwzNvz979/0OSBKof/93+1nnvnM3/62u6HBT85parK98sp3jY1heMPceuv73X9PTDStXj3z4MEVt912Wnx8H+ENAKAQQ78ACOHEE/9aXFwjr0rSOefk//Ofl4RxCdeN1XW7Wgea8z1EJp323rFCDP06KSH+ksw+urZk6h3OFENMf69HbW3H449//sQTXww8UT4Aer32zDNHX3hh4THHjEhLi8vIiE9ONh0+3Pr99w379zeWljYdc4z18stPCP1Ywbff3n/uuS9KkmSxGG+8ccrNN09NTjbJHwQAGDyCCgAh3H//x7fd9tNt6Z5Wrpz+xz/+XF4NlWAHFbNOd8/Yn+aL9ycEQWWSJf6yLP9BpT9ffFG9du1nL7+81+E4al/5YCssTPntb0+99NLje0+mDwGPRzrxxCdKS5tuuOGUlSunpaSY5Y8AAAQqDJd1AOht6dKJMTF9jP6SJOmBBz554YWv5dVIoXS4VfA5A3ouLpf3lVe+O/30pydPXv/cc3tCmVJOOSX7tdcW7N173ZIlE8KSUiRJeuONkrPPzi8tvfG++84ipQCAusJzZQcAmfT0uKKiAnn1P5Yte+uLL6rl1ZAIdqezOFdhp3twQaWx0Xb//R+PGfPIL3/5948/PiQ/HEyzZo15993Ld+y4av78giHuJT9E55137B//+PO0tFBM2QeAaBPWCzwA9HD11SfJS/9hs7kuuODlw4db5QegEpNOO8pslFf78e23R669dvPIkQ/ddtv7FRWhe1E0Gs1FF/3ss8+W/etfl/3856Plh8MhXD05ABANmKMCQBRer3TMMX8+cKBJfuA/MjLi33xz0cknZ8oPBNOL1XVfBHOOSpxWd/cxSuaoOP948LC8OmQmnfa4uNgJlvjCuFi/CxZ4PNLmzT888sjO998/ID8WZDExuiuumPCb30w/9lir/BgAIEJxKwiAKDQaadmyE+XVHmpq2mfMePr110vkB4YzTTguw4l6/eSE+CuzM+7Oz7skM+24eD8ppaXFvnbtZ4WFj55//kshTimxsTErVkwtLb1x/fr/IqUAQFShRwWAQOrrO4899tGWloG2wtBoNPfdN+u3v50uPxAcL9XUfd4SxB6VeL3u9/mh6FGx6PVjzcYxseaxseY0g6I1fN1u77/+deC55756442Sri6n/HCQWa3mG2445Ve/OmXECCapA0A0IqgAEMuzz361ZMkb8movV1456bHH5hmNfS8UpqJgBxWLXrc6aEElXq/LN5vHmE3HxJnTlYUTn6++qnvuua9eeOGrmpog/u79GTUq8aabpi5bdmLoN0UBAIiDoAJAOEVFL7/11j55tZeCgpRHH507a1ZwJ1UHP6joV+ePkld7UR5UYnW6fLNpbKx5bJwpw2CQHx5QTU3Hiy9+/dxzX+3Z08fmm8FmMOiKigqXLp149tljwrjFJwBAEAQVAMKpqekYP35dY2OX/EBffvGL4x588JzsbIv8gEpeqK7/srVNXlVPgl5/19CCikWvzzYZcoyGbKMxy2RMidHLH+FPV5dr06Z9zz331bvvlrrdYfhSOP749KVLJ1522QlsRQIA6EZQASCijRu/ueSSV+XVfsTHG1avnnnjjVP0evVvwwc7qFh0+tVjBxdUUgwx2UZjltGQYzJmmwwWXYDj32w293vvHXjtte9effW7tja7/HDwJSQYFy06funSiaeckiU/BgCIegQVAIL6xS9eefXVb+XV/h13XNrtt59+0UXj1N3aIthBJVGvv1NBj0qb2727tT3HZMw2Go3aIeWx9nbn5s0/vP56yebNP4Qln0iSNGNG3tKlEy+++GexsYPu/wEARAmCCgBB1dd3Tpv25ADbqvQpOzvh+usnX331SVarSX4sIP9XU/9Za7vXO7hd25VLjNHfOcZ/UBm6hoauTZv2vf56yXvvHbDbXfLDIZGZaVmyZOLSpRPHjk2WHwMA4GgEFQDiqqxsmzXr2e+/b5Af8Mdsjrniigk33njKuHEp8mOD55WkTren0+PucHk63O5Ot7vT4+lwu51er8sreT0etyS5vJJH8rg9kssreTUevUaj12i0klavkfQajVaj8f3FrNWZdVqzVmvSac1arVmni9VpY7VqdgHJVFS0vfFGyeuvl3z4YXlY5p9IkqTXa887r2Dp0olz5owNxvA8AEBEIqgAEFptbcfPf/7cN9/UyQ8oM3Nm3oUXjrvg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R1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAIAdUQEAAHZEBQAA2BEVAABgR1QAAICdAMDpr+u71aOuAAAAAElFTkSuQmCC';
 
-// ════════ GRÁFICO SVG — EVOLUÇÃO DO FATURAMENTO ════════
+// ════════ GRÁFICO SVG - EVOLUÇÃO DO FATURAMENTO ════════
 
 function rptGenSvgChart(historico, mesSel, anoRef) {
   if (!historico || !historico.length) return '';
@@ -4795,7 +4874,7 @@ async function listSheetTabs(sheetId) {
     var resp = await fetch('https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json');
     if (!resp.ok) return [];
     var text = await resp.text();
-    // Google retorna ")]}'\n" ou similar — extrai o JSON
+    // Google retorna ")]}'\n" ou similar - extrai o JSON
     var m = text.match(/google\.visualization\.Query\.setResponse\((.*)\)/);
     if (!m) return [];
     try {
@@ -4806,7 +4885,7 @@ async function listSheetTabs(sheetId) {
   } catch(e) { return []; }
 }
 
-// Lista de nomes prováveis de abas — meses, KPIs, módulos
+// Lista de nomes prováveis de abas - meses, KPIs, módulos
 var COMMON_TAB_NAMES = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
   'Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez',
@@ -4917,7 +4996,7 @@ function buildAIContextForClient(cliente) {
 
 async function callClaude(apiKey, userPrompt, maxTokens, systemPrompt, forceJSON) {
   var messages = [{ role: 'user', content: userPrompt }];
-  // Prefill: força a IA a começar a resposta com "{" — assim ela não pode responder com texto explicativo
+  // Prefill: força a IA a começar a resposta com "{" - assim ela não pode responder com texto explicativo
   if (forceJSON) messages.push({ role: 'assistant', content: '{' });
   var body = {
     model: 'claude-haiku-4-5-20251001',
@@ -5076,7 +5155,7 @@ async function testarFontesIA(tipo) {
   });
 }
 
-// ═══════════════ MENSAL — IA preenche TUDO ═══════════════
+// ═══════════════ MENSAL - IA preenche TUDO ═══════════════
 async function generateAnalysisWithAI() {
   var apiKey = _anthropicKey;
   if (!apiKey) {
@@ -5102,12 +5181,12 @@ async function generateAnalysisWithAI() {
   if (typeof _gToken === 'undefined' || !_gToken) {
     alert('Para ler os dados reais das planilhas, é necessário conectar o Google Drive.\n\nAo clicar OK, abrirá o popup do Google. Após autorizar, clique novamente em "Gerar Relatório com IA".');
     gDriveSignIn(function(){
-      // Callback após OAuth — reinicia o fluxo
+      // Callback após OAuth - reinicia o fluxo
       setTimeout(function(){ generateAnalysisWithAI(); }, 500);
     });
     return;
   }
-  // Drive conectado — carrega dados via OAuth
+  // Drive conectado - carrega dados via OAuth
   try { await new Promise(function(res){ autoLoadDriveData('mensal', res); setTimeout(res, 20000); }); } catch(e) { console.warn('[AI] autoLoadDriveData falhou:', e); }
   try { await loadIndicadoresData(); } catch(e) {}
 
@@ -5119,7 +5198,7 @@ async function generateAnalysisWithAI() {
 
   var ctx = buildAIContextForClient(cliente);
 
-  // ── 3) Lê TODAS as planilhas — PRIORIDADE HÍBRIDA ──
+  // ── 3) Lê TODAS as planilhas - PRIORIDADE HÍBRIDA ──
   var btnEarly = document.getElementById('btn-gerar-ia');
   if (btnEarly) { btnEarly.textContent = 'Lendo planilhas do cliente...'; btnEarly.disabled = true; }
 
@@ -5197,16 +5276,16 @@ async function generateAnalysisWithAI() {
     '• Identificação de tendências, sazonalidades, padrões de desempenho e gargalos operacionais\n' +
     '• Construção de análises executivas estratégicas, fundamentadas e acionáveis\n' +
     '• Tradução de dados numéricos em recomendações concretas e mensuráveis para o empresário\n\n' +
-    'Antes de produzir qualquer análise, você examina TODOS os dados fornecidos em profundidade — mês a mês, comparativos com ano anterior, qualidade da execução — e só então sintetiza conclusões.\n\n' +
+    'Antes de produzir qualquer análise, você examina TODOS os dados fornecidos em profundidade - mês a mês, comparativos com ano anterior, qualidade da execução - e só então sintetiza conclusões.\n\n' +
     '═══ REGRA TEMPORAL CRÍTICA ═══\n' +
     'Esta análise está sendo gerada em ' + __MESES_RM[__mesRm-1] + '/' + __anoRm + '. Meses no FUTURO (' + (__mesRm < 12 ? __MESES_RM[__mesRm] + '/' + __anoRm + ' em diante' : 'nenhum') + ') AINDA NÃO ACONTECERAM.\n' +
-    'PROIBIDO chamar mês futuro de "paralisação", "queda", "estagnação", "sem operação" ou "sem dados". Esses meses ainda não decorreram — naturalmente estão zerados.\n' +
+    'PROIBIDO chamar mês futuro de "paralisação", "queda", "estagnação", "sem operação" ou "sem dados". Esses meses ainda não decorreram - naturalmente estão zerados.\n' +
     'Análise vale APENAS para o mês de referência (' + (function(){ try { return __MESES_RM[(parseInt(_rmf.mes) || __mesRm) - 1] + '/' + (_rmf.ano || __anoRm); } catch(e){ return __MESES_RM[__mesRm-1] + '/' + __anoRm; } })() + ') e meses já decorridos no histórico.\n\n' +
     'REGRAS OBRIGATÓRIAS DE OUTPUT:\n' +
     '1. NUNCA invente, estime ou chute números. Use APENAS valores que aparecem literalmente nas FONTES DE DADOS.\n' +
-    '2. Se um valor não existir para o período/filtro exato, retorne 0 — NUNCA fabrique.\n' +
+    '2. Se um valor não existir para o período/filtro exato, retorne 0 - NUNCA fabrique.\n' +
     '3. Para mesmos dados de entrada, sua resposta DEVE ser idêntica (determinística).\n' +
-    '4. Responda APENAS com JSON válido — sem markdown, sem texto antes/depois, sem comentários.\n' +
+    '4. Responda APENAS com JSON válido - sem markdown, sem texto antes/depois, sem comentários.\n' +
     '5. Os filtros do usuário (cliente, programa, mês, ano) são a chave exata para os dados.\n' +
     '6. Na "analise" e "proximos": use vocabulário de gestão, cite números reais, não generalize.\n' +
     '7. NUNCA mencione meses futuros como problema na análise.';
@@ -5220,11 +5299,11 @@ async function generateAnalysisWithAI() {
     '═══════════════════ FONTES DE DADOS ═══════════════════\n\n' +
     '── LINKS CADASTRADOS PARA "' + cliente + '" ──\n' +
     JSON.stringify(ctx.links, null, 2) + '\n\n' +
-    '── VALORES JÁ EXTRAÍDOS PELO DRIVE (PRIORIDADE MÁXIMA — USE ESTES) ──\n' +
-    (Object.keys(driveExtraidos).length ? JSON.stringify(driveExtraidos, null, 2) : '(Drive não retornou valores diretos — use o CSV abaixo)') + '\n\n' +
+    '── VALORES JÁ EXTRAÍDOS PELO DRIVE (PRIORIDADE MÁXIMA - USE ESTES) ──\n' +
+    (Object.keys(driveExtraidos).length ? JSON.stringify(driveExtraidos, null, 2) : '(Drive não retornou valores diretos - use o CSV abaixo)') + '\n\n' +
     '── CONTEÚDO BRUTO DAS PLANILHAS (CSV) ──\n' +
     (function(){
-      if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) return '(NENHUMA PLANILHA PÚBLICA ACESSÍVEL — verifique se as planilhas vinculadas estão compartilhadas como "Qualquer pessoa com o link")';
+      if (!ctx.sheetsCSV || !Object.keys(ctx.sheetsCSV).length) return '(NENHUMA PLANILHA PÚBLICA ACESSÍVEL - verifique se as planilhas vinculadas estão compartilhadas como "Qualquer pessoa com o link")';
       return Object.keys(ctx.sheetsCSV).map(function(k){
         return '### ' + k + ' ###\n' + ctx.sheetsCSV[k];
       }).join('\n\n');
@@ -5243,15 +5322,15 @@ async function generateAnalysisWithAI() {
     '── MATERIAIS PRODUZIDOS NO DRIVE (' + mesNome + '/' + ano + ') ──\n' +
     oeFormatMateriaisDrive(ctx.materiaisDrive) + '\n\n' +
     '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
-    '1. PRIORIDADE 1 — Se "VALORES JÁ EXTRAÍDOS PELO DRIVE" contém algum valor, USE-O DIRETAMENTE sem reinterpretar. Esses valores foram extraídos via Google Sheets API e são autoritativos.\n' +
-    '2. PRIORIDADE 2 — Para valores ausentes nos VALORES EXTRAÍDOS, ANALISE o CONTEÚDO BRUTO DAS PLANILHAS (CSV). Cada CSV pode ter cabeçalhos como "Mês", "Faturamento", "Meta", "Crescimento", "Ticket Médio", "Conversão", "Clientes", etc.\n' +
+    '1. PRIORIDADE 1 - Se "VALORES JÁ EXTRAÍDOS PELO DRIVE" contém algum valor, USE-O DIRETAMENTE sem reinterpretar. Esses valores foram extraídos via Google Sheets API e são autoritativos.\n' +
+    '2. PRIORIDADE 2 - Para valores ausentes nos VALORES EXTRAÍDOS, ANALISE o CONTEÚDO BRUTO DAS PLANILHAS (CSV). Cada CSV pode ter cabeçalhos como "Mês", "Faturamento", "Meta", "Crescimento", "Ticket Médio", "Conversão", "Clientes", etc.\n' +
     '3. ENCONTRE no CSV a linha que corresponde a "' + mesNome + '" (ou "' + _rmf.mes + '", "' + String(_rmf.mes).padStart(2,'0') + '/' + ano + '", "' + mesNome.toLowerCase() + '/' + String(ano).slice(-2) + '") e ano="' + ano + '".\n' +
     '4. Extraia os valores LITERAIS. Converta moeda BR para número (ex.: "R$ 145.800,00" → "145800.00"; "23,7%" → "23.7").\n' +
     '5. Para os campos do programa "' + programa + '": ' + camposExplicacao + '\n' +
     '6. Formato numérico: sem R$, sem %, sem separador de milhar, ponto como decimal. Ex.: "98500.00", "23.7".\n' +
     '7. APENAS se o valor REALMENTE não existir nem nos VALORES EXTRAÍDOS nem no CSV, retorne 0. NUNCA invente.\n' +
     '8. ESCOPO ESTRITO DO MÊS: os campos numéricos (fat, meta, cresc, etc.) devem refletir EXCLUSIVAMENTE o mês "' + mesNome + '/' + ano + '". JAMAIS misture com outros meses. Em "analise" e "proximos", cite SOMENTE eventos/dados deste mês.\n' +
-    '9. Em "analise": 3 parágrafos CURTOS (máx. 4 linhas cada): (a) INDICADORES do mês com números reais; (b) EXECUÇÃO — concluídas/atrasadas do FlowUp DO MÊS; (c) PLANEJAMENTO ESTRATÉGICO — % execução por QUADRO Trello + materiais do Drive do mês. Texto enxuto, factual, sem floreios.\n' +
+    '9. Em "analise": 3 parágrafos CURTOS (máx. 4 linhas cada): (a) INDICADORES do mês com números reais; (b) EXECUÇÃO - concluídas/atrasadas do FlowUp DO MÊS; (c) PLANEJAMENTO ESTRATÉGICO - % execução por QUADRO Trello + materiais do Drive do mês. Texto enxuto, factual, sem floreios.\n' +
     '10. Em "proximos": 3-4 ações concretas (frases curtas).\n' +
     '11. "historico" = array COMPARATIVO ano atual ("' + ano + '") vs ano anterior ("' + (parseInt(ano)-1) + '"). Para CADA mês 1..12, retorne {"mes":N,"fatAtual":VALOR_DO_ANO_ATUAL,"fatAnterior":VALOR_DO_ANO_ANTERIOR,"meta":VALOR_DA_META_ATUAL}. Use 0 onde faltar dado. Isso alimenta o gráfico Realizado vs. Ano Anterior. NÃO afeta os campos do mês selecionado.\n' +
     '12. Se TODAS as fontes financeiras estiverem vazias, em "analise" inclua: "Dados financeiros indisponíveis no mês. Análise baseada em FlowUp, Trello e Drive." e use 0 nos numéricos.\n\n' +
@@ -5266,9 +5345,11 @@ async function generateAnalysisWithAI() {
     var text = await callClaude(apiKey, prompt2, 4000, sysPrompt, true);
     var parsed = extractJSON(text);
 
-    // Preenche todos os campos esperados em _rmf e nos inputs
+    // Preenche os campos esperados em _rmf e nos inputs - só quando o campo está vazio.
+    // Se já tiver sido preenchido manualmente, o valor digitado é mantido (a IA não sobrescreve).
     camposEsperados.forEach(function(k){
-      if (parsed[k] !== undefined && parsed[k] !== null && parsed[k] !== '') {
+      var jaPreenchido = _rmf[k] !== undefined && _rmf[k] !== null && String(_rmf[k]).trim() !== '';
+      if (!jaPreenchido && parsed[k] !== undefined && parsed[k] !== null && parsed[k] !== '') {
         _rmf[k] = String(parsed[k]);
         var el = document.getElementById('rmf-'+k);
         if (el) el.value = _rmf[k];
@@ -5314,7 +5395,7 @@ async function generateAnalysisWithAI() {
     if (btn) { btn.textContent = '✔ Relatório gerado pela IA'; btn.disabled = false; }
     setTimeout(function(){ rptGenerateMensal(); }, 200);
   } catch(e) {
-    if (btn) { btn.textContent = '✗ Erro — tente novamente'; btn.disabled = false; }
+    if (btn) { btn.textContent = '✗ Erro - tente novamente'; btn.disabled = false; }
     console.error('Erro AI:', e);
     if (_isAnthropicAuthError(e.message)) {
       var newKey = _promptForAnthropicKey();
@@ -5324,7 +5405,7 @@ async function generateAnalysisWithAI() {
   }
 }
 
-// ═══════════════ ENCERRAMENTO — IA preenche TUDO ═══════════════
+// ═══════════════ ENCERRAMENTO - IA preenche TUDO ═══════════════
 async function generateAnalysisEncerramento() {
   var apiKey = _anthropicKey;
   if (!apiKey) {
@@ -5360,7 +5441,7 @@ async function generateAnalysisEncerramento() {
         ctx.materiaisDrive = await oeListDriveDocsInPeriod(folderIdEnc, _ref.dtini, _ref.dtfim, 0);
       } catch(e) { console.warn('[AI enc] erro materiais Drive:', e); }
     }
-    // Mentorias realizadas — busca no Google Calendar (eventos do cliente no período)
+    // Mentorias realizadas - busca no Google Calendar (eventos do cliente no período)
     if (btn) { btn.textContent = 'Contando mentorias na agenda...'; }
     ctx.mentoriasCalendar = { count: 0, events: [] };
     if (_gToken && _ref.cliente && (_ref.dtini || _ref.dtfim)) {
@@ -5382,7 +5463,7 @@ async function generateAnalysisEncerramento() {
       mentoriasCalendar: ctx.mentoriasCalendar.count
     });
 
-    // Estrutura oficial dos programas — para a IA identificar próximo módulo e atividades previstas
+    // Estrutura oficial dos programas - para a IA identificar próximo módulo e atividades previstas
     var METODO_PROGRAMAS = {
       mentoring: {
         nome: 'Organize Mentoring',
@@ -5427,7 +5508,7 @@ async function generateAnalysisEncerramento() {
       proxModuloOficial = metodoAtivo.modulos[idxM + 1] || null;
     }
 
-    // Análise baseada APENAS em Trello + FlowUp + Drive — sem indicadores financeiros
+    // Análise baseada APENAS em Trello + FlowUp + Drive - sem indicadores financeiros
     var sysPromptEnc = 'Você é um CONSULTOR SÊNIOR E MENTOR EMPRESARIAL da Organize Empresas, com 20+ anos analisando programas de mentoria para PMEs. Sua expertise:\n' +
       '• Avaliação de desempenho de clientes em programas estruturados de mentoria\n' +
       '• Interpretação de execução de tarefas, cumprimento de prazos e disciplina operacional\n' +
@@ -5436,13 +5517,13 @@ async function generateAnalysisEncerramento() {
       '• Construção de planos de ação para o próximo módulo do programa\n\n' +
       'Antes de qualquer análise, você examina TODAS as tarefas (concluídas, em andamento, atrasadas), cruza com a cadência do programa, e só então sintetiza conclusões.\n\n' +
       'REGRAS OBRIGATÓRIAS:\n' +
-      '1. Baseie a análise EXCLUSIVAMENTE em dados objetivos das tarefas no FlowUp, cards no Trello e materiais no Drive — fornecidos nas FONTES DE DADOS.\n' +
+      '1. Baseie a análise EXCLUSIVAMENTE em dados objetivos das tarefas no FlowUp, cards no Trello e materiais no Drive - fornecidos nas FONTES DE DADOS.\n' +
       '2. JAMAIS invente fatos, números ou eventos. Se algo não está nas fontes, NÃO mencione.\n' +
       '3. NÃO faça análise financeira (faturamento, lucro, margens, ROI). Foco é OPERACIONAL: comprometimento e cumprimento de tarefas pelo cliente.\n' +
       '4. Responda APENAS com JSON válido, sem markdown.\n' +
-      '5. Respeite ESTRITAMENTE o período informado (dtini..dtfim) — considere apenas eventos dentro desse intervalo.\n' +
+      '5. Respeite ESTRITAMENTE o período informado (dtini..dtfim) - considere apenas eventos dentro desse intervalo.\n' +
       '6. Use a ESTRUTURA OFICIAL do programa para identificar o próximo módulo e atividades previstas (não invente nomes de módulos).\n' +
-      '7. Análises devem ser concretas — cite nomes de tarefas/cards/materiais específicos, não generalize.';
+      '7. Análises devem ser concretas - cite nomes de tarefas/cards/materiais específicos, não generalize.';
 
     var prompt_text = '═══════════════════ FILTROS DO USUÁRIO ═══════════════════\n' +
       'CLIENTE: "' + (_ref.cliente || 'N/A') + '"\n' +
@@ -5475,25 +5556,25 @@ async function generateAnalysisEncerramento() {
       'PROGRAMA: ' + metodoAtivo.nome + ' (' + metodoAtivo.tipo + ')\n\n' +
       'MÓDULOS DO PROGRAMA:\n' +
       metodoAtivo.modulos.map(function(m){
-        return 'Módulo ' + m.n + ' — ' + m.nome + ' (' + m.meses + ')\n   Foco: ' + m.foco;
+        return 'Módulo ' + m.n + ' - ' + m.nome + ' (' + m.meses + ')\n   Foco: ' + m.foco;
       }).join('\n') + '\n\n' +
       (moduloAtual
-        ? 'MÓDULO ATUAL DO CLIENTE: ' + moduloAtual.n + ' — ' + moduloAtual.nome + '\n'
+        ? 'MÓDULO ATUAL DO CLIENTE: ' + moduloAtual.n + ' - ' + moduloAtual.nome + '\n'
         : 'MÓDULO ATUAL: não informado nos filtros\n') +
       (proxModuloOficial
-        ? 'PRÓXIMO MÓDULO OFICIAL: ' + proxModuloOficial.n + ' — ' + proxModuloOficial.nome + '\n   Foco do próximo: ' + proxModuloOficial.foco + '\n\n'
+        ? 'PRÓXIMO MÓDULO OFICIAL: ' + proxModuloOficial.n + ' - ' + proxModuloOficial.nome + '\n   Foco do próximo: ' + proxModuloOficial.foco + '\n\n'
         : '\n') +
       '═══════════════════ INSTRUÇÕES ═══════════════════\n' +
-      '1. ESCOPO DO PERÍODO ("' + (_ref.dtini||'?') + '" a "' + (_ref.dtfim||'?') + '") — REGRA OBRIGATÓRIA: toda a análise deve considerar EXCLUSIVAMENTE este intervalo. Eventos fora do período NÃO devem entrar.\n' +
-      '2. FOCO DA ANÁLISE: desempenho do cliente na execução das tarefas atribuídas a ele no FlowUp (etapas Organize Mentoring / Master / Estratégico — atividades sob responsabilidade do cliente).\n' +
+      '1. ESCOPO DO PERÍODO ("' + (_ref.dtini||'?') + '" a "' + (_ref.dtfim||'?') + '") - REGRA OBRIGATÓRIA: toda a análise deve considerar EXCLUSIVAMENTE este intervalo. Eventos fora do período NÃO devem entrar.\n' +
+      '2. FOCO DA ANÁLISE: desempenho do cliente na execução das tarefas atribuídas a ele no FlowUp (etapas Organize Mentoring / Master / Estratégico - atividades sob responsabilidade do cliente).\n' +
       '3. PROIBIDO mencionar: faturamento, meta, lucro, margem, ponto de equilíbrio, capital, inadimplência ou qualquer indicador financeiro. ZERO análise financeira.\n' +
       '4. Campos de TEXTO (modnum, modnom, dtini, dtfim, proxmod): se preenchidos nos FILTROS, mantenha; se vazios, deixe "" (NÃO escreva "(vazio)").\n' +
       '5. "nment": SEMPRE use o número exato de mentorias do Google Calendar (campo "MENTORIAS REALIZADAS NO PERÍODO" acima). Se 0, retorne "0".\n\n' +
       '─── CONTEÚDO DA "analise" (Análise Executiva) ───\n' +
       'Produza 3 parágrafos CURTOS (3-4 linhas cada) avaliando o cliente neste módulo:\n' +
-      '(a) COMPROMETIMENTO E ANDAMENTO — quantas tarefas o cliente concluiu vs pendentes/atrasadas (números reais). Avalie a postura do cliente na execução.\n' +
-      '(b) PRINCIPAIS AVANÇOS — entregas concretas: tarefas mais relevantes concluídas + cards do Trello finalizados + materiais entregues no Drive (cite até 3 nomes específicos).\n' +
-      '(c) PONTOS DE ATENÇÃO — atrasos, tarefas pendentes críticas, lacunas que impactaram o andamento. Se tudo OK, dizer.\n\n' +
+      '(a) COMPROMETIMENTO E ANDAMENTO - quantas tarefas o cliente concluiu vs pendentes/atrasadas (números reais). Avalie a postura do cliente na execução.\n' +
+      '(b) PRINCIPAIS AVANÇOS - entregas concretas: tarefas mais relevantes concluídas + cards do Trello finalizados + materiais entregues no Drive (cite até 3 nomes específicos).\n' +
+      '(c) PONTOS DE ATENÇÃO - atrasos, tarefas pendentes críticas, lacunas que impactaram o andamento. Se tudo OK, dizer.\n\n' +
       '─── CONTEÚDO DOS CAMPOS DO PRÓXIMO MÓDULO ───\n' +
       'IMPORTANTE: use a ESTRUTURA OFICIAL DO PROGRAMA acima para identificar o próximo módulo (NÃO invente nomes).\n' +
       '"proxmod" = nome OFICIAL do próximo módulo conforme listado em "MÉTODO OFICIAL DO PROGRAMA" acima. Se já preenchido nos filtros, mantenha.\n' +
@@ -5512,9 +5593,12 @@ async function generateAnalysisEncerramento() {
     var text = await callClaude(apiKey, prompt_text, 4000, sysPromptEnc, true);
     var parsed = extractJSON(text);
 
-    // Campos do módulo
+    // Campos do módulo - só preenche com a sugestão da IA se o campo estava vazio.
+    // Se o coordenador já preencheu manualmente (ex: "Módulo 3"), o valor dele é mantido -
+    // a IA nunca sobrescreve o que já foi digitado, mesmo que sugira algo diferente.
     ['modnum','modnom','dtini','dtfim','proxmod','nment'].forEach(function(k){
-      if (parsed[k] !== undefined && parsed[k] !== null && parsed[k] !== '') {
+      var jaPreenchido = _ref[k] !== undefined && _ref[k] !== null && String(_ref[k]).trim() !== '';
+      if (!jaPreenchido && parsed[k] !== undefined && parsed[k] !== null && parsed[k] !== '') {
         _ref[k] = String(parsed[k]);
         var el = document.getElementById('ref-'+k);
         if (el) el.value = _ref[k];
@@ -5606,11 +5690,11 @@ function rptGenerateMensal() {
   html += '<div style="'+S_grid4+'">';
 
   // Card 1: Faturamento (destaque azul)
-  var metaCtxStr = metaN > 0 ? 'Meta: '+fmtBRL(metaN) : '—';
-  html += '<div style="'+S_cardHL+'"><div style="'+S_lblW+'">Faturamento Realizado</div><div style="'+S_valW+'">'+(fatN>0?fmtBRL(fatN):'—')+'</div><div style="'+S_hintW+'">'+metaCtxStr+'</div></div>';
+  var metaCtxStr = metaN > 0 ? 'Meta: '+fmtBRL(metaN) : '-';
+  html += '<div style="'+S_cardHL+'"><div style="'+S_lblW+'">Faturamento Realizado</div><div style="'+S_valW+'">'+(fatN>0?fmtBRL(fatN):'-')+'</div><div style="'+S_hintW+'">'+metaCtxStr+'</div></div>';
 
   // Card 2: Crescimento
-  var crescStr = (!isNaN(crescN) && _rmf.cresc) ? (crescN>=0?'+':'')+crescN.toFixed(1)+'%' : '—';
+  var crescStr = (!isNaN(crescN) && _rmf.cresc) ? (crescN>=0?'+':'')+crescN.toFixed(1)+'%' : '-';
   var crescColor = (!isNaN(crescN) && _rmf.cresc) ? (crescN>=0?S_valG:S_valR) : S_val;
   var fat25 = _rmf._historico && _rmf._historico.find(function(h){return h.mesNum===_rmf.mes;});
   var fat25Str = (fat25 && fat25.fat2025 > 0) ? mesNome.substring(0,3)+'/25: '+fmtBRL(fat25.fat2025) : '';
@@ -5657,7 +5741,7 @@ function rptGenerateMensal() {
       historico.sort(function(a,b){ return a.mes - b.mes; });
     }
   }
-  // Gera histórico mínimo quando IA não retornou nada — só com o mês selecionado
+  // Gera histórico mínimo quando IA não retornou nada - só com o mês selecionado
   if (!historico.length && (fatN > 0 || metaN > 0)) {
     historico = [{ mes: mesSelInt, fat: fatN, meta: metaN, fatAnterior: 0 }];
   }
@@ -5677,14 +5761,14 @@ function rptGenerateMensal() {
   html += '<div style="'+S_sec+'">Atividades do Mês</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:0;">';
 
-  // Box verde — concluídas
+  // Box verde - concluídas
   var doneList = done.slice(0,12).map(function(t){ return '<li style="font-size:12px;padding:6px 0;border-bottom:1px solid #E0E5EE;display:flex;align-items:flex-start;gap:8px;line-height:1.4;"><span style="width:6px;height:6px;border-radius:50%;background:#28A745;flex-shrink:0;margin-top:5px;display:inline-block;"></span><span>'+t.name+(t.responsible?' <em style=\'color:#8A94A8;font-size:10px\'>('+t.responsible+')</em>':'')+'</span></li>'; }).join('');
   if (done.length > 12) doneList += '<li style="font-size:11px;color:#8A94A8;padding:6px 0;font-style:italic;">+ '+(done.length-12)+' atividades adicionais concluídas</li>';
   html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;overflow:hidden;">';
   html += '<div style="padding:10px 14px;background:#E8F5ED;color:#1A6B3A;font-family:Montserrat,Arial,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:8px;"><span style="background:#28A745;color:#fff;border-radius:99px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">'+done.length+'</span>Atividades Concluídas</div>';
   html += '<ul style="padding:10px 14px;list-style:none;margin:0;">'+(doneList||'<li style="font-size:12px;color:#8A94A8;padding:6px 0;font-style:italic;">Nenhuma atividade concluída no período.</li>')+'</ul></div>';
 
-  // Box laranja — pendentes / em atraso
+  // Box laranja - pendentes / em atraso
   var pend = over.concat(pending).slice(0,10);
   var pendList = pend.map(function(t){
     var tag = t.isOver ? '<span style="background:#DC3545;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;margin-right:4px;">ATRASADA</span>' : '';
@@ -5732,7 +5816,7 @@ function rptGenerateMensal() {
     var tBoards = filteredBoards, tCards = filteredCards;
     var tDone = tCards.filter(function(c){return c.dueComplete;}).length;
     var tOver = tCards.filter(function(c){return c.isOver;}).length;
-    html += '<div style="'+S_sec+'">Planejamento Estratégico — Trello</div>';
+    html += '<div style="'+S_sec+'">Planejamento Estratégico - Trello</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">';
     html += '<div style="'+S_card+'"><div style="'+S_lbl+'">Boards</div><div style="'+S_val+';color:#0079BF">'+tBoards.length+'</div></div>';
     html += '<div style="'+S_card+'"><div style="'+S_lbl+'">Cards Concluídos</div><div style="'+S_valG+'">'+tDone+'</div></div>';
@@ -5744,7 +5828,7 @@ function rptGenerateMensal() {
     }).join('');
     html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 16px;">'+bRows+'</div>';
   } else if (trelloUrl) {
-    html += '<div style="'+S_sec+'">Planejamento Estratégico — Trello</div>';
+    html += '<div style="'+S_sec+'">Planejamento Estratégico - Trello</div>';
     html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:16px 20px;font-size:12px;color:#8A94A8;font-style:italic;">Board do Trello configurado mas sem dados sincronizados. Clique em "Sincronizar" no painel principal.</div>';
   }
 
@@ -5844,19 +5928,19 @@ function rptMensal() {
       'ondrop="oeHandleDrop(event,\'mensal\')">'+
       '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1B2B6B" stroke-width="1.5" style="margin-bottom:6px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>'+
       '<div style="font-size:13px;font-weight:700;color:#1B2B6B;">Arraste planilhas .xlsx aqui</div>'+
-      '<div style="font-size:11px;color:#8A94A8;margin-top:2px;">ou clique para selecionar — INDICADORES COMERCIAIS, FINANCEIROS, FLUXO DE CAIXA, DRE, etc.</div>'+
+      '<div style="font-size:11px;color:#8A94A8;margin-top:2px;">ou clique para selecionar - INDICADORES COMERCIAIS, FINANCEIROS, FLUXO DE CAIXA, DRE, etc.</div>'+
       '<input type="file" id="oe-upload-input" accept=".xlsx,.xls" multiple style="display:none;" onchange="oeUploadInline(event,\'mensal\')">'+
     '</div>'+
     '<div id="oe-uploads-list" style="margin-bottom:12px;"></div>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:#41546A;">'+
     (_gToken?'<span style="color:#22c55e;font-weight:600;">● Drive conectado</span> · Painel também busca automaticamente na pasta Drive cadastrada no Portal do Cliente':
-      '<span style="color:var(--muted);">Drive desconectado — </span><span style="cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Drive</span> <span style="color:var(--muted);">para leitura automática.</span>')+
+      '<span style="color:var(--muted);">Drive desconectado - </span><span style="cursor:pointer;text-decoration:underline;color:var(--navy);" onclick="showGDriveConfigModal()">Conectar Drive</span> <span style="color:var(--muted);">para leitura automática.</span>')+
     '</div>'+
     '<div id="rpt-drive-loading" style="display:none" class="rpt-loading-overlay">Carregando dados...</div>';
 
   var kpiSection = '';
   if (_rmf.programa === 'master') {
-    kpiSection = '<div class="rpt-form-section">DRE — Demonstrativo de Resultados (preenchido automaticamente ou manualmente)</div>' +
+    kpiSection = '<div class="rpt-form-section">DRE - Demonstrativo de Resultados (preenchido automaticamente ou manualmente)</div>' +
       '<div class="rpt-form-grid">' +
       '<div class="rpt-cfg-field"><label>Faturamento Bruto (R$)</label><input id="rmf-fat" value="'+(_rmf.fat||'')+'" oninput="_rmf.fat=this.value" placeholder="Ex: 145000"></div>' +
       '<div class="rpt-cfg-field"><label>CMV / Custo dos Produtos (R$)</label><input id="rmf-cmv" value="'+(_rmf.cmv||'')+'" oninput="_rmf.cmv=this.value" placeholder="Ex: 52000"></div>' +
@@ -5957,7 +6041,7 @@ function rptEncerramento() {
     '<div class="rpt-cfg-field"><label>Próximos Passos e Foco do Próximo Módulo</label><textarea id="ref-proximos" rows="5" oninput="_ref.proximos=this.value" placeholder="Será preenchida pela IA com as atividades previstas e pontos de atenção.">'+(_ref.proximos||'')+'</textarea></div>' +
     '</div>' +
     '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-top:6px;font-size:11.5px;color:#1E3A8A;">'+
-    '<strong>Fontes da análise:</strong> FlowUp (tarefas do cliente), Trello (planejamento estratégico) e Drive (materiais entregues). A IA avalia o cumprimento das atividades — sem indicadores financeiros.'+
+    '<strong>Fontes da análise:</strong> FlowUp (tarefas do cliente), Trello (planejamento estratégico) e Drive (materiais entregues). A IA avalia o cumprimento das atividades - sem indicadores financeiros.'+
     '</div>'+
     '<div id="ai-diag-panel-enc" style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12.5px;display:none;"></div>' +
     '<div style="display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap;">' +
@@ -6018,7 +6102,7 @@ function rptGenerateEncerramento() {
 
   var kpiHtml = '<div class="rpt-kpi-highlight">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
-    '<div style="font-size:10.5px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;font-weight:600">Desempenho do Cliente — ' + programaLabel + (_ref.modnum?' · Módulo Nº '+_ref.modnum:'') + '</div>' +
+    '<div style="font-size:10.5px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;font-weight:600">Desempenho do Cliente - ' + programaLabel + (_ref.modnum?' · Módulo Nº '+_ref.modnum:'') + '</div>' +
     '<div style="padding:5px 12px;border-radius:99px;background:'+perfBg+';color:'+perfColor+';font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.6px;">'+perfLabel+'</div>' +
     '</div>' +
     '<div class="rpt-kpi-highlight-grid">' +
@@ -6039,12 +6123,12 @@ function rptGenerateEncerramento() {
     '</div></div>' +
     '</div>';
 
-  var flowSec = rptFlowUpSection(tasksPeriodo, 'Atividades do Cliente — Detalhamento');
+  var flowSec = rptFlowUpSection(tasksPeriodo, 'Atividades do Cliente - Detalhamento');
   var trelloSec = rptTrelloSection(_ref.cliente, { dtIni: _ref.dtini, dtFim: _ref.dtfim });
 
   var analysisSec = rptAnalysisSection(_ref.analise, _ref.proximos);
 
-  var modBadge = _ref.modnum ? '<div class="rpt-modulo-badge">Módulo ' + _ref.modnum + (_ref.modnom?' — '+_ref.modnom:'') + '</div>' : '';
+  var modBadge = _ref.modnum ? '<div class="rpt-modulo-badge">Módulo ' + _ref.modnum + (_ref.modnom?' - '+_ref.modnom:'') + '</div>' : '';
   var periodoInfo = periodoStr ? '<div style="font-size:11.5px;color:var(--muted);margin-top:4px">Período: ' + periodoStr + '</div>' : '';
 
   var headerExtra = modBadge + periodoInfo;
@@ -6141,7 +6225,7 @@ async function rgcHandleFiles(fileList) {
   _rgcAIAnalysis = null;
   document.getElementById('rgc-ai-analysis').style.display = 'none';
 
-  // Dedup por nome de arquivo — se já existe, substitui (re-leitura)
+  // Dedup por nome de arquivo - se já existe, substitui (re-leitura)
   var nomesExistentes = new Set(_rgcData.map(function(d){ return d.filename; }));
 
   rgcStatus('Lendo ' + files.length + ' planilha(s)...', 'info');
@@ -6274,7 +6358,7 @@ function rgcParseFile(file) {
 function rgcExtractFromWorkbook(wb, filename) {
   // ─────────────────────────────────────────────────────────────────────
   // ESTRATÉGIA: ler dados RAW (inputs manuais do cliente) e CALCULAR
-  // tudo localmente. Não dependemos de cache de fórmulas — quando uma
+  // tudo localmente. Não dependemos de cache de fórmulas - quando uma
   // planilha é editada/exportada via Google Sheets, as fórmulas com
   // referência cruzada perdem o cached value e voltam 0/null.
   // Fontes consultadas, em ordem:
@@ -6339,19 +6423,19 @@ function rgcExtractFromWorkbook(wb, filename) {
   var baseSheet = wb.Sheets['Base de Dados'];
   var crescSheet = wb.Sheets['Crescimento da Empresa'];
 
-  // ── 3) MENSAL — calcula DIRETO das abas mensais (fonte mais confiável) ──
+  // ── 3) MENSAL - calcula DIRETO das abas mensais (fonte mais confiável) ──
   var mensal = [];
   for (var i = 0; i < 12; i++) {
     var mesNum = i + 1;
     var nomeMes = MES_NOMES_FULL[i];
-    // Aba mensal — pode ter variações de nome (acento, "Meta de Venda " vs "Meta de venda ")
+    // Aba mensal - pode ter variações de nome (acento, "Meta de Venda " vs "Meta de venda ")
     var abaName = wb.SheetNames.find(function(n){
       var ne = n.toLowerCase();
       return ne.indexOf('meta de venda') >= 0 && ne.indexOf(nomeMes.toLowerCase()) >= 0;
     });
     var abaM = abaName ? wb.Sheets[abaName] : null;
 
-    // Meta do mês — usa Definição de Meta, calculando se necessário
+    // Meta do mês - usa Definição de Meta, calculando se necessário
     var rowDef = i + 4; // linhas 4..15
     var fat25Mes = num(val(defSheet, 'D' + rowDef));
     var pctCrescDesej = num(val(defSheet, 'F' + rowDef)); // já em decimal (0.10 = 10%)
@@ -6361,7 +6445,7 @@ function rgcExtractFromWorkbook(wb, filename) {
       metaCalc = fat25Mes + (fat25Mes * pctCrescDesej);
     }
 
-    // Realizado do mês — soma E7:E37 da aba mensal (mais confiável que E39 que é fórmula)
+    // Realizado do mês - soma E7:E37 da aba mensal (mais confiável que E39 que é fórmula)
     var realizadoMes = abaM ? sumRange(abaM, 'E', 7, 37) : 0;
     // Tenta fallback E39 se zero
     if (realizadoMes === 0 && abaM) {
@@ -6372,7 +6456,7 @@ function rgcExtractFromWorkbook(wb, filename) {
       realizadoMes = num(val(baseSheet, 'E' + (i + 4)));
     }
 
-    // Funil — soma O7:O37 (abordados) e P7:P37 (fechadas)
+    // Funil - soma O7:O37 (abordados) e P7:P37 (fechadas)
     var abordadosMes = abaM ? sumRange(abaM, 'O', 7, 37) : 0;
     var fechadasMes = abaM ? sumRange(abaM, 'P', 7, 37) : 0;
     var convMes = abordadosMes > 0 ? (fechadasMes / abordadosMes) : 0;
@@ -6400,7 +6484,7 @@ function rgcExtractFromWorkbook(wb, filename) {
     });
   }
 
-  // ── 4) KPIs — contexto temporal: meses já decorridos vs futuros ──
+  // ── 4) KPIs - contexto temporal: meses já decorridos vs futuros ──
   var hojeKpi = new Date();
   var mesAtualKpi = hojeKpi.getMonth() + 1; // 1-12
   var mesesDecorridos = mensal.filter(function(m){ return m.mes <= mesAtualKpi; });
@@ -6419,7 +6503,7 @@ function rgcExtractFromWorkbook(wb, filename) {
 
   var metasBatidas = mesesDecorridos.filter(function(m){ return m.pctAting >= 1; }).length;
 
-  // Melhor / pior mês — apenas meses já decorridos COM dados
+  // Melhor / pior mês - apenas meses já decorridos COM dados
   var mesesComDados = mesesDecorridos.filter(function(m){ return m.realizado > 0; });
   var melhorMes = '', piorMes = '';
   if (mesesComDados.length) {
@@ -6543,7 +6627,7 @@ function rgcRenderAll() {
 }
 
 function rgcRenderSummary() {
-  // Apenas indicadores de PROCESSAMENTO — NÃO consolida nenhum indicador financeiro.
+  // Apenas indicadores de PROCESSAMENTO - NÃO consolida nenhum indicador financeiro.
   // Cada empresa tem seus próprios números na seção individual abaixo.
   var ok = _rgcData.filter(function(d){ return !d.error; });
   if (!ok.length) return;
@@ -6564,7 +6648,7 @@ function rgcRenderSummary() {
 
   var html = '<div style="display:flex;gap:14px;flex-wrap:wrap;">'
     + card('Clientes Analisados', ok.length, '#1B2B6B', 'Empresas com planilha processada')
-    + card('Qualidade de Preenchimento Média', qualidadeMedia + '%', qualidadeColor, qualLabel + ' — atualização das planilhas')
+    + card('Qualidade de Preenchimento Média', qualidadeMedia + '%', qualidadeColor, qualLabel + ' - atualização das planilhas')
     + '</div>'
     + '<div style="margin-top:10px;padding:10px 14px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;font-size:11.5px;color:#1E3A8A;">'
     + '<strong>Análise individual:</strong> os indicadores financeiros, gráficos e desempenho são apresentados <strong>por empresa</strong> abaixo. Não há consolidação entre clientes.'
@@ -6632,7 +6716,7 @@ function rgcRenderClientCards() {
     return '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04);">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;">'
         + '<div style="flex:1;min-width:0;"><div style="font-weight:800;color:#1B2B6B;font-size:14px;margin-bottom:2px;line-height:1.3;">'+(d.cliente||'(sem nome)')+'</div>'
-        + '<div style="font-size:10.5px;color:#6B7A99;text-transform:uppercase;letter-spacing:.5px;font-weight:600;">'+(d.programa||'—')+'</div></div>'
+        + '<div style="font-size:10.5px;color:#6B7A99;text-transform:uppercase;letter-spacing:.5px;font-weight:600;">'+(d.programa||'-')+'</div></div>'
         + rgcQualBadge(q)
       + '</div>'
       + '<div style="font-size:10.5px;color:#7C3AED;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding:5px 9px;background:#F5F3FF;border-radius:6px;display:inline-block;">Acumulado · '+periodoLabel+'/'+hojeC.getFullYear()+'</div>'
@@ -6688,7 +6772,7 @@ async function rgcRunAI() {
   btn.disabled = true; var oldTxt = btn.innerHTML; btn.innerHTML = 'Analisando...';
 
   try {
-    // Contexto temporal — fundamental para a IA não confundir mês futuro com paralisação
+    // Contexto temporal - fundamental para a IA não confundir mês futuro com paralisação
     // DEVE ser declarado ANTES do sysPrompt, pois sysPrompt usa contextoTemporal.mes_atual
     var hojeRef = new Date();
     var mesAtualRef = hojeRef.getMonth() + 1;
@@ -6706,40 +6790,40 @@ async function rgcRunAI() {
       meses_futuros_no_ano: 12 - mesAtualRef
     };
 
-    // ANÁLISE INDIVIDUAL POR CLIENTE — uma chamada por empresa, em paralelo.
+    // ANÁLISE INDIVIDUAL POR CLIENTE - uma chamada por empresa, em paralelo.
     // Não há consolidação financeira entre clientes.
     var sysPrompt = 'Você é um CONSULTOR SÊNIOR E MENTOR EMPRESARIAL da Organize Empresas, com 20+ anos analisando indicadores comerciais de pequenas e médias empresas. Sua expertise:\n' +
-      '• Análise profunda de planilhas comerciais — meta vs realizado, evolução mensal, sazonalidades\n' +
+      '• Análise profunda de planilhas comerciais - meta vs realizado, evolução mensal, sazonalidades\n' +
       '• Interpretação estratégica de KPIs (faturamento, atingimento, ticket médio, conversão, funil)\n' +
       '• Identificação de tendências, ciclos, picos, vales e pontos de inflexão\n' +
-      '• Diagnóstico de crescimento vs ano anterior — distinguir performance real de efeito sazonal\n' +
+      '• Diagnóstico de crescimento vs ano anterior - distinguir performance real de efeito sazonal\n' +
       '• Avaliação de disciplina operacional (qualidade do preenchimento da planilha)\n' +
       '• Construção de análises executivas acionáveis para o empresário\n\n' +
       '═══ REGRA TEMPORAL CRÍTICA ═══\n' +
       'Esta análise está sendo gerada em ' + contextoTemporal.mes_atual + '. Os campos do JSON do cliente trazem CADA MÊS marcado com "status_temporal":\n' +
       '• "REALIZADO" → mês decorrido, dados completos, ANALISE NORMALMENTE\n' +
-      '• "EM_ANDAMENTO" → mês corrente, dados parciais — analise com a ressalva "até o momento"\n' +
+      '• "EM_ANDAMENTO" → mês corrente, dados parciais - analise com a ressalva "até o momento"\n' +
       '• "FUTURO_NAO_DECORRIDO" → mês não aconteceu. PROIBIDO chamar de "paralisação", "queda", "sem operação", "dados não registrados". NÃO inclua em análise de gap, tendência ou comparação com meta. Pode no máximo dizer "restam X meses no ano".\n\n' +
-      'Use o campo "kpis_acumulado_ate_o_mes_atual" para % atingimento — NUNCA compare faturamento acumulado parcial com meta anual COMPLETA.\n\n' +
+      'Use o campo "kpis_acumulado_ate_o_mes_atual" para % atingimento - NUNCA compare faturamento acumulado parcial com meta anual COMPLETA.\n\n' +
       'METODOLOGIA OBRIGATÓRIA antes de cada análise:\n' +
-      '1. Identifique quais meses são REALIZADOS — só estes contam para conclusões\n' +
+      '1. Identifique quais meses são REALIZADOS - só estes contam para conclusões\n' +
       '2. Examine picos, vales, metas batidas/perdidas APENAS nos meses já decorridos\n' +
-      '3. Cruze com evolução vs ano anterior (mesmo período) — crescendo, estável ou decrescendo?\n' +
+      '3. Cruze com evolução vs ano anterior (mesmo período) - crescendo, estável ou decrescendo?\n' +
       '4. Avalie atingimento médio + CONSISTÊNCIA mensal\n' +
-      '5. Considere a qualidade do preenchimento — se baixa, alerte que conclusões podem estar enviesadas\n' +
+      '5. Considere a qualidade do preenchimento - se baixa, alerte que conclusões podem estar enviesadas\n' +
       '6. SÓ ENTÃO sintetize\n\n' +
       'REGRAS OBRIGATÓRIAS:\n' +
       '1. Baseie-se EXCLUSIVAMENTE nos dados fornecidos do CLIENTE individual. Não invente.\n' +
-      '2. NUNCA compare com outros clientes — a análise é exclusiva desta empresa.\n' +
-      '3. Cite NÚMEROS REAIS (ex: "atingiu 87% em Junho com R$ 60.281,90") — sem generalizações.\n' +
+      '2. NUNCA compare com outros clientes - a análise é exclusiva desta empresa.\n' +
+      '3. Cite NÚMEROS REAIS (ex: "atingiu 87% em Junho com R$ 60.281,90") - sem generalizações.\n' +
       '4. Responda APENAS com JSON válido, sem markdown.\n' +
       '5. Valores em moeda em formato brasileiro (R$ 12.345,67).\n' +
-      '6. Recomendações ESPECÍFICAS e MENSURÁVEIS — não "melhorar conversão", mas "subir conversão de 24% para 35% até [mês futuro]".\n' +
+      '6. Recomendações ESPECÍFICAS e MENSURÁVEIS - não "melhorar conversão", mas "subir conversão de 24% para 35% até [mês futuro]".\n' +
       '7. JAMAIS mencione meses FUTURO_NAO_DECORRIDO como problema, gap ou paralisação.';
 
     // Tarefa por cliente
     function montaContextoCliente(d) {
-      // KPIs anuais — só considerar meses já realizados ou em andamento
+      // KPIs anuais - só considerar meses já realizados ou em andamento
       var mesesRelevantes = d.mensal.filter(function(m){ return m.mes <= mesAtualRef; });
       var totalRelMesesPassados = mesesRelevantes.reduce(function(s,m){return s + m.realizado;}, 0);
       var totalMetaMesesPassados = mesesRelevantes.reduce(function(s,m){return s + m.meta;}, 0);
@@ -6756,7 +6840,7 @@ async function rgcRunAI() {
           meses_considerados: mesesRelevantes.length + ' (Janeiro até ' + MES_LBL_FULL[mesAtualRef - 1] + ')'
         },
         kpis_projecao_ano_completo: {
-          // Apenas se houver meses futuros — projeta com base na meta do ano
+          // Apenas se houver meses futuros - projeta com base na meta do ano
           meta_anual: d.kpis.metaAnual,
           ticket_medio_ate_agora: d.kpis.ticketAnual,
           taxa_conversao_ate_agora_pct: (Number(d.kpis.convAnual)*100).toFixed(1) + '%',
@@ -6768,14 +6852,14 @@ async function rgcRunAI() {
           faturamento_acumulado_ano_anterior: d.kpis.fat2025,
           faturamento_acumulado_ano_atual: d.kpis.fat2026,
           variacao_total_pct: (Number(d.kpis.crescTotalPct)*100).toFixed(1) + '%',
-          observacao: 'Comparação considera todos os meses lançados — em ambos os anos.'
+          observacao: 'Comparação considera todos os meses lançados - em ambos os anos.'
         },
         // CADA mês marcado com status temporal explícito
         mensal_com_status_temporal: d.mensal.map(function(m){
           var status;
           if (m.mes < mesAtualRef) status = 'REALIZADO (mês já decorreu)';
           else if (m.mes === mesAtualRef) status = 'EM_ANDAMENTO (mês corrente, dados parciais)';
-          else status = 'FUTURO_NAO_DECORRIDO (NÃO ANALISAR — mês ainda não aconteceu)';
+          else status = 'FUTURO_NAO_DECORRIDO (NÃO ANALISAR - mês ainda não aconteceu)';
           return {
             mes: m.nome,
             mes_numero: m.mes,
@@ -6784,7 +6868,7 @@ async function rgcRunAI() {
             realizado: m.realizado,
             atingimento_pct: Math.round((m.pctAting||0)*100)+'%',
             faturamento_ano_anterior: m.fat2025,
-            crescimento_vs_ano_anterior_pct: m.fat2025 > 0 ? Math.round((m.cresc||0)*100)+'%' : '—'
+            crescimento_vs_ano_anterior_pct: m.fat2025 > 0 ? Math.round((m.cresc||0)*100)+'%' : '-'
           };
         }),
         qualidade_preenchimento: {
@@ -6808,8 +6892,8 @@ async function rgcRunAI() {
         '   - Incluir em cálculos de gap, tendência, comparação com meta\n' +
         '   - Contar como "mês sem dados"\n' +
         '   - Citar valores R$ 0 desses meses como evidência de algo\n' +
-        '   - Apenas IGNORAR esses meses — você pode no máximo dizer "restam ' + contextoTemporal.meses_futuros_no_ano + ' meses no ano para atingir a meta anual"\n\n' +
-        'KPIs de atingimento devem usar APENAS meses REALIZADOS ou EM_ANDAMENTO (campo "kpis_acumulado_ate_o_mes_atual"). NUNCA use "meta_anual completa" como base de comparação para o que foi realizado até agora — isso seria injusto.\n\n' +
+        '   - Apenas IGNORAR esses meses - você pode no máximo dizer "restam ' + contextoTemporal.meses_futuros_no_ano + ' meses no ano para atingir a meta anual"\n\n' +
+        'KPIs de atingimento devem usar APENAS meses REALIZADOS ou EM_ANDAMENTO (campo "kpis_acumulado_ate_o_mes_atual"). NUNCA use "meta_anual completa" como base de comparação para o que foi realizado até agora - isso seria injusto.\n\n' +
         '═══════════════════ DADOS DO CLIENTE ═══════════════════\n' +
         JSON.stringify(ctxCliente, null, 2) + '\n\n' +
         '═══════════════════ ENTREGUE (análise exclusiva deste cliente) ═══════════════════\n' +
@@ -6863,11 +6947,11 @@ function rgcRenderAIAnalysis() {
       + '</div>';
   };
 
-  // Uma seção dobrável por cliente — análise individual completa
+  // Uma seção dobrável por cliente - análise individual completa
   var blocos = analises.map(function(r, idx){
     if (r.error || !r.analise) {
       return '<details style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;padding:14px 18px;margin-bottom:14px;">'
-        + '<summary style="font-weight:800;color:#991B1B;cursor:pointer;font-size:14px;">'+r.cliente+' — Erro na análise</summary>'
+        + '<summary style="font-weight:800;color:#991B1B;cursor:pointer;font-size:14px;">'+r.cliente+' - Erro na análise</summary>'
         + '<div style="font-size:12px;color:#7F1D1D;margin-top:6px;">'+(r.error||'Análise não disponível')+'</div>'
         + '</details>';
     }
@@ -6888,7 +6972,7 @@ function rgcRenderAIAnalysis() {
       + '</details>';
   }).join('');
 
-  var html = '<div style="font-size:18px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Análise Executiva — IA · '+analises.length+' cliente(s)</div>'
+  var html = '<div style="font-size:18px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Análise Executiva - IA · '+analises.length+' cliente(s)</div>'
     + '<div style="font-size:12px;color:#6B7A99;margin-bottom:14px;padding:10px 14px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;color:#1E3A8A;">'
     + 'Cada cliente foi analisado individualmente pela IA. Não há consolidação financeira nem comparações entre empresas.'
     + '</div>'
@@ -6899,7 +6983,7 @@ function rgcRenderAIAnalysis() {
   el.style.display = 'block';
 }
 
-// Gráfico SVG estilo painel — barras agrupadas Meta vs Realizado por mês (mais visual para PDF)
+// Gráfico SVG estilo painel - barras agrupadas Meta vs Realizado por mês (mais visual para PDF)
 function rgcPdfChart(mensal) {
   var MES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   var hoje = new Date();
@@ -6965,7 +7049,7 @@ function rgcPdfChart(mensal) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PDF NATIVO VETORIAL — jsPDF puro, texto selecionável, sem rasterização
+// PDF NATIVO VETORIAL - jsPDF puro, texto selecionável, sem rasterização
 // ═══════════════════════════════════════════════════════════════
 async function rgcDownloadPDF() {
   var ok = _rgcData.filter(function(d){ return !d.error; });
@@ -7070,7 +7154,7 @@ async function rgcDownloadPDF() {
       return H;
     }
 
-    // ═══════════════ CAPA — fundo navy puro, logo direto sem badge ═══════════════
+    // ═══════════════ CAPA - fundo navy puro, logo direto sem badge ═══════════════
     rect(0,0,PW,PH,COL.navyDark);
     rect(0,0,PW,PH*0.62,COL.navy);
     if (logoImg) {
@@ -7147,7 +7231,7 @@ async function rgcDownloadPDF() {
       doc.setFont('helvetica','bold'); setText(COL.navy);
       doc.text(d.cliente.substring(0,42), tx+12, y+5);
       doc.setFont('helvetica','normal'); setText(COL.txtMuted);
-      doc.text((d.programa||'—'), tx+95, y+5);
+      doc.text((d.programa||'-'), tx+95, y+5);
       var q = d.qualidade; var bc = qBadgeColors(q.score);
       var badgeText = (q.classificacao+' '+q.score+'%').toUpperCase();
       doc.setFontSize(6.5); doc.setFont('helvetica','bold');
@@ -7158,7 +7242,7 @@ async function rgcDownloadPDF() {
       y += 7.5;
     });
 
-    // ═══════════════ POR CLIENTE — fluxo contínuo, sem quebra forçada ═══════════════
+    // ═══════════════ POR CLIENTE - fluxo contínuo, sem quebra forçada ═══════════════
     var currentY = y;  // continua de onde o sumário parou
     ok.forEach(function(d, idx) {
       // Espaço mínimo para iniciar bloco do cliente: ~95mm (nome + KPIs + gráfico)
@@ -7377,7 +7461,7 @@ async function rgcDownloadPDF() {
   var logoSrc = (typeof S !== 'undefined' && S.logoConfig && S.logoConfig.img) ? S.logoConfig.img : (typeof LOGO_ORGANIZE_B64 !== 'undefined' ? LOGO_ORGANIZE_B64 : '');
 
   // ═════════════════════════════════════════════════════════════
-  // CAPA — logo gigante centralizada + título + data
+  // CAPA - logo gigante centralizada + título + data
   // ═════════════════════════════════════════════════════════════
   var capa = '<div style="width:794px;height:1080px;background:linear-gradient(135deg,#1B2B6B 0%,#0F1A45 100%);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:60px;page-break-after:always;box-sizing:border-box;">'
     + (logoSrc ? '<img src="'+logoSrc+'" alt="Organize Empresas" style="height:130px;width:auto;margin-bottom:40px;filter:brightness(0) invert(1);">' : '<div style="font-size:32px;font-weight:800;letter-spacing:3px;margin-bottom:40px;">ORGANIZE EMPRESAS</div>')
@@ -7388,7 +7472,7 @@ async function rgcDownloadPDF() {
     + '</div>';
 
   // ═════════════════════════════════════════════════════════════
-  // HEADER reutilizável — aparece no TOPO de cada página interna
+  // HEADER reutilizável - aparece no TOPO de cada página interna
   // ═════════════════════════════════════════════════════════════
   function pageHeader(title) {
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 30px;background:#1B2B6B;color:#fff;">'
@@ -7442,7 +7526,7 @@ async function rgcDownloadPDF() {
     + '</div>';
 
   // ═════════════════════════════════════════════════════════════
-  // PÁGINA POR EMPRESA — REPLICA o card do painel
+  // PÁGINA POR EMPRESA - REPLICA o card do painel
   // ═════════════════════════════════════════════════════════════
   var clientesHTML_per = ok.map(function(d, idx){
     var k = d.kpis, q = d.qualidade;
@@ -7451,7 +7535,7 @@ async function rgcDownloadPDF() {
     var atingColor = pct >= 0.85 ? '#16A34A' : pct >= 0.5 ? '#F59E0B' : '#DC2626';
     var crescColor = k.crescTotalPct >= 0 ? '#16A34A' : '#DC2626';
 
-    // Análise IA — caixas estilo painel
+    // Análise IA - caixas estilo painel
     var iaBlock = '';
     if (analise) {
       var iaBox = function(t, c, color){
@@ -7479,13 +7563,13 @@ async function rgcDownloadPDF() {
       + pageHeader(d.cliente + ' · ' + (d.programa||''))
       // CONTEÚDO do cliente
       + '<div style="padding:24px 30px;">'
-        // BLOCO PRINCIPAL — card estilo painel
+        // BLOCO PRINCIPAL - card estilo painel
         + '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:14px;padding:22px 24px;box-shadow:0 2px 8px rgba(27,43,107,.06);">'
           // Top: nome + qualidade badge
           + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:12px;">'
             + '<div style="flex:1;min-width:0;">'
               + '<div style="font-weight:800;color:#1B2B6B;font-size:22px;margin-bottom:3px;line-height:1.2;">'+(d.cliente||'(sem nome)')+'</div>'
-              + '<div style="font-size:11px;color:#6B7A99;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">'+(d.programa||'—')+'</div>'
+              + '<div style="font-size:11px;color:#6B7A99;text-transform:uppercase;letter-spacing:.6px;font-weight:700;">'+(d.programa||'-')+'</div>'
             + '</div>'
             + '<div>'+rgcQualBadge(q)+'</div>'
           + '</div>'
@@ -7581,7 +7665,7 @@ async function rgcDownloadPDF() {
         windowWidth: RENDER_W_PX
       });
 
-      var imgData = canvas.toDataURL('image/jpeg', 0.85); // JPEG 85% — peso 5-10x menor que PNG
+      var imgData = canvas.toDataURL('image/jpeg', 0.85); // JPEG 85% - peso 5-10x menor que PNG
       var imgW_mm = A4_W_MM;
       var imgH_mm = (canvas.height * A4_W_MM) / canvas.width;
 
@@ -7619,7 +7703,7 @@ async function rgcDownloadPDF() {
   }
 */
 
-// ═══════════════ PORTAL DO CLIENTE — Gerador de Portais Integrado ═══════════════
+// ═══════════════ PORTAL DO CLIENTE - Gerador de Portais Integrado ═══════════════
 
 var _portalLogoData = '';
 var _portalEditId = null;
@@ -7627,7 +7711,7 @@ var PORTAL_PAGES = 'https://administrativo-ship-it.github.io/painel-organize-emp
 var PORTAL_WORKER = 'https://organize-inscricoes.administrativo-2a8.workers.dev';
 
 // Todas as operações de portal (listar/criar/editar/excluir) passam pelo Worker,
-// que guarda o token do GitHub no servidor — o navegador nunca precisa de um token
+// que guarda o token do GitHub no servidor - o navegador nunca precisa de um token
 // próprio, então isso funciona em qualquer dispositivo sem configuração alguma.
 function portalHeaders(extra) {
   return Object.assign({ 'X-Admin-Key': (_DC && _DC.pKey) || '' }, extra || {});
@@ -7778,7 +7862,7 @@ async function portalCreate() {
 function portalShowEditBanner() {
   var b = document.getElementById('p-edit-banner');
   b.style.display = 'flex';
-  document.getElementById('p-edit-banner-txt').innerHTML = '✎ Editando portal: <strong>' + _portalEditId + '</strong> — o link permanece o mesmo.';
+  document.getElementById('p-edit-banner-txt').innerHTML = '✎ Editando portal: <strong>' + _portalEditId + '</strong> - o link permanece o mesmo.';
 }
 
 function portalResetForm() {
@@ -7936,9 +8020,9 @@ function rptSummary() {
     var overColor = p.tasks.over > 0 ? 'color:var(--red);font-weight:700' : 'color:var(--muted)';
     var pct = p.progress;
     var barColor = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--navy)' : 'var(--orange)';
-    projRows += '<tr><td style="color:var(--muted);font-size:11px">' + (i+1) + '</td><td><strong style="font-size:12px">' + p.name + '</strong></td><td style="font-size:11.5px">' + (p.client||'—') + '</td><td style="font-size:11.5px">' + p.responsible + '</td><td style="text-align:center">' + p.tasks.total + '</td><td style="text-align:center;color:var(--green);font-weight:700">' + p.tasks.done + '</td><td style="text-align:center;' + overColor + '">' + p.tasks.over + '</td><td><div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="flex:1;height:4px;background:var(--border);border-radius:999px;overflow:hidden;min-width:50px"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:999px"></div></div>' + pct + '%</div></td><td><span class="badge b-' + p.status + '">' + statusLabel(p.status) + '</span></td><td><span class="risk-badge rb-' + p.risk + '">' + riskLabel(p.risk) + '</span></td></tr>';
+    projRows += '<tr><td style="color:var(--muted);font-size:11px">' + (i+1) + '</td><td><strong style="font-size:12px">' + p.name + '</strong></td><td style="font-size:11.5px">' + (p.client||'-') + '</td><td style="font-size:11.5px">' + p.responsible + '</td><td style="text-align:center">' + p.tasks.total + '</td><td style="text-align:center;color:var(--green);font-weight:700">' + p.tasks.done + '</td><td style="text-align:center;' + overColor + '">' + p.tasks.over + '</td><td><div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="flex:1;height:4px;background:var(--border);border-radius:999px;overflow:hidden;min-width:50px"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:999px"></div></div>' + pct + '%</div></td><td><span class="badge b-' + p.status + '">' + statusLabel(p.status) + '</span></td><td><span class="risk-badge rb-' + p.risk + '">' + riskLabel(p.risk) + '</span></td></tr>';
   });
-  if (!projRows) projRows = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Nenhum projeto carregado — sincronize o painel</td></tr>';
+  if (!projRows) projRows = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Nenhum projeto carregado - sincronize o painel</td></tr>';
 
   var trelloRows = '';
   S.trelloBoards.forEach(function(b) {
@@ -7953,13 +8037,13 @@ function rptSummary() {
   if (highRisk.length) {
     var riskRows = '';
     highRisk.forEach(function(p) {
-      riskRows += '<tr><td><strong>' + p.name + '</strong></td><td>' + (p.client||'—') + '</td><td>' + p.responsible + '</td><td style="color:var(--red);font-weight:700;text-align:center">' + p.tasks.over + '</td><td><span class="risk-badge rb-' + p.risk + '">' + riskLabel(p.risk) + '</span></td><td style="font-size:11px">' + (p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '—') + '</td></tr>';
+      riskRows += '<tr><td><strong>' + p.name + '</strong></td><td>' + (p.client||'-') + '</td><td>' + p.responsible + '</td><td style="color:var(--red);font-weight:700;text-align:center">' + p.tasks.over + '</td><td><span class="risk-badge rb-' + p.risk + '">' + riskLabel(p.risk) + '</span></td><td style="font-size:11px">' + (p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '-') + '</td></tr>';
     });
     riskSection = '<div class="rpt-sec">Projetos em Risco (' + highRisk.length + ')</div><div class="table-wrap" style="margin-bottom:0"><table><thead><tr><th>Projeto</th><th>Cliente</th><th>Responsável</th><th>Tarefas Atrasadas</th><th>Risco</th><th>Prazo</th></tr></thead><tbody>' + riskRows + '</tbody></table></div>';
   }
 
   document.getElementById('report-preview').innerHTML =
-    rptHeader('Relatório — Resumo Geral', 'Consolidado de Projetos, Tarefas e Planejamentos') +
+    rptHeader('Relatório - Resumo Geral', 'Consolidado de Projetos, Tarefas e Planejamentos') +
     '<div class="rpt-kpi-row">' +
     '<div class="rpt-kpi"><div class="rpt-kpi-val">' + ps.length + '</div><div class="rpt-kpi-lbl">Projetos</div></div>' +
     '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--green)">' + activeP + '</div><div class="rpt-kpi-lbl">Projetos Ativos</div></div>' +
@@ -8012,11 +8096,11 @@ function rptFlowUpProjects() {
     var barColor = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--navy)' : 'var(--orange)';
     rows += '<tr><td style="color:var(--muted);font-size:11px">' + (i+1) + '</td>' +
       '<td><strong style="font-size:12px">' + p.name + '</strong></td>' +
-      '<td style="font-size:11.5px">' + (p.client||'—') + '</td>' +
-      '<td style="font-size:11px;color:var(--txt2)">' + (p.service||'—') + '</td>' +
+      '<td style="font-size:11.5px">' + (p.client||'-') + '</td>' +
+      '<td style="font-size:11px;color:var(--txt2)">' + (p.service||'-') + '</td>' +
       '<td style="font-size:11.5px">' + p.responsible + '</td>' +
-      '<td style="font-size:11px">' + (p.start ? new Date(p.start).toLocaleDateString('pt-BR') : '—') + '</td>' +
-      '<td style="font-size:11px">' + (p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '—') + '</td>' +
+      '<td style="font-size:11px">' + (p.start ? new Date(p.start).toLocaleDateString('pt-BR') : '-') + '</td>' +
+      '<td style="font-size:11px">' + (p.deadline ? new Date(p.deadline).toLocaleDateString('pt-BR') : '-') + '</td>' +
       '<td style="text-align:center">' + p.tasks.total + '</td>' +
       '<td style="text-align:center;color:var(--green);font-weight:700">' + p.tasks.done + '</td>' +
       '<td style="text-align:center;color:' + (p.tasks.over>0?'var(--red)':'var(--muted)') + ';font-weight:' + (p.tasks.over>0?'700':'400') + '">' + p.tasks.over + '</td>' +
@@ -8027,7 +8111,7 @@ function rptFlowUpProjects() {
   if (!rows) rows = '<tr><td colspan="13" style="text-align:center;color:var(--muted);padding:20px">Nenhum projeto encontrado com esses filtros</td></tr>';
 
   document.getElementById('report-preview').innerHTML =
-    rptHeader('Relatório de Projetos — FlowUp', 'Situação atual da carteira de projetos') +
+    rptHeader('Relatório de Projetos - FlowUp', 'Situação atual da carteira de projetos') +
     '<div class="rpt-kpi-row">' +
     '<div class="rpt-kpi"><div class="rpt-kpi-val">' + ps.length + '</div><div class="rpt-kpi-lbl">Total</div></div>' +
     '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--green)">' + active + '</div><div class="rpt-kpi-lbl">Ativos</div></div>' +
@@ -8079,23 +8163,23 @@ function rptFlowUpTasks() {
   var rows = '';
   ts.forEach(function(t, i) {
     var dueStyle = t.isOver ? 'color:var(--red);font-weight:700' : '';
-    var delayStr = t.isOver ? (t.daysLate + 'd') : '—';
+    var delayStr = t.isOver ? (t.daysLate + 'd') : '-';
     var delayStyle = t.isOver ? 'color:var(--red);font-weight:700' : 'color:var(--muted)';
     var statLabel = t.isDone ? 'Concluída' : (t.isOver ? 'Atrasada' : 'Em andamento');
     var statClass = t.isDone ? 'b-done' : (t.isOver ? 'b-over' : 'b-active');
     rows += '<tr><td style="color:var(--muted);font-size:11px">' + (i+1) + '</td>' +
       '<td style="font-size:12px;max-width:220px"><strong>' + t.name + '</strong></td>' +
-      '<td style="font-size:11px;color:var(--txt2)">' + (t.project||'—') + '</td>' +
-      '<td style="font-size:11px">' + (t.client||'—') + '</td>' +
+      '<td style="font-size:11px;color:var(--txt2)">' + (t.project||'-') + '</td>' +
+      '<td style="font-size:11px">' + (t.client||'-') + '</td>' +
       '<td style="font-size:12px">' + t.responsible + '</td>' +
-      '<td style="font-size:11px;' + dueStyle + '">' + (t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '—') + '</td>' +
+      '<td style="font-size:11px;' + dueStyle + '">' + (t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '-') + '</td>' +
       '<td><span class="badge ' + statClass + '">' + statLabel + '</span></td>' +
       '<td style="font-size:11px;' + delayStyle + '">' + delayStr + '</td></tr>';
   });
   if (!rows) rows = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Nenhuma tarefa encontrada com esses filtros</td></tr>';
 
   document.getElementById('report-preview').innerHTML =
-    rptHeader('Relatório de Tarefas — FlowUp', 'Situação das tarefas nos projetos') +
+    rptHeader('Relatório de Tarefas - FlowUp', 'Situação das tarefas nos projetos') +
     '<div class="rpt-kpi-row">' +
     '<div class="rpt-kpi"><div class="rpt-kpi-val">' + ts.length + '</div><div class="rpt-kpi-lbl">Total</div></div>' +
     '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--green)">' + done + '</div><div class="rpt-kpi-lbl">Concluídas</div></div>' +
@@ -8158,7 +8242,7 @@ function rptTrello() {
   });
 
   document.getElementById('report-preview').innerHTML =
-    rptHeader('Relatório de Planejamentos — Trello', 'Situação dos planejamentos estratégicos mensais') +
+    rptHeader('Relatório de Planejamentos - Trello', 'Situação dos planejamentos estratégicos mensais') +
     '<div class="rpt-kpi-row">' +
     '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:var(--trello)">' + boards.length + '</div><div class="rpt-kpi-lbl">Boards</div></div>' +
     '<div class="rpt-kpi"><div class="rpt-kpi-val">' + totalC + '</div><div class="rpt-kpi-lbl">Cards Total</div></div>' +
@@ -8192,8 +8276,8 @@ var INSCRICOES_LINKS = [
     nome: 'Curso de Formação em DISC',
     url: 'https://administrativo-ship-it.github.io/painel-organize-empresas/inscricao-disc.html',
     formato: '100% on-line, pelo Google Meet',
-    cargaHoraria: '2 encontros de 2h — 4h no total',
-    dataHorario: 'A confirmar — avisado por WhatsApp',
+    cargaHoraria: '2 encontros de 2h - 4h no total',
+    dataHorario: '28 e 29 de setembro, às 18h (Brasília)',
     investimento: 'R$ 297,00',
     vagas: 'Vagas limitadas',
     prazo: 'Aberto, sem prazo definido',
@@ -8265,23 +8349,23 @@ async function inscLoadInscritos(formId, box) {
     var hasPlano = list.some(function(e){ return e.plano; });
     var hasFormaPagamento = list.some(function(e){ return e.forma_pagamento; });
     var rows = list.slice().reverse().map(function(e) {
-      var ts = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR') + ' ' + new Date(e.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '—';
-      var comprovante = (e.comprovante_confirmado === true || e.comprovante_confirmado === 'true') ? '✓ Confirmado' : '—';
+      var ts = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR') + ' ' + new Date(e.ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '-';
+      var comprovante = (e.comprovante_confirmado === true || e.comprovante_confirmado === 'true') ? '✓ Confirmado' : '-';
       var plano = e.plano === 'completo' ? 'Inscrição completa' : (e.plano === 'basico' ? 'Somente inscrição' : (e.plano || ''));
       var formaPagamento = e.forma_pagamento === 'cartao' ? 'Cartão de crédito' : (e.forma_pagamento === 'pix' ? 'Pix' : (e.forma_pagamento || ''));
       return '<tr>' +
         '<td>' + esc(ts) + '</td>' +
-        '<td>' + esc(e.nome || '—') + '</td>' +
-        '<td><a href="https://wa.me/55' + esc((e.whatsapp||'').replace(/\D/g,'')) + '" target="_blank" rel="noopener" style="color:var(--navy)">' + esc(e.whatsapp || '—') + '</a></td>' +
-        '<td>' + esc(e.email || '—') + '</td>' +
-        '<td>' + esc(e.empresa || '—') + '</td>' +
-        '<td>' + esc(e.cargo || '—') + '</td>' +
-        '<td>' + esc(e.colaboradores || '—') + '</td>' +
-        '<td>' + esc(e.faturamento || '—') + '</td>' +
-        (hasPlano ? '<td>' + esc(plano || '—') + '</td>' : '') +
-        (hasFormaPagamento ? '<td>' + esc(formaPagamento || '—') + '</td>' : '') +
+        '<td>' + esc(e.nome || '-') + '</td>' +
+        '<td><a href="https://wa.me/55' + esc((e.whatsapp||'').replace(/\D/g,'')) + '" target="_blank" rel="noopener" style="color:var(--navy)">' + esc(e.whatsapp || '-') + '</a></td>' +
+        '<td>' + esc(e.email || '-') + '</td>' +
+        '<td>' + esc(e.empresa || '-') + '</td>' +
+        '<td>' + esc(e.cargo || '-') + '</td>' +
+        '<td>' + esc(e.colaboradores || '-') + '</td>' +
+        '<td>' + esc(e.faturamento || '-') + '</td>' +
+        (hasPlano ? '<td>' + esc(plano || '-') + '</td>' : '') +
+        (hasFormaPagamento ? '<td>' + esc(formaPagamento || '-') + '</td>' : '') +
         '<td>' + comprovante + '</td>' +
-        '<td>' + esc(e.observacao || '—') + '</td>' +
+        '<td>' + esc(e.observacao || '-') + '</td>' +
       '</tr>';
     }).join('');
     var planoHeader = hasPlano ? '<th>Plano</th>' : '';
@@ -8547,7 +8631,7 @@ function cvToBase64(buffer) {
   return btoa(binary);
 }
 
-// ── Claude API — suporte a PDF nativo (document block) e texto extraído ──
+// ── Claude API - suporte a PDF nativo (document block) e texto extraído ──
 async function cvCallClaudeDoc(apiKey, file, fileText, perfil) {
   var isPDF = file.name.toLowerCase().endsWith('.pdf');
   var sys = 'Você é especialista sênior em Recrutamento & Seleção. Analise o currículo com base EXCLUSIVAMENTE no perfil da vaga descrito. Seja objetivo e criterioso. Responda APENAS com JSON válido, sem markdown.';
@@ -8707,7 +8791,7 @@ function cvRenderResults() {
       html += '<tr style="border-bottom:1px solid #F0F4F8;">'
         +'<td style="padding:10px;font-weight:800;color:#1B2B6B;font-size:15px;">'+(i+1)+'</td>'
         +'<td style="padding:10px;overflow:hidden;">'
-          +'<div style="font-weight:700;color:#1B2B6B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.nome||'—')+'</div>'
+          +'<div style="font-weight:700;color:#1B2B6B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.nome||'-')+'</div>'
           +(r.resumo?'<div style="font-size:11px;color:#6B7A99;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+r.resumo+'</div>':'')
           +'</td>'
         +'<td style="padding:10px;">'
@@ -8716,18 +8800,18 @@ function cvRenderResults() {
             +'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;background:'+nbBg+';color:'+nbTxt+';white-space:nowrap;flex-shrink:0;">'+nb+'</span>'
           +'</div>'
         +'</td>'
-        +'<td style="padding:10px;font-size:12px;color:#41546A;word-break:break-word;overflow-wrap:break-word;white-space:normal;">'+(r.formacao||'—')+'</td>'
+        +'<td style="padding:10px;font-size:12px;color:#41546A;word-break:break-word;overflow-wrap:break-word;white-space:normal;">'+(r.formacao||'-')+'</td>'
         +'<td style="padding:10px;font-size:11.5px;">'
           +(r.telefone?'<div style="color:#1B2B6B;font-weight:700;font-size:13px;white-space:nowrap;">'+r.telefone+'</div>':'')
           +(r.email?'<div style="color:#6B7A99;font-size:10.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.email+'</div>':'')
-          +(!r.email&&!r.telefone?'<span style="color:#9CA3AF;">—</span>':'')
+          +(!r.email&&!r.telefone?'<span style="color:#9CA3AF;">-</span>':'')
         +'</td>'
         +'</tr>';
     });
     html += '</tbody></table></div></div>';
 
     // Cards detalhados
-    html += '<div style="font-size:14px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Fichas Detalhadas — Top '+top.length+'</div>';
+    html += '<div style="font-size:14px;font-weight:800;color:#1B2B6B;margin-bottom:14px;">Fichas Detalhadas - Top '+top.length+'</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px;margin-bottom:24px;">';
     top.forEach(function(r,i) {
       var sc = r.score||0;
@@ -8737,13 +8821,13 @@ function cvRenderResults() {
         +'<div style="background:'+hdrBg+';padding:14px 18px;display:flex;justify-content:space-between;align-items:flex-start;">'
           +'<div style="flex:1;min-width:0;">'
             +'<div style="font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">#'+(i+1)+' de '+top.length+'</div>'
-            +'<div style="font-size:15px;font-weight:800;color:#fff;line-height:1.2;">'+(r.nome||'—')+'</div>'
+            +'<div style="font-size:15px;font-weight:800;color:#fff;line-height:1.2;">'+(r.nome||'-')+'</div>'
             +(r.telefone?'<div style="font-size:11px;color:rgba(255,255,255,.9);font-weight:700;margin-top:3px;">'+r.telefone+'</div>':'')
             +(r.email?'<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:1px;">'+r.email+'</div>':'')
           +'</div>'
           +'<div style="text-align:right;flex-shrink:0;margin-left:12px;">'
             +'<div style="font-size:28px;font-weight:900;color:#fff;line-height:1;">'+sc+'%</div>'
-            +'<div style="font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;">'+(r.nivel_aderencia||'—')+'</div>'
+            +'<div style="font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;">'+(r.nivel_aderencia||'-')+'</div>'
           +'</div>'
         +'</div>'
         +'<div style="height:3px;background:#E0E5EE;"><div style="height:3px;width:'+sc+'%;background:'+sC+';"></div></div>'
@@ -8762,17 +8846,17 @@ function cvRenderResults() {
 
   if (desc.length) {
     html += '<details style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;padding:14px 18px;">'
-      +'<summary style="cursor:pointer;font-weight:700;color:#991B1B;font-size:13px;list-style:none;">Descartados automaticamente — '+desc.length+' currículo(s) com baixa aderência</summary>'
+      +'<summary style="cursor:pointer;font-weight:700;color:#991B1B;font-size:13px;list-style:none;">Descartados automaticamente - '+desc.length+' currículo(s) com baixa aderência</summary>'
       +'<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:7px;">';
     desc.forEach(function(r){
-      html += '<span style="background:#FEE2E2;border-radius:6px;padding:4px 10px;font-size:12px;color:#991B1B;">'+(r.nome||r._filename||'—')+(r.score?' ('+r.score+'%)':'')+(r.error?' [erro]':'')+'</span>';
+      html += '<span style="background:#FEE2E2;border-radius:6px;padding:4px 10px;font-size:12px;color:#991B1B;">'+(r.nome||r._filename||'-')+(r.score?' ('+r.score+'%)':'')+(r.error?' [erro]':'')+'</span>';
     });
     html += '</div></details>';
   }
   el.innerHTML = html;
 }
 
-// ── PDF — landscape A4, estilo apresentação (1 slide por candidato) ──
+// ── PDF - landscape A4, estilo apresentação (1 slide por candidato) ──
 async function cvDownloadPDF() {
   if (!_cvResults.length) { alert('Gere a análise primeiro.'); return; }
   var btn = document.getElementById('cv-btn-pdf');
@@ -8801,7 +8885,7 @@ async function cvDownloadPDF() {
     function tx(s){
       if(!s)return'';
       return String(s)
-        .replace(/—|–/g,'-')
+        .replace(/-|–/g,'-')
         .replace(/[‘’]/g,"'")
         .replace(/[“”]/g,'"')
         .replace(/•/g,'·')
@@ -8873,10 +8957,10 @@ async function cvDownloadPDF() {
       b(11); st(WHITE); doc.text(sc+'%',MC+104,cy+10,{align:'center'});
       var nb=(r.nivel_aderencia||'').toUpperCase().indexOf('ALTA')>=0?'ALTA':(r.nivel_aderencia||'').toUpperCase().indexOf('MED')>=0?'MÉD.':'BAIX.';
       b(7); st(sc_c); doc.text(nb,MC+120,cy+10.5);
-      // Formação — até 2 linhas
+      // Formação - até 2 linhas
       var fLn=doc.splitTextToSize(tx(r.formacao||'-'),64);
       n(8); st([44,62,80]); doc.text(fLn.slice(0,2),MC+132,cy+7.5);
-      // Contato — e-mail e telefone em linhas separadas
+      // Contato - e-mail e telefone em linhas separadas
       n(7.5); st(MUTED);
       if(r.email)doc.text(tx(r.email).substring(0,34),MC+200,cy+7);
       if(r.telefone){b(8);st([27,43,107]);doc.text(tx(r.telefone),MC+200,cy+14);}
