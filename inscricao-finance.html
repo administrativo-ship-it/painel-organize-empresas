@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Imersão Organize Finance — Organize Empresas</title>
+<title>Imersão Organize Finance - Organize Empresas</title>
 <meta name="description" content="Inscrição para a Imersão Organize Finance da Organize Empresas.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -97,7 +97,7 @@ select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(
 <body>
 <div id="app"></div>
 <script>
-window.__LOGO_DATA_URI__ = ''; // preenchido no deploy (logo embutido como asset separado — ver assets/logo-organize.png)
+window.__LOGO_DATA_URI__ = ''; // preenchido no deploy (logo embutido como asset separado - ver assets/logo-organize.png)
 var CONFIG = {
   formId: 'finance',
   registerUrl: 'https://organize-inscricoes.administrativo-2a8.workers.dev/register',
@@ -128,7 +128,7 @@ function esc(s){ s=(s===undefined||s===null)?'':String(s); return s.replace(/&/g
 function fmtWhatsApp(v){ var d=String(v||'').replace(/\D/g,'').slice(0,11); if(d.length<=2)return d; if(d.length<=7)return '('+d.slice(0,2)+') '+d.slice(2); return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7); }
 function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 function planPrice(v){ var list=CONFIG.planOptions||[]; for(var i=0;i<list.length;i++){ if(list[i].value===v) return list[i].price; } return ''; }
-function planLabel(v){ var list=CONFIG.planOptions||[]; for(var i=0;i<list.length;i++){ if(list[i].value===v) return list[i].label+' — '+list[i].price; } return v||'—'; }
+function planLabel(v){ var list=CONFIG.planOptions||[]; for(var i=0;i<list.length;i++){ if(list[i].value===v) return list[i].label+' - '+list[i].price; } return v||'-'; }
 
 var VIEW = {mode:'form', locked:false, banner:null, values:{}, errors:{}};
 
@@ -249,7 +249,7 @@ function renderFormPanel(){
   '</div>';
   html += '<button type="submit" class="btn btn-primary" '+(locked?'disabled':'')+'>'+(locked?'Enviando…':'Registrar inscrição')+'</button>';
   html += '<p class="privacy-note">Seus dados são usados apenas pela equipe da Organize Empresas para tratar esta inscrição.</p>';
-  return '<div class="panel"><h2>Formulário de inscrição</h2><p class="sub">Preencha os dados, pague via Pix e confirme o envio do comprovante — nossa equipe valida o pagamento e confirma sua vaga.</p><form id="regform" novalidate>'+html+'</form></div>';
+  return '<div class="panel"><h2>Formulário de inscrição</h2><p class="sub">Preencha os dados, pague via Pix e confirme o envio do comprovante - nossa equipe valida o pagamento e confirma sua vaga.</p><form id="regform" novalidate>'+html+'</form></div>';
 }
 
 function renderThanks(entry){
