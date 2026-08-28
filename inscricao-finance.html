@@ -349,7 +349,7 @@ function submitHandler(e){
   VIEW.banner = {type:'info', text:'Enviando sua inscrição…'};
   render();
 
-  var entry = {nome:v.nome, whatsapp:fmtWhatsApp(v.whatsapp), email:v.email, empresa:v.empresa, cargo:v.cargo, colaboradores:v.colaboradores, faturamento:v.faturamento, comprovante_confirmado:v.comprovante_confirmado, observacao:v.observacao};
+  var entry = {nome:v.nome, whatsapp:fmtWhatsApp(v.whatsapp), email:v.email, empresa:v.empresa, cargo:v.cargo, colaboradores:v.colaboradores, faturamento:v.faturamento, valor:planPrice(v.plano)||'', comprovante_confirmado:v.comprovante_confirmado, observacao:v.observacao};
   if (CONFIG.hasPlanChoice) entry.plano = v.plano;
 
   fetch(CONFIG.registerUrl, {
