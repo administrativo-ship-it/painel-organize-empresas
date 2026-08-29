@@ -6510,6 +6510,28 @@ async function callClaudeDocs(apiKey, userPrompt, maxTokens, systemPrompt, force
   return text;
 }
 
+// Rede de segurança: remove travessões/meia-riscas que a IA eventualmente ainda gere,
+// mesmo com a instrução explícita no system prompt. Aplica recursivamente a qualquer
+// campo de texto do objeto retornado pela IA (strings, arrays e objetos aninhados).
+function _ermSanitizeDashText(s) {
+  return String(s || '')
+    .replace(/\s+[—–]\s+/g, ', ')   // "texto — texto" -> "texto, texto"
+    .replace(/([a-zà-ú0-9])[—–]([a-zà-ú0-9])/gi, '$1 a $2') // "2023—2024" -> "2023 a 2024"
+    .replace(/[—–]/g, ',')          // qualquer travessão remanescente
+    .replace(/\s*,\s*,\s*/g, ', ')  // corrige vírgulas duplicadas geradas na troca
+    .replace(/,\s*\./g, '.');       // corrige ", ." gerado na troca
+}
+function _ermSanitizeDashes(val) {
+  if (typeof val === 'string') return _ermSanitizeDashText(val);
+  if (Array.isArray(val)) return val.map(_ermSanitizeDashes);
+  if (val && typeof val === 'object') {
+    var out = {};
+    for (var k in val) { if (Object.prototype.hasOwnProperty.call(val, k)) out[k] = _ermSanitizeDashes(val[k]); }
+    return out;
+  }
+  return val;
+}
+
 async function generateAnalysisEncerramentoMentoria() {
   var apiKey = _anthropicKey;
   if (!apiKey) {
@@ -6555,16 +6577,17 @@ async function generateAnalysisEncerramentoMentoria() {
   };
 
   var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas',estrategico:'Organize Estratégico'}[_erm.programa] || 'Programa de Mentoria (não especificado)';
-  var periodoStr = (_erm.dtini && _erm.dtfim) ? (_erm.dtini + ' a ' + _erm.dtfim) : '(período não informado pela equipe — considere todo o histórico disponível nas fontes)';
+  var periodoStr = (_erm.dtini && _erm.dtfim) ? (_erm.dtini + ' a ' + _erm.dtfim) : '(período não informado pela equipe, considere todo o histórico disponível nas fontes)';
 
-  var sysPrompt = 'Você é um CONSULTOR SÊNIOR da Organize Empresas responsável por redigir o RELATÓRIO FINAL DE ENCERRAMENTO DE MENTORIA de um cliente — o documento mais importante da jornada, que consolida TUDO que foi feito ao longo de TODO o programa (não um módulo isolado) e será apresentado diretamente ao cliente em uma reunião de encerramento.\n\n' +
-    'Você recebe dados de MÚLTIPLAS fontes (FlowUp, Google Agenda, Google Drive, planilhas e documentos anexados, e um comentário manual da equipe) e deve cruzá-los para produzir uma narrativa coesa, factual e valorosa — mostrando ao cliente o caminho percorrido e o valor entregue.\n\n' +
+  var sysPrompt = 'Você é um CONSULTOR SÊNIOR da Organize Empresas responsável por redigir o RELATÓRIO FINAL DE ENCERRAMENTO DE MENTORIA de um cliente, o documento mais importante da jornada, que consolida TUDO que foi feito ao longo de TODO o programa (não um módulo isolado) e será apresentado diretamente ao cliente em uma reunião de encerramento.\n\n' +
+    'Você recebe dados de MÚLTIPLAS fontes (FlowUp, Google Agenda, Google Drive, planilhas e documentos anexados, e um comentário manual da equipe) e deve cruzá-los para produzir uma narrativa coesa, factual e valorosa, mostrando ao cliente o caminho percorrido e o valor entregue.\n\n' +
     'REGRAS OBRIGATÓRIAS:\n' +
     '1. NUNCA invente números, entregas ou eventos que não estejam nas fontes fornecidas.\n' +
-    '2. Se um dado não existir em nenhuma fonte, não mencione — não preencha com algo genérico.\n' +
-    '3. Considere OBRIGATORIAMENTE o "COMENTÁRIO MANUAL DA EQUIPE" abaixo, se houver — incorpore o que for relevante na análise final.\n' +
+    '2. Se um dado não existir em nenhuma fonte, não mencione (não preencha com algo genérico).\n' +
+    '3. Considere OBRIGATORIAMENTE o "COMENTÁRIO MANUAL DA EQUIPE" abaixo, se houver, incorporando o que for relevante na análise final.\n' +
     '4. Tom: profissional, valorizando as conquistas do cliente ao longo de toda a mentoria, mas honesto sobre pendências relevantes.\n' +
-    '5. Responda APENAS com JSON válido — sem markdown, sem texto antes/depois, sem comentários.';
+    '5. Responda APENAS com JSON válido, sem markdown, sem texto antes/depois, sem comentários.\n' +
+    '6. NUNCA use travessão (—) ou meia-risca (–) em nenhum texto gerado (nem para intercalar uma explicação, nem como separador). Use vírgula, dois-pontos, parênteses ou ponto final no lugar. Isso vale para TODOS os campos de texto da resposta.';
 
   var promptParts = [];
   promptParts.push('═══════════ DADOS DO CLIENTE ═══════════\nCLIENTE: "' + cliente + '"\nPROGRAMA: "' + programaLabel + '"\nPERÍODO DA MENTORIA: ' + periodoStr + '\n');
@@ -6599,6 +6622,7 @@ async function generateAnalysisEncerramentoMentoria() {
   try {
     var text = await callClaudeDocs(apiKey, userPrompt, 4000, sysPrompt, true, pdfFiles);
     var parsed = extractJSON(text);
+    parsed = _ermSanitizeDashes(parsed);
     _erm.ai = parsed;
     if (btn) { btn.textContent = '✔ Relatório gerado pela IA'; btn.disabled = false; }
     rptGenerateEncerramentoMentoriaPreview();
