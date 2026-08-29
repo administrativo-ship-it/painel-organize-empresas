@@ -1241,7 +1241,17 @@ tbody tr:hover{background:var(--off);}
 
 <script>
 // ═══════════════ STATE ═══════════════
-const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIiwicEtleSI6IndYUHlGMmVTRG1oSnB6MDNrUXJwOUFsZkFQbnphQ0hfNVhVdGJRRm5CV1UiLCJmdVRva2VuIjoiTm1tcC1Kelo3TGUwUHdJUUNvdWxBTGZkY0NIckRrYmdwbExSRVJXbHo5cUxZQm1FRngyRXlQX0VrcVNYRmhNLTVOSk5tU29NbXZwY0RSZDFDYnZudzZlSmQtR2N4d1BfSnhhS0dvb2VtSjNCSEI5cFlvaW9yMms0R2tWOEktNWtQVHJlRmF1aTQ2d3BPWTVINExWaUp0VXVxN1hyVjh0T1NsNDhCUUIyUzB4NkE5Ynd4S2lzZFgtR1ViYWcwTVdFdi1zel8yR045Yi1OR1JuNUtBMGNnb0doTjlONVMxOTFPa0VtcjFJR2l2VWRJTmxLVGdOdmNwODBXOC1NeHo2SjJIM1RZdyIsImZ1VG9rZW5FeHAiOjE4MTk1MDMwMjAwMTB9'));}catch(e){return {};}})();
+// SEGURANÇA (29/08/2026): este arquivo é servido publicamente pelo GitHub Pages —
+// NUNCA embutir chaves/tokens aqui (qualquer pessoa pode ver o código-fonte da página).
+// Um blob base64 com fuKey/trKey/trToken/aiKey/pKey/fuToken ficou embutido aqui por
+// engano (era usado como "fallback" quando o localStorage estava vazio) e vazou
+// publicamente essas credenciais — inclusive a chave da API Anthropic, que muito
+// provavelmente foi descoberta e usada por terceiros (consumo de crédito inexplicado
+// em modelos que este painel nunca chama). Removido: só ficam aqui valores NÃO
+// sensíveis (identificador de subdomínio, intervalo de atualização). Todas as demais
+// chaves precisam ser configuradas manualmente em "Configurações" — ficam só no
+// localStorage do navegador de quem usa, nunca neste arquivo.
+const _DC = { fuSubdomain: 'organizementoring', refresh: 5 };
 const S = {
   projects: [], tasks: [], members: [], boards: [],
   trelloBoards: [], trelloCards: [], trelloLists: [],
