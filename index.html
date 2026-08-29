@@ -1241,7 +1241,7 @@ tbody tr:hover{background:var(--off);}
 
 <script>
 // ═══════════════ STATE ═══════════════
-const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIiwicEtleSI6IndYUHlGMmVTRG1oSnB6MDNrUXJwOUFsZkFQbnphQ0hfNVhVdGJRRm5CV1UiLCJmdVRva2VuIjoiT1d6eFlCV2F1aEtaeWNCZWwyTnpocVptZXpjeGNwVDJSTjNUMXJzVk8xcFlJQkVOUWg5VWJIdEQxOENQTlhGM1NXa1A4XzV6TjdLSHA1eFUzeHByNWUtZ0w4RUY2bEh2NDNBQ3BPSXl4TmF3VU52Z1BQSzUzVnJiNnNsT3hhSVc3VmhqT0JhdEVNS3pPZlhhTzVjaXM0aS1FY0pfWDR1RS1jTDk2UGNEdXRzVmhyWmo0dXF3dHBVME41aElQRzJHQUtRRXMzSExfME03bHU5N2d4d0dZNmNvTFV4dmVTaHVIUm9RRHYwbFJwZDc2QzVVbFlHNS0yYnVwakFBOG91YzBOX1NvQSIsImZ1VG9rZW5FeHAiOjE4MTk1MDAwMTgxMDJ9'));}catch(e){return {};}})();
+const _DC = (function(){try{return JSON.parse(atob('eyJmdVN1YmRvbWFpbiI6Im9yZ2FuaXplbWVudG9yaW5nIiwiZnVLZXkiOiIwZjQ2NjQ2ZWI1ZDU0Mjg2YmFlYjNlNTVkNjcyMWRiNyIsInRyS2V5IjoiNWIzZTdhYThlOTEwYmQ0Yjk3NDJiMjliOGRhZmExODEiLCJ0clRva2VuIjoiQVRUQTU3YzlkYjk0ZjVhNzkzNTY2NzIxMDE1NzZkNTYzYzU0NTk5NTE3ZTMyYjVlMTQ0NjE5MmMwZTZhZDkyZDgzNmI4M0MxMUI3QyIsInJlZnJlc2giOjUsImFpS2V5Ijoic2stYW50LWFwaTAzLWlyMHlHYkVXcEh4X2F3RVA5b0tOM1ZqQ1ZrRW5aVERLX1lOT1d2YjdRZlhUMjkxaVRLUDltMmdLTndZRy1oTW8zT1BNX25WQzVnUEFSUGZiWkhEX2NRLXBOTk9ud0FBIiwicEtleSI6IndYUHlGMmVTRG1oSnB6MDNrUXJwOUFsZkFQbnphQ0hfNVhVdGJRRm5CV1UiLCJmdVRva2VuIjoiV05OX2FOOHlxSnFkaEJCZUh2cktkZE8tNlN4SExreFpUaDNodVNMY3hmUHF4Rk1tVFJDSFR0cms5c1lLVlRzUF81YUZ6enNhd2ZMT2dwQlp4YUlrQWdMam5raHlzTjlpZVpib3FvQUdvTUlUZUNPZkYxYmhKUEN5ZW9HVUdKcXIxMDBtbnhqWllZV1Z1eFpncEEtend2S0JoWElJQ0p4by14VmJvczFiNWlYNDBUN1Z5SHZ1X1Qxamx0eW52ODE1OXg2NzZVeDc4TjZNZFlWeUlKc1JpMEFwNWJGS2d1czZlaEZPZWswR3NIZzJWbURzZC1wbm1JcXJvWGtuR1dqU1RHQTFzdyIsImZ1VG9rZW5FeHAiOjE4MTk0OTg4MTg2MjV9'));}catch(e){return {};}})();
 const S = {
   projects: [], tasks: [], members: [], boards: [],
   trelloBoards: [], trelloCards: [], trelloLists: [],
@@ -4397,6 +4397,181 @@ function rptDestroyChart(id) {
   if (_gCharts[id]) { try { _gCharts[id].destroy(); } catch(e) {} delete _gCharts[id]; }
 }
 
+// ═══ Captura um <canvas> de Chart.js já renderizado em tela como PNG (dataURL) ═══
+// Usado para embutir os mesmos gráficos exibidos na prévia dentro dos PDFs em
+// paisagem (jsPDF nativo, sem html2canvas) — garante que o PDF fique idêntico à tela.
+function rptCanvasImage(canvasId) {
+  try {
+    var c = document.getElementById(canvasId);
+    if (!c || !c.width || !c.height) return null;
+    return c.toDataURL('image/png');
+  } catch(e) { console.warn('[rptCanvasImage]', canvasId, e); return null; }
+}
+
+// Converte o gráfico SVG desenhado à mão (rptGenSvgChart, usado no Relatório Mensal)
+// em uma imagem PNG, para poder ser embutido no PDF vetorial (que não renderiza SVG).
+function rptSvgToImage(svgString, W, H, scale) {
+  return new Promise(function(resolve){
+    if (!svgString) { resolve(null); return; }
+    try {
+      var s = scale || 2;
+      var svg64 = btoa(unescape(encodeURIComponent(svgString)));
+      var img = new Image();
+      img.onload = function(){
+        try {
+          var canvas = document.createElement('canvas');
+          canvas.width = W * s; canvas.height = H * s;
+          var ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#F7F9FC'; ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/png'));
+        } catch(e) { resolve(null); }
+      };
+      img.onerror = function(){ resolve(null); };
+      img.src = 'data:image/svg+xml;base64,' + svg64;
+    } catch(e) { resolve(null); }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MOTOR COMPARTILHADO DE PDF EM FORMATO "APRESENTAÇÃO" (SLIDES, PAISAGEM)
+// Usado pelos relatórios com saída em paisagem (Mensal, Encerramento de
+// Módulo e Encerramento de Mentoria). Cada seção = 1 slide; textos e listas
+// longas paginam automaticamente para nunca cortar conteúdo no meio da página.
+// ═══════════════════════════════════════════════════════════════════════
+var RPT_SLIDE_COL = {
+  navy: [0,0,128], navyDark: [10,10,60], teal: [139,212,224],
+  gold: [244,168,0], txt: [13,21,38], txtMuted: [65,84,106],
+  muted: [138,155,181], bg: [244,246,251], white: [255,255,255], border: [226,232,244],
+  green: [22,163,74], red: [220,38,38], amber: [217,119,6]
+};
+
+async function rptLoadLogoImg() {
+  var logoBase64 = (typeof S !== 'undefined' && S.logoConfig && S.logoConfig.img) ? S.logoConfig.img : (typeof LOGO_ORGANIZE_B64 !== 'undefined' ? LOGO_ORGANIZE_B64 : '');
+  var logoMime = (logoBase64.indexOf('image/jpeg') !== -1) ? 'JPEG' : 'PNG';
+  var logoImg = null;
+  if (logoBase64) {
+    logoImg = await new Promise(function(res){
+      var img = new Image();
+      img.onload = function(){ res(img); };
+      img.onerror = function(){ res(null); };
+      img.src = logoBase64;
+    });
+  }
+  return { logoBase64: logoBase64, logoMime: logoMime, logoImg: logoImg };
+}
+
+function rptMkSlideEngine(doc, logoImg, logoBase64, logoMime, footerLabel) {
+  var PW = 297, PH = 210, COL = RPT_SLIDE_COL;
+  function setFill(c){ doc.setFillColor(c[0],c[1],c[2]); }
+  function setText(c){ doc.setTextColor(c[0],c[1],c[2]); }
+  function rect(x,y,w,h,c,r){ setFill(c); if (r) doc.roundedRect(x,y,w,h,r,r,'F'); else doc.rect(x,y,w,h,'F'); }
+  function drawLogo(x,y,h){
+    if (!logoImg || !logoBase64) return 0;
+    var w = h * (logoImg.width/logoImg.height);
+    try { doc.addImage(logoBase64, logoMime, x, y, w, h, undefined, 'FAST'); } catch(e){}
+    return w;
+  }
+  var SLIDE_NUM = 0;
+  function slideFooter(){
+    SLIDE_NUM++;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); setText(COL.muted);
+    doc.text('Organize Empresas · ' + footerLabel, 10, PH-6);
+    doc.text(String(SLIDE_NUM), PW-10, PH-6, {align:'right'});
+  }
+  function slideHeader(title){
+    rect(0,0,PW,22,COL.navy);
+    rect(0,20,PW,2,COL.teal);
+    var cx = 10;
+    if (logoImg) { var h=13; var w=drawLogo(cx,4.5,h); cx += w + 8; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); setText(COL.white);
+    doc.text(title, cx, 13.5);
+  }
+  // Quebra texto e pagina automaticamente se não couber no slide (evita corte de conteúdo)
+  function textBlock(text, x, y, maxWidth, opts) {
+    opts = opts || {};
+    var fs = opts.fontSize || 11.5, lh = opts.lineHeight || 6;
+    doc.setFont('helvetica', opts.bold?'bold':'normal'); doc.setFontSize(fs); setText(opts.color || COL.txt);
+    var lines = doc.splitTextToSize(String(text||''), maxWidth);
+    for (var li=0; li<lines.length; li++) {
+      if (y > PH - 20) {
+        slideFooter(); doc.addPage(); slideHeader(opts.continTitle || '');
+        y = 32; doc.setFont('helvetica', opts.bold?'bold':'normal'); doc.setFontSize(fs); setText(opts.color || COL.txt);
+      }
+      doc.text(lines[li], x, y); y += lh;
+    }
+    return y;
+  }
+  // Lista com marcador, paginação automática (para listas de tarefas etc.)
+  function listBlock(items, x, y, maxWidth, opts) {
+    opts = opts || {};
+    if (!items || !items.length) return y;
+    var fs = opts.fontSize || 10, lh = opts.lineHeight || 5.4;
+    doc.setFont('helvetica','normal'); doc.setFontSize(fs); setText(opts.color || COL.txt);
+    for (var i=0; i<items.length; i++) {
+      var lines = doc.splitTextToSize(String(items[i]||''), maxWidth - 5);
+      for (var li=0; li<lines.length; li++) {
+        if (y > PH - 20) {
+          slideFooter(); doc.addPage(); slideHeader(opts.continTitle || '');
+          y = 32; doc.setFont('helvetica','normal'); doc.setFontSize(fs); setText(opts.color || COL.txt);
+        }
+        if (li === 0) { setFill(opts.dotColor || COL.teal); doc.circle(x+1.1, y-1.6, 0.9, 'F'); }
+        doc.text(lines[li], x+5, y); y += lh;
+      }
+      y += (opts.gap != null ? opts.gap : 1);
+    }
+    return y;
+  }
+  // Embute uma imagem (dataURL) mantendo o aspect ratio dentro de uma caixa x,y,w,h
+  function chartImage(dataUrl, x, y, w, h) {
+    if (!dataUrl) return false;
+    try {
+      var props = doc.getImageProperties(dataUrl);
+      var ratio = Math.min(w/props.width, h/props.height);
+      var iw = props.width*ratio, ih = props.height*ratio;
+      doc.addImage(dataUrl, 'PNG', x + (w-iw)/2, y + (h-ih)/2, iw, ih);
+      return true;
+    } catch(e) { console.warn('[PDF chartImage]', e); return false; }
+  }
+  function kpiRow(kpis, x, y, w, h) {
+    h = h || 26;
+    var kpiW = (w - (kpis.length-1)*6) / kpis.length, kx = x;
+    kpis.forEach(function(k){
+      rect(kx, y, kpiW, h, COL.bg, 3);
+      doc.setDrawColor(COL.border[0],COL.border[1],COL.border[2]); doc.setLineWidth(0.2); doc.roundedRect(kx,y,kpiW,h,3,3);
+      doc.setFont('helvetica','bold'); doc.setFontSize(17); setText(k.color || COL.navy);
+      doc.text(String(k.val), kx+kpiW/2, y+h*0.5, {align:'center'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); setText(COL.txtMuted);
+      doc.text(String(k.label), kx+kpiW/2, y+h*0.77, {align:'center', maxWidth:kpiW-4});
+      kx += kpiW + 6;
+    });
+    return y + h;
+  }
+  // Grade de gráficos (imagens capturadas de canvases Chart.js) com legenda/título por card
+  function chartGrid(charts, x, y, w, opts) {
+    opts = opts || {};
+    charts = charts.filter(function(c){ return c && c.img; });
+    if (!charts.length) return y;
+    var cols = opts.cols || (charts.length >= 5 ? 3 : (charts.length >= 2 ? 2 : 1));
+    var gh = opts.rowHeight || 75, gw = (w - (cols-1)*8) / cols, gx = x, gy = y, colI = 0;
+    charts.forEach(function(c){
+      rect(gx, gy, gw, gh, COL.bg, 3);
+      doc.setDrawColor(COL.border[0],COL.border[1],COL.border[2]); doc.roundedRect(gx,gy,gw,gh,3,3);
+      doc.setFont('helvetica','bold'); doc.setFontSize(9.5); setText(COL.navy);
+      doc.text(c.title||'', gx+5, gy+8, {maxWidth:gw-10});
+      chartImage(c.img, gx+5, gy+13, gw-10, gh-17);
+      colI++;
+      if (colI >= cols) { colI = 0; gx = x; gy += gh + 8; } else { gx += gw + 8; }
+    });
+    return gy + (colI > 0 ? gh + 8 : 0);
+  }
+  return {
+    doc: doc, PW: PW, PH: PH, COL: COL, setFill: setFill, setText: setText, rect: rect, drawLogo: drawLogo,
+    slideFooter: slideFooter, slideHeader: slideHeader, textBlock: textBlock, listBlock: listBlock,
+    chartImage: chartImage, kpiRow: kpiRow, chartGrid: chartGrid
+  };
+}
+
 function rptBarChart(canvasId, labels, datasets, opts) {
   rptDestroyChart(canvasId);
   var canvas = document.getElementById(canvasId);
@@ -4564,6 +4739,304 @@ function rptDownloadPDF(tipo) {
   }).catch(function(e){
     if (btn) { btn.textContent = 'Erro - tente novamente'; btn.disabled = false; }
   });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PDF DE APRESENTAÇÃO (PAISAGEM) — Relatório Mensal de Resultados
+// jsPDF nativo vetorial, mesmo motor de slides do Encerramento de Mentoria
+// (rptMkSlideEngine). Embute os gráficos já renderizados na prévia (canvas
+// Chart.js capturado via rptCanvasImage) e o gráfico de evolução do
+// faturamento (convertido do SVG via rptSvgToImage).
+// ═══════════════════════════════════════════════════════════════
+async function rptDownloadPDFMensalApresentacao() {
+  if (!_rmf.cliente) { alert('Gere o relatório primeiro antes de baixar o PDF.'); return; }
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF não carregado.'); return; }
+
+  var btn = document.querySelector('.rpt-pdf-btn');
+  var oldTxt = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Gerando apresentação...'; }
+
+  try {
+    var L = await rptLoadLogoImg();
+    var JsPDF = window.jspdf.jsPDF;
+    var doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape', compress: true });
+    var E = rptMkSlideEngine(doc, L.logoImg, L.logoBase64, L.logoMime, 'Relatório Mensal de Resultados');
+    var PW = E.PW, PH = E.PH, COL = E.COL;
+
+    var cliente = _rmf.cliente || 'Cliente';
+    var mesNome = mesNomeStr(_rmf.mes);
+    var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[_rmf.programa] || (_rmf.programa||'').toUpperCase();
+    var isMaster = _rmf.programa === 'master';
+
+    var fatN = parseFloat((_rmf.fat||'0').replace(',','.')) || 0;
+    var metaN = parseFloat((_rmf.meta||'0').replace(',','.')) || 0;
+    var crescN = parseFloat((_rmf.cresc||'').replace(',','.'));
+    var pctMeta = (metaN > 0 && fatN > 0) ? Math.min(Math.round(fatN/metaN*100),100) : 0;
+
+    var tasks = rptTasksForClient(_rmf.cliente);
+    var done = tasks.filter(function(t){return t.isDone;});
+    var over = tasks.filter(function(t){return t.isOver;});
+    var pending = tasks.filter(function(t){return !t.isDone&&!t.isOver;});
+
+    // ═══ SLIDE 1 — CAPA ═══
+    E.rect(0,0,PW,PH,COL.navyDark);
+    E.rect(0,0,PW,PH*0.7,COL.navy);
+    if (L.logoImg) { var capaH=34, capaW=capaH*(L.logoImg.width/L.logoImg.height); E.drawLogo((PW-capaW)/2, 46, capaH); }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.teal);
+    doc.text('RELATÓRIO MENSAL DE RESULTADOS', PW/2, 100, {align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(26); E.setText(COL.white);
+    doc.text(cliente, PW/2, 116, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(13); E.setText([200,210,230]);
+    doc.text(programaLabel + ' · ' + mesNome + ' de ' + _rmf.ano, PW/2, 128, {align:'center'});
+    doc.setFontSize(10); E.setText(COL.muted);
+    doc.text('Emitido em ' + new Date().toLocaleDateString('pt-BR'), PW/2, PH-15, {align:'center'});
+    E.slideFooter();
+
+    // ═══ SLIDE 2 — INDICADORES DO MÊS + EVOLUÇÃO DO FATURAMENTO ═══
+    doc.addPage();
+    E.slideHeader('Indicadores do Mês');
+    var kpis;
+    if (isMaster) {
+      var cmvN = parseFloat((_rmf.cmv||'0').replace(',','.'))||0;
+      var dfixasN = parseFloat((_rmf.dfixas||'0').replace(',','.'))||0;
+      var dvarN = parseFloat((_rmf.dvar||'0').replace(',','.'))||0;
+      var impostN = parseFloat((_rmf.impost||'0').replace(',','.'))||0;
+      var llN = parseFloat((_rmf.ll||'0').replace(',','.')) || (fatN - cmvN - dfixasN - dvarN - impostN);
+      kpis = [
+        {label:'Faturamento Bruto', val: fatN>0?fmtBRL(fatN):'-'},
+        {label:'Despesas Totais', val: fmtBRL(cmvN+dfixasN+dvarN+impostN)},
+        {label:'Lucro Líquido', val: fmtBRL(llN), color: llN>=0?COL.green:COL.red}
+      ];
+    } else {
+      kpis = [
+        {label:'Faturamento Realizado', val: fatN>0?fmtBRL(fatN):'-'},
+        {label:'Meta do Mês', val: metaN>0?fmtBRL(metaN):'-'},
+        {label:'% da Meta Atingido', val: pctMeta+'%', color: pctMeta>=100?COL.green:COL.navy},
+        {label:'Crescimento vs. Ano Anterior', val: (!isNaN(crescN)&&_rmf.cresc)?((crescN>=0?'+':'')+crescN.toFixed(1)+'%'):'-', color: (!isNaN(crescN)&&_rmf.cresc)?(crescN>=0?COL.green:COL.red):COL.navy}
+      ];
+    }
+    var y2 = E.kpiRow(kpis, 10, 30, PW-20, 30) + 10;
+    if ((_rmf._chartHistorico||[]).length) {
+      var fatImg = await rptSvgToImage(rptGenSvgChart(_rmf._chartHistorico, _rmf._chartMesSel||0, parseInt(_rmf.ano)||new Date().getFullYear()), 1280, 340, 2);
+      if (fatImg) {
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5); E.setText(COL.navy);
+        doc.text('Evolução do Faturamento Realizado vs. Meta', 10, y2+2);
+        E.chartImage(fatImg, 10, y2+6, PW-20, Math.max(PH-y2-24, 40));
+      }
+    }
+    E.slideFooter();
+
+    // ═══ SLIDE 3 — PAINEL VISUAL (ATIVIDADES + TRELLO) ═══
+    var opsImgM = rptCanvasImage('mensal-chart-ops');
+    var trelloImgM = rptCanvasImage('mensal-chart-trello');
+    if (opsImgM || trelloImgM) {
+      doc.addPage();
+      E.slideHeader('Painel Visual — Atividades e Planejamento');
+      var chartsM = [];
+      if (opsImgM) chartsM.push({ img: opsImgM, title: 'Distribuição das Atividades (FlowUp)' });
+      if (trelloImgM) chartsM.push({ img: trelloImgM, title: 'Progresso por Board (Trello)' });
+      E.chartGrid(chartsM, 10, 30, PW-20, { rowHeight: 140, cols: chartsM.length });
+      E.slideFooter();
+    }
+
+    // ═══ SLIDE 4 — ATIVIDADES DETALHADAS ═══
+    if (done.length || over.length || pending.length) {
+      doc.addPage();
+      E.slideHeader('Atividades do Mês — Detalhamento');
+      var colWm = (PW-20-10)/2;
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.green);
+      doc.text('Concluídas (' + done.length + ')', 10, 32);
+      E.listBlock(done.slice(0,25).map(function(t){ return t.name + (t.responsible?' ('+t.responsible+')':''); }), 10, 40, colWm, {continTitle:'Atividades do Mês (continuação)', dotColor:COL.green});
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.amber);
+      doc.text('Pendentes / Em Atraso (' + (over.length+pending.length) + ')', 10+colWm+10, 32);
+      var pendListM = over.concat(pending).slice(0,25).map(function(t){ return (t.isOver?'[ATRASADA] ':'') + t.name; });
+      E.listBlock(pendListM, 10+colWm+10, 40, colWm, {continTitle:'Atividades do Mês (continuação)', dotColor:COL.amber});
+      E.slideFooter();
+    }
+
+    // ═══ SLIDE 5 — RESUMO EXECUTIVO / PRÓXIMOS PASSOS ═══
+    if (_rmf.analise || _rmf.proximos) {
+      doc.addPage();
+      E.slideHeader('Resumo Executivo e Próximos Passos');
+      var y5 = 34;
+      if (_rmf.analise) {
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.navy);
+        doc.text('Resumo Executivo', 10, y5); y5 += 7;
+        y5 = E.textBlock(_rmf.analise, 10, y5, PW-20, {fontSize:11, lineHeight:6, continTitle:'Resumo Executivo (continuação)'});
+        y5 += 6;
+      }
+      if (_rmf.proximos) {
+        if (y5 > PH-40) { E.slideFooter(); doc.addPage(); E.slideHeader('Próximos Passos'); y5 = 34; }
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.navy);
+        doc.text('Próximos Passos e Recomendações', 10, y5); y5 += 7;
+        E.textBlock(_rmf.proximos, 10, y5, PW-20, {fontSize:11, lineHeight:6, continTitle:'Próximos Passos (continuação)'});
+      }
+      E.slideFooter();
+    }
+
+    // ═══ SLIDE 6 — OBSERVAÇÕES ADICIONAIS (comentário manual) ═══
+    if (_rmf.comentarios && _rmf.comentarios.trim()) {
+      doc.addPage();
+      E.slideHeader('Observações Adicionais');
+      E.rect(10,28,PW-20,4,COL.gold,2);
+      doc.setFont('helvetica','italic'); doc.setFontSize(9); E.setText(COL.txtMuted);
+      doc.text('Conteúdo inserido manualmente pela equipe', 10, 40);
+      E.textBlock(_rmf.comentarios, 10, 48, PW-20, {fontSize:11.5, lineHeight:6.2, continTitle:'Observações Adicionais (continuação)'});
+      E.slideFooter();
+    }
+
+    doc.save('Relatorio_Mensal_' + cliente.replace(/[^a-zA-Z0-9]/g,'_') + '_' + mesNome + '_' + _rmf.ano + '.pdf');
+  } catch(e) {
+    console.error('[Mensal PDF]', e);
+    alert('Erro ao gerar PDF: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = oldTxt; }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PDF DE APRESENTAÇÃO (PAISAGEM) — Relatório de Encerramento de Módulo
+// ═══════════════════════════════════════════════════════════════
+async function rptDownloadPDFEncerramentoApresentacao() {
+  if (!_ref.cliente) { alert('Gere o relatório primeiro antes de baixar o PDF.'); return; }
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF não carregado.'); return; }
+
+  var btn = document.querySelector('.rpt-pdf-btn');
+  var oldTxt = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Gerando apresentação...'; }
+
+  try {
+    var L = await rptLoadLogoImg();
+    var JsPDF = window.jspdf.jsPDF;
+    var doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape', compress: true });
+    var E = rptMkSlideEngine(doc, L.logoImg, L.logoBase64, L.logoMime, 'Relatório de Encerramento de Módulo');
+    var PW = E.PW, PH = E.PH, COL = E.COL;
+
+    var cliente = _ref.cliente || 'Cliente';
+    var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas'}[_ref.programa]||_ref.programa;
+    var periodoStr = (_ref.dtini && _ref.dtfim) ? (new Date(_ref.dtini+'T12:00:00').toLocaleDateString('pt-BR') + ' a ' + new Date(_ref.dtfim+'T12:00:00').toLocaleDateString('pt-BR')) : '';
+    var cd = _ref._chartData || { tTotal:0, tDone:0, tPend:0, tOver:0, pctConcl:0, perfLabel:'Sem dados', tasksPeriodo:[] };
+
+    // ═══ SLIDE 1 — CAPA ═══
+    E.rect(0,0,PW,PH,COL.navyDark);
+    E.rect(0,0,PW,PH*0.7,COL.navy);
+    if (L.logoImg) { var capaH=34, capaW=capaH*(L.logoImg.width/L.logoImg.height); E.drawLogo((PW-capaW)/2, 46, capaH); }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.teal);
+    doc.text('RELATÓRIO DE ENCERRAMENTO DE MÓDULO', PW/2, 100, {align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(26); E.setText(COL.white);
+    doc.text(cliente, PW/2, 116, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(13); E.setText([200,210,230]);
+    doc.text(programaLabel + (_ref.modnum ? ' · Módulo ' + _ref.modnum + (_ref.modnom?' - '+_ref.modnom:'') : '') + (periodoStr?' · '+periodoStr:''), PW/2, 128, {align:'center'});
+    doc.setFontSize(10); E.setText(COL.muted);
+    doc.text('Emitido em ' + new Date().toLocaleDateString('pt-BR'), PW/2, PH-15, {align:'center'});
+    E.slideFooter();
+
+    // ═══ SLIDE 2 — DESEMPENHO DO CLIENTE ═══
+    doc.addPage();
+    E.slideHeader('Desempenho do Cliente no Módulo');
+    var kpis = [
+      {label:'Tarefas no Período', val: String(cd.tTotal)},
+      {label:'Concluídas', val: String(cd.tDone), color: COL.green},
+      {label:'Pendentes', val: String(cd.tPend), color: COL.amber},
+      {label:'Em Atraso', val: String(cd.tOver), color: COL.red},
+      {label:'Cumprimento', val: cd.pctConcl+'%', color: cd.pctConcl>=65?COL.green:COL.amber}
+    ];
+    var y2e = E.kpiRow(kpis, 10, 30, PW-20, 28) + 8;
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5); E.setText(COL.navy);
+    doc.text('Avaliação Geral: ' + cd.perfLabel, 10, y2e+4);
+    if (_ref.nment) { doc.setFont('helvetica','normal'); doc.setFontSize(10); E.setText(COL.txtMuted); doc.text('Mentorias realizadas no módulo: ' + _ref.nment, 10, y2e+12); }
+    E.slideFooter();
+
+    // ═══ SLIDE 3 — PAINEL VISUAL ═══
+    var opsImgE = rptCanvasImage('enc-chart-ops');
+    var trelloImgE = rptCanvasImage('enc-chart-trello');
+    if (opsImgE || trelloImgE) {
+      doc.addPage();
+      E.slideHeader('Painel Visual — Atividades e Planejamento');
+      var chartsE = [];
+      if (opsImgE) chartsE.push({ img: opsImgE, title: 'Distribuição das Atividades (FlowUp)' });
+      if (trelloImgE) chartsE.push({ img: trelloImgE, title: 'Progresso por Board (Trello)' });
+      E.chartGrid(chartsE, 10, 30, PW-20, { rowHeight: 140, cols: chartsE.length });
+      E.slideFooter();
+    }
+
+    // ═══ SLIDE 4 — ATIVIDADES DETALHADAS ═══
+    var tp = cd.tasksPeriodo || [];
+    if (tp.length) {
+      doc.addPage();
+      E.slideHeader('Atividades do Cliente — Detalhamento');
+      var doneT = tp.filter(function(t){return t.isDone;});
+      var openT = tp.filter(function(t){return !t.isDone;});
+      var colWe = (PW-20-10)/2;
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.green);
+      doc.text('Concluídas (' + doneT.length + ')', 10, 32);
+      E.listBlock(doneT.slice(0,25).map(function(t){ return t.name + (t.responsible?' ('+t.responsible+')':''); }), 10, 40, colWe, {continTitle:'Atividades (continuação)', dotColor:COL.green});
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.amber);
+      doc.text('Pendentes / Em Atraso (' + openT.length + ')', 10+colWe+10, 32);
+      E.listBlock(openT.slice(0,25).map(function(t){ return (t.isOver?'[ATRASADA] ':'') + t.name; }), 10+colWe+10, 40, colWe, {continTitle:'Atividades (continuação)', dotColor:COL.amber});
+      E.slideFooter();
+    }
+
+    // ═══ SLIDE 5 — FOCO DO PRÓXIMO MÓDULO ═══
+    if (_ref.proxmod || _ref.proxAtividades || _ref.proxTarefasCliente || _ref.proxAtencoes) {
+      doc.addPage();
+      E.slideHeader('Foco do Próximo Módulo');
+      var y5e = 34;
+      if (_ref.proxmod) { doc.setFont('helvetica','bold'); doc.setFontSize(14); E.setText(COL.navy); doc.text(_ref.proxmod, 10, y5e); y5e += 10; }
+      if (_ref.proxAtividades) {
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5); E.setText(COL.navy); doc.text('Atividades Previstas', 10, y5e); y5e += 7;
+        y5e = E.textBlock(_ref.proxAtividades, 10, y5e, PW-20, {fontSize:10.5, lineHeight:5.8, continTitle:'Foco do Próximo Módulo (continuação)'}); y5e += 5;
+      }
+      if (_ref.proxTarefasCliente) {
+        if (y5e > PH-40) { E.slideFooter(); doc.addPage(); E.slideHeader('Foco do Próximo Módulo (continuação)'); y5e = 34; }
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5); E.setText(COL.navy); doc.text('Tarefas a Cargo do Cliente', 10, y5e); y5e += 7;
+        y5e = E.textBlock(_ref.proxTarefasCliente, 10, y5e, PW-20, {fontSize:10.5, lineHeight:5.8, continTitle:'Foco do Próximo Módulo (continuação)'}); y5e += 5;
+      }
+      if (_ref.proxAtencoes) {
+        if (y5e > PH-40) { E.slideFooter(); doc.addPage(); E.slideHeader('Foco do Próximo Módulo (continuação)'); y5e = 34; }
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5); E.setText(COL.amber); doc.text('Pontos de Atenção', 10, y5e); y5e += 7;
+        E.textBlock(_ref.proxAtencoes, 10, y5e, PW-20, {fontSize:10.5, lineHeight:5.8, continTitle:'Foco do Próximo Módulo (continuação)'});
+      }
+      E.slideFooter();
+    }
+
+    // ═══ SLIDE 6 — ANÁLISE EXECUTIVA / PRÓXIMOS PASSOS ═══
+    if (_ref.analise || _ref.proximos) {
+      doc.addPage();
+      E.slideHeader('Análise Executiva e Próximos Passos');
+      var y6e = 34;
+      if (_ref.analise) {
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.navy);
+        doc.text('Análise Executiva do Módulo', 10, y6e); y6e += 7;
+        y6e = E.textBlock(_ref.analise, 10, y6e, PW-20, {fontSize:11, lineHeight:6, continTitle:'Análise Executiva (continuação)'}); y6e += 6;
+      }
+      if (_ref.proximos) {
+        if (y6e > PH-40) { E.slideFooter(); doc.addPage(); E.slideHeader('Próximos Passos'); y6e = 34; }
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); E.setText(COL.navy);
+        doc.text('Próximos Passos', 10, y6e); y6e += 7;
+        E.textBlock(_ref.proximos, 10, y6e, PW-20, {fontSize:11, lineHeight:6, continTitle:'Próximos Passos (continuação)'});
+      }
+      E.slideFooter();
+    }
+
+    // ═══ SLIDE 7 — OBSERVAÇÕES ADICIONAIS (comentário manual) ═══
+    if (_ref.comentarios && _ref.comentarios.trim()) {
+      doc.addPage();
+      E.slideHeader('Observações Adicionais');
+      E.rect(10,28,PW-20,4,COL.gold,2);
+      doc.setFont('helvetica','italic'); doc.setFontSize(9); E.setText(COL.txtMuted);
+      doc.text('Conteúdo inserido manualmente pela equipe', 10, 40);
+      E.textBlock(_ref.comentarios, 10, 48, PW-20, {fontSize:11.5, lineHeight:6.2, continTitle:'Observações Adicionais (continuação)'});
+      E.slideFooter();
+    }
+
+    doc.save('Encerramento_Modulo_' + cliente.replace(/[^a-zA-Z0-9]/g,'_') + (_ref.modnum?'_Mod'+_ref.modnum:'') + '.pdf');
+  } catch(e) {
+    console.error('[Encerramento Módulo PDF]', e);
+    alert('Erro ao gerar PDF: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = oldTxt; }
+  }
 }
 // ═══════════════ RELATÓRIO MENSAL + ENCERRAMENTO ═══════════════
 
@@ -5865,6 +6338,9 @@ function rptGenerateMensal() {
     html += rptGenSvgChart(historico, mesSelInt, parseInt(_rmf.ano) || new Date().getFullYear());
     html += '</div>';
   }
+  // Guarda os dados do gráfico para reconstrução em imagem no PDF em paisagem
+  _rmf._chartHistorico = historico;
+  _rmf._chartMesSel = mesSelInt;
 
   // ── ATIVIDADES (FlowUp) ──
   var done = tasks.filter(function(t){return t.isDone;});
@@ -5895,6 +6371,12 @@ function rptGenerateMensal() {
 
   html += '</div>'; // fim grid atividades
 
+  // ── DISTRIBUIÇÃO DAS ATIVIDADES (gráfico) ──
+  if (done.length + over.length + pending.length > 0) {
+    html += '<div style="'+S_sec+'">Distribuição das Atividades</div>';
+    html += '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:8px;padding:14px;max-width:340px;"><div style="height:200px;"><canvas id="mensal-chart-ops"></canvas></div></div>';
+  }
+
   // ── TRELLO (se houver dados) ──
   // Filtrar Trello pelo cliente selecionado
   var clientLinks2 = _rmf.cliente ? getClientLinks(_rmf.cliente) : {};
@@ -5924,6 +6406,9 @@ function rptGenerateMensal() {
   var filteredCards = S.trelloCards ? S.trelloCards.filter(function(c) {
     return filteredBoards.some(function(b){ return b.id === c.boardId; });
   }) : [];
+  // Guarda para reconstrução do gráfico/lista no PDF em paisagem
+  _rmf._trelloBoards = filteredBoards;
+  _rmf._trelloCards = filteredCards;
 
   if (filteredBoards.length) {
     var tBoards = filteredBoards, tCards = filteredCards;
@@ -5940,6 +6425,7 @@ function rptGenerateMensal() {
       return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #E0E5EE;font-size:12px;"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+b.name+'</span><span style="width:40px;text-align:right;color:#1B2B6B;font-weight:700;">'+bd+'/'+bc.length+'</span><div style="width:80px;height:6px;background:#DDE2EC;border-radius:99px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+(pct>=80?'#28A745':'#1B2B6B')+';border-radius:99px;"></div></div><span style="width:32px;text-align:right;font-size:11px;color:#6B7A99;">'+pct+'%</span></div>';
     }).join('');
     html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:12px 16px;">'+bRows+'</div>';
+    html += '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:8px;padding:14px;margin-top:10px;"><div style="'+S_lbl+';margin-bottom:6px;">Progresso por Board (%)</div><div style="height:180px;"><canvas id="mensal-chart-trello"></canvas></div></div>';
   } else if (trelloUrl) {
     html += '<div style="'+S_sec+'">Planejamento Estratégico - Trello</div>';
     html += '<div style="background:#F5F7FA;border:1px solid #E0E5EE;border-radius:8px;padding:16px 20px;font-size:12px;color:#8A94A8;font-style:italic;">Board do Trello configurado mas sem dados sincronizados. Clique em "Sincronizar" no painel principal.</div>';
@@ -5977,11 +6463,25 @@ function rptGenerateMensal() {
   html += '<div style="font-size:11px;color:rgba(255,255,255,.6);">Relatório gerado em '+new Date().toLocaleDateString('pt-BR')+' · Referência: '+mesNome+'/'+_rmf.ano+'</div>';
   html += '</div></div>'; // fim page
 
-  var actionBar = '<div class="rpt-action-bar"><button class="rpt-pdf-btn" onclick="rptDownloadPDF(\'mensal\')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>Baixar PDF</button><button class="rpt-drive-btn secondary" onclick="window.print()">Imprimir</button></div>';
+  var actionBar = '<div class="rpt-action-bar"><button class="rpt-pdf-btn" onclick="rptDownloadPDFMensalApresentacao()"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>Baixar PDF (Apresentação)</button><button class="rpt-drive-btn secondary" onclick="window.print()">Imprimir</button></div>';
 
   var prev = document.getElementById('rpt-prev');
   if (prev) prev.innerHTML = actionBar + html;
   else document.getElementById('report-preview').innerHTML = actionBar + html;
+
+  setTimeout(function(){
+    if (done.length + over.length + pending.length > 0) {
+      rptDoughnutChart('mensal-chart-ops', ['Concluídas','Pendentes','Atrasadas'], [done.length, pending.length, over.length], ['#22c55e','#F0A500','#ef4444']);
+    }
+    if (filteredBoards && filteredBoards.length) {
+      var bLabels2 = filteredBoards.slice(0,8).map(function(b){ return b.name.length>18?b.name.substring(0,16)+'…':b.name; });
+      var bPct2 = filteredBoards.slice(0,8).map(function(b){
+        var bc = filteredCards.filter(function(c){return c.boardId===b.id;});
+        return bc.length ? Math.round(bc.filter(function(c){return c.dueComplete;}).length/bc.length*100) : 0;
+      });
+      rptBarChart('mensal-chart-trello', bLabels2, [{label:'Progresso (%)', data:bPct2, backgroundColor:'rgba(91,190,206,0.8)', borderRadius:4}], {scales:{y:{max:100,ticks:{callback:function(v){return v+'%';}}}}});
+    }
+  }, 60);
 }
 
 // ════════ RELATÓRIO MENSAL ════════
@@ -6254,6 +6754,21 @@ function rptGenerateEncerramento() {
   var flowSec = rptFlowUpSection(tasksPeriodo, 'Atividades do Cliente - Detalhamento');
   var trelloSec = rptTrelloSection(_ref.cliente, { dtIni: _ref.dtini, dtFim: _ref.dtfim });
 
+  // Boards Trello do cliente/período (mesmo filtro usado por rptTrelloSection) — para o gráfico
+  var encTrelloBoards = S.trelloBoards || [];
+  var encTrelloCards = S.trelloCards || [];
+  if (_ref.cliente) {
+    var encCn = _ref.cliente.toLowerCase();
+    encTrelloBoards = encTrelloBoards.filter(function(b){ return b.name.toLowerCase().indexOf(encCn) >= 0; });
+  }
+  if (_ref.dtini || _ref.dtfim) {
+    encTrelloBoards = encTrelloBoards.filter(function(b){ return boardMatchesPeriodo(b.name, _ref.dtini, _ref.dtfim); });
+  }
+  if (_ref.cliente || _ref.dtini) {
+    var encBoardIds = {}; encTrelloBoards.forEach(function(b){ encBoardIds[b.id] = true; });
+    encTrelloCards = encTrelloCards.filter(function(c){ return encBoardIds[c.boardId]; });
+  }
+
   var analysisSec = rptAnalysisSection(_ref.analise, _ref.proximos) + rptManualCommentSection(_ref.comentarios);
 
   var modBadge = _ref.modnum ? '<div class="rpt-modulo-badge">Módulo ' + _ref.modnum + (_ref.modnom?' - '+_ref.modnom:'') + '</div>' : '';
@@ -6286,10 +6801,20 @@ function rptGenerateEncerramento() {
   }
 
   var chartsHtmlEnc = '';
+  if (tTotal > 0 || encTrelloCards.length > 0) {
+    chartsHtmlEnc = '<div class="rpt-sec">Painel Visual</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">';
+    if (tTotal > 0) {
+      chartsHtmlEnc += '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:8px;padding:14px;"><div style="font-size:10.5px;font-weight:700;color:#1B2B6B;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">Distribuição das Atividades</div><div style="height:200px;"><canvas id="enc-chart-ops"></canvas></div></div>';
+    }
+    if (encTrelloCards.length > 0) {
+      chartsHtmlEnc += '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:8px;padding:14px;"><div style="font-size:10.5px;font-weight:700;color:#1B2B6B;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">Progresso por Board Trello (%)</div><div style="height:200px;"><canvas id="enc-chart-trello"></canvas></div></div>';
+    }
+    chartsHtmlEnc += '</div>';
+  }
 
   var actionBarEnc = '<div class="rpt-action-bar">' +
-    '<button class="rpt-pdf-btn" onclick="rptDownloadPDF(\'encerramento\')">' +
-    '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>Baixar PDF</button>' +
+    '<button class="rpt-pdf-btn" onclick="rptDownloadPDFEncerramentoApresentacao()">' +
+    '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>Baixar PDF (Apresentação)</button>' +
     '<button class="rpt-drive-btn secondary" onclick="window.print()">Imprimir</button>' +
     '</div>';
 
@@ -6301,7 +6826,22 @@ function rptGenerateEncerramento() {
   if (prev) prev.innerHTML = actionBarEnc + content;
   else document.getElementById('report-preview').innerHTML = actionBarEnc + content;
 
-  renderReportCharts(_ref, tasks, 'encerramento');
+  setTimeout(function(){
+    if (tTotal > 0) {
+      rptDoughnutChart('enc-chart-ops', ['Concluídas','Pendentes','Atrasadas'], [tDone, tPend, tOver], ['#22c55e','#F0A500','#ef4444']);
+    }
+    if (encTrelloCards.length > 0) {
+      var ebLabels = encTrelloBoards.slice(0,8).map(function(b){ return b.name.length>18?b.name.substring(0,16)+'…':b.name; });
+      var ebPct = encTrelloBoards.slice(0,8).map(function(b){
+        var bc = encTrelloCards.filter(function(c){return c.boardId===b.id;});
+        return bc.length ? Math.round(bc.filter(function(c){return c.dueComplete;}).length/bc.length*100) : 0;
+      });
+      rptBarChart('enc-chart-trello', ebLabels, [{label:'Progresso (%)', data:ebPct, backgroundColor:'rgba(91,190,206,0.8)', borderRadius:4}], {scales:{y:{max:100,ticks:{callback:function(v){return v+'%';}}}}});
+    }
+  }, 60);
+
+  // Guarda dados para o PDF em paisagem
+  _ref._chartData = { tTotal:tTotal, tDone:tDone, tPend:tPend, tOver:tOver, pctConcl:pctConcl, perfLabel:perfLabel, tasksPeriodo:tasksPeriodo, encTrelloBoards:encTrelloBoards, encTrelloCards:encTrelloCards };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -6357,6 +6897,80 @@ function rptEncerramentoMentoria() {
   if (_erm.cliente && _erm.ai) rptGenerateEncerramentoMentoriaPreview();
 }
 
+// Monta a lista de gráficos disponíveis para o Painel Visual, com base nos dados
+// já coletados (_erm.flowup/_erm.trello/_erm.mentoriasEvents/_erm.materiaisDriveList/_erm.ai).
+// Retorna só os cartões que TÊM dado suficiente (nunca mostra gráfico vazio).
+function ermChartCardsDef() {
+  var cards = [];
+  var fu = _erm.flowup || {};
+  if ((fu.concluidas||0) + (fu.andamento||0) + (fu.atrasadas||0) > 0) {
+    cards.push({ id:'erm-chart-tarefas', title:'Tarefas Concluídas vs. Pendentes (FlowUp)' });
+  }
+  var tr = _erm.trello || {};
+  if ((tr.cards||0) > 0) {
+    cards.push({ id:'erm-chart-trello', title:'Planejamento Estratégico (Trello)' });
+  }
+  if ((_erm.mentoriasEvents||[]).length > 0) {
+    cards.push({ id:'erm-chart-mentorias', title:'Mentorias Realizadas por Mês' });
+  }
+  if ((_erm.materiaisDriveList||[]).length > 0) {
+    cards.push({ id:'erm-chart-materiais', title:'Materiais Entregues por Tipo' });
+  }
+  var itens = ((_erm.ai||{}).indicadores||{}).itens || [];
+  var parsedItens = itens.map(function(it){
+    var raw = String(it.valor||'');
+    var num = /r\$/i.test(raw) ? parseBRL(raw) : (/%/.test(raw) ? parsePct(raw) : parseFloat(raw.replace(/\./g,'').replace(',','.')));
+    return { label: it.label, num: num };
+  }).filter(function(it){ return it.num != null && !isNaN(it.num) && it.num !== 0; });
+  if (parsedItens.length >= 2) {
+    cards.push({ id:'erm-chart-indicadores', title:'Indicadores Financeiros e Comerciais', wide:true, _itens: parsedItens });
+  }
+  return cards;
+}
+
+// Renderiza (ou re-renderiza) os gráficos Chart.js do Painel Visual da prévia em tela.
+// Precisa rodar DEPOIS do innerHTML com os <canvas> já estar no DOM (por isso via setTimeout).
+function ermRenderCharts() {
+  var fu = _erm.flowup || {};
+  if ((fu.concluidas||0) + (fu.andamento||0) + (fu.atrasadas||0) > 0) {
+    rptDoughnutChart('erm-chart-tarefas', ['Concluídas','Em Andamento','Atrasadas'], [fu.concluidas||0, fu.andamento||0, fu.atrasadas||0], ['#22c55e','rgba(0,0,128,0.75)','#ef4444']);
+  }
+  var tr = _erm.trello || {};
+  if ((tr.cards||0) > 0) {
+    var aberto = Math.max((tr.cards||0) - (tr.concluidos||0) - (tr.vencidos||0), 0);
+    rptDoughnutChart('erm-chart-trello', ['Concluídos','Em Aberto','Vencidos'], [tr.concluidos||0, aberto, tr.vencidos||0], ['#22c55e','#0052CC','#ef4444']);
+  }
+  var events = _erm.mentoriasEvents || [];
+  if (events.length) {
+    var byMonth = {};
+    events.forEach(function(e){
+      var d = e.start ? new Date(e.start) : null;
+      if (!d || isNaN(d.getTime())) return;
+      var k = d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2);
+      byMonth[k] = (byMonth[k]||0) + 1;
+    });
+    var keys = Object.keys(byMonth).sort();
+    if (keys.length) {
+      var MESES3 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      var mLabels = keys.map(function(k){ var p=k.split('-'); return MESES3[parseInt(p[1],10)-1]+'/'+p[0].slice(2); });
+      var mData = keys.map(function(k){ return byMonth[k]; });
+      rptBarChart('erm-chart-mentorias', mLabels, [{label:'Mentorias', data:mData, backgroundColor:'rgba(0,0,128,0.75)', borderRadius:4}]);
+    }
+  }
+  var mats = _erm.materiaisDriveList || [];
+  if (mats.length) {
+    var byType = {};
+    mats.forEach(function(d){ var t = oeMimeShort(d.mime); byType[t] = (byType[t]||0) + 1; });
+    var tLabels = Object.keys(byType), tData = tLabels.map(function(t){ return byType[t]; });
+    rptDoughnutChart('erm-chart-materiais', tLabels, tData, ['#0052CC','#22c55e','#F0A500','#8B5CF6','#ef4444','#06B6D4']);
+  }
+  var cards = ermChartCardsDef();
+  var indCard = cards.filter(function(c){ return c.id === 'erm-chart-indicadores'; })[0];
+  if (indCard) {
+    rptHorizBarChart('erm-chart-indicadores', indCard._itens.map(function(it){ return it.label; }), indCard._itens.map(function(it){ return it.num; }), 'rgba(0,0,128,0.75)');
+  }
+}
+
 function rptGenerateEncerramentoMentoriaPreview() {
   var cliente = _erm.cliente || 'Cliente não selecionado';
   var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas',estrategico:'Organize Estratégico'}[_erm.programa] || 'Programa de Mentoria';
@@ -6377,6 +6991,20 @@ function rptGenerateEncerramentoMentoriaPreview() {
       '</div></div>';
   }
 
+  // ── PAINEL VISUAL (gráficos) — só aparece com os cartões para os quais há dado real ──
+  var chartCards = ermChartCardsDef();
+  var chartsHtml = '';
+  if (chartCards.length) {
+    chartsHtml = '<div class="rpt-sec">Painel Visual — Indicadores da Jornada</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:18px;">' +
+      chartCards.map(function(c){
+        return '<div style="background:#fff;border:1px solid #E0E5EE;border-radius:10px;padding:14px;'+(c.wide?'grid-column:span 2;':'')+'">' +
+          '<div style="font-size:11px;font-weight:700;color:#1B2B6B;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">'+c.title+'</div>' +
+          '<div style="height:230px;"><canvas id="'+c.id+'"></canvas></div></div>';
+      }).join('') +
+      '</div>';
+  }
+
   function sec(titulo, texto, borda) {
     if (!texto) return '';
     return '<div class="rpt-sec">'+titulo+'</div><div class="rpt-analysis-box"'+(borda?' style="border-left-color:'+borda+'"':'')+'><p style="white-space:pre-line">'+String(texto).replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</p></div>';
@@ -6394,11 +7022,13 @@ function rptGenerateEncerramentoMentoriaPreview() {
     '</div>';
 
   var content = rptHeader('RELATÓRIO DE ENCERRAMENTO DE MENTORIA', programaLabel + ' | ' + cliente + (periodoStr?' | '+periodoStr:'')) +
-    kpiHtml + secResumo + secJornada + secEntregas + secResultados + secRecom + secComentario + rptFooter();
+    kpiHtml + chartsHtml + secResumo + secJornada + secEntregas + secResultados + secRecom + secComentario + rptFooter();
 
   var prev = document.getElementById('rpt-prev');
   if (prev) prev.innerHTML = actionBar + content;
   else document.getElementById('report-preview').innerHTML = actionBar + content;
+
+  if (chartCards.length) setTimeout(ermRenderCharts, 60);
 }
 
 // ── Upload de arquivos (planilhas, PDF, Word, CSV/TXT) para o Encerramento de Mentoria ──
@@ -6575,6 +7205,11 @@ async function generateAnalysisEncerramentoMentoria() {
     tarefasTotal: ctx.flowup.total, tarefasConcl: ctx.flowup.concluidas,
     mentoriasRealizadas: mentoriasCalendar.count, materiaisDrive: materiaisDrive.length
   };
+  // Guarda os dados-fonte para os gráficos (painel visual da prévia + do PDF)
+  _erm.flowup = { total: ctx.flowup.total, concluidas: ctx.flowup.concluidas, andamento: ctx.flowup.andamento, atrasadas: ctx.flowup.atrasadas };
+  _erm.trello = { boards: ctx.trello.boards, cards: ctx.trello.cards, concluidos: ctx.trello.concluidos, vencidos: ctx.trello.vencidos };
+  _erm.mentoriasEvents = mentoriasCalendar.events || [];
+  _erm.materiaisDriveList = materiaisDrive || [];
 
   var programaLabel = {mentoring:'Organize Mentoring',master:'Organize Master',marketing:'Organize Marketing e Vendas',estrategico:'Organize Estratégico'}[_erm.programa] || 'Programa de Mentoria (não especificado)';
   var periodoStr = (_erm.dtini && _erm.dtfim) ? (_erm.dtini + ' a ' + _erm.dtfim) : '(período não informado pela equipe, considere todo o histórico disponível nas fontes)';
@@ -6758,6 +7393,31 @@ async function rptDownloadPDFApresentacao() {
     y2 += 38;
     if (ai.resumoExecutivo) y2 = textBlock(ai.resumoExecutivo, 10, y2+4, PW-20, {fontSize:11.5, lineHeight:6.2, continTitle:'Resumo Executivo (continuação)'});
     slideFooter();
+
+    // ═══ SLIDE 2.5 — PAINEL VISUAL (GRÁFICOS) ═══
+    var chartDefs = ermChartCardsDef().map(function(c){ return { id: c.id, title: c.title, img: rptCanvasImage(c.id) }; }).filter(function(c){ return !!c.img; });
+    if (chartDefs.length) {
+      doc.addPage();
+      slideHeader('Painel Visual — Indicadores da Jornada');
+      var cols = chartDefs.length >= 5 ? 3 : (chartDefs.length >= 2 ? 2 : 1);
+      var gw = (PW-20-(cols-1)*8)/cols, gh = 76, gx = 10, gy = 30, colG = 0;
+      chartDefs.forEach(function(c){
+        rect(gx, gy, gw, gh, COL.bg, 3);
+        doc.setDrawColor(COL.border[0],COL.border[1],COL.border[2]); doc.roundedRect(gx,gy,gw,gh,3,3);
+        doc.setFont('helvetica','bold'); doc.setFontSize(9.5); setText(COL.navy);
+        doc.text(c.title, gx+5, gy+8, {maxWidth:gw-10});
+        try {
+          var props = doc.getImageProperties(c.img);
+          var maxW = gw-10, maxH = gh-16;
+          var ratio = Math.min(maxW/props.width, maxH/props.height);
+          var iw = props.width*ratio, ih = props.height*ratio;
+          doc.addImage(c.img, 'PNG', gx+(gw-iw)/2, gy+13+(maxH-ih)/2, iw, ih);
+        } catch(e) {}
+        colG++;
+        if (colG >= cols) { colG = 0; gx = 10; gy += gh + 8; } else { gx += gw + 8; }
+      });
+      slideFooter();
+    }
 
     // ═══ SLIDE 3 — A JORNADA / PRINCIPAIS ENTREGAS ═══
     if (ai.jornada || ai.principaisEntregas) {
