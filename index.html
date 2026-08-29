@@ -2063,7 +2063,7 @@ async function syncAll(forceLive = false) {
     _apiHealth.flowup = { status:'error', lastSync: new Date().toISOString(), error: e.message, tasksLoaded: 0, projectsLoaded: 0 };
   }
 
-  if (hasTrello) {
+  {
     try {
       setLoadingText('Carregando boards Trello...');
       const [allBoards, orgs] = await Promise.all([TR.boards(), TR.organizations()]);
