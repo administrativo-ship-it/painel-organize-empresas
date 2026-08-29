@@ -1296,8 +1296,8 @@ async function fuRequest(method, path, body) {
 
 async function fuFetchAllPages(path, pageSize, extraBody) {
   pageSize = pageSize || 100;
-  // Busca página 1 para descobrir total (Count) e primeiros itens
-  var body1 = Object.assign({ PageSize: pageSize, CurrentPage: 1 }, extraBody || {});
+  // Busca página 0 (API do FlowUp pagina a partir de 0, não de 1) para descobrir total (Count) e primeiros itens
+  var body1 = Object.assign({ PageSize: pageSize, CurrentPage: 0 }, extraBody || {});
   var d1 = await fuRequest('POST', path, body1);
   var items1 = d1.Result || d1.Items || d1.items || (Array.isArray(d1) ? d1 : []);
   var count = d1.Count || 0;
@@ -1307,7 +1307,7 @@ async function fuFetchAllPages(path, pageSize, extraBody) {
   var totalPages = Math.ceil(count / pageSize);
   var all = items1.slice();
   var pageNums = [];
-  for (var p = 2; p <= totalPages; p++) pageNums.push(p);
+  for (var p = 1; p < totalPages; p++) pageNums.push(p); // página 0 já obtida acima
   // Processa em lotes de 10 páginas simultâneas para não sobrecarregar a API
   for (var i = 0; i < pageNums.length; i += 10) {
     var batch = pageNums.slice(i, i + 10);
@@ -1350,11 +1350,12 @@ async function fuGetProjectInfos() {
 // Busca todos os quadros ativos + enriquece com GetBoardInfo.
 // NUNCA lança erro - retorna [] em qualquer falha para não quebrar o sync principal.
 // ATENÇÃO: GetActiveBoards usa snake_case (page_size/current_page), não PascalCase.
+// A API do FlowUp pagina a partir de 0 (mesma regra do querytasks) — current_page começa em 0.
 async function fuGetBoardsWithInfo() {
   try {
     // Busca paginada com snake_case - fuFetchAllPages usa PascalCase e retorna 0 neste endpoint
     var boardsList = [];
-    var page = 1, pageSize = 100;
+    var page = 0, pageSize = 100;
     while (true) {
       var d = await fuRequest('POST', '/v1/Board/GetActiveBoards', { page_size: pageSize, current_page: page });
       var items = d.Result || d.Items || d.items || (Array.isArray(d) ? d : []);
