@@ -544,7 +544,7 @@ tbody tr:hover{background:var(--off);}
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       Personalizar
     </button>
-    <details class="cfg-advanced">
+    <details class="cfg-advanced" id="oe-cfg-advanced-block" style="display:none">
       <summary>
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
         Configurações avançadas
@@ -1181,20 +1181,27 @@ tbody tr:hover{background:var(--off);}
 
       <!-- IA -->
       <div id="cfg-ia" style="display:none">
-        <div class="cfg-field">
-          <label class="cfg-lbl">Chave API Anthropic (Claude)</label>
-          <div style="position:relative">
-            <input class="cfg-inp" id="ai-apikey" type="password" placeholder="sk-ant-api03-..." style="padding-right:80px">
-            <button onclick="var el=document.getElementById('ai-apikey');el.type=el.type==='password'?'text':'password';this.textContent=el.type==='password'?'Mostrar':'Ocultar'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--navy);font-size:11px;font-weight:600;cursor:pointer;padding:2px 4px;">Mostrar</button>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:5px">Obtenha em: <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--navy)">console.anthropic.com</a> · Salva apenas neste navegador</div>
+        <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11.5px;color:#1E3A8A;line-height:1.5;">
+          A chave da API Anthropic (Claude) fica guardada com segurança no servidor (Cloudflare Worker) — nunca no navegador. Qualquer pessoa logada no painel já consegue gerar relatórios com IA normalmente, sem precisar de chave nenhuma. Aqui você só troca a chave-mestra quando precisar.
         </div>
-        <button onclick="testAnthropicKey()" style="width:100%;background:rgba(92,200,212,.12);border:1px solid rgba(92,200,212,.3);color:var(--teal);padding:9px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px">Testar conexão</button>
-        <div id="ai-test-result" style="font-size:12px;margin-top:8px;min-height:18px;text-align:center"></div>
+        <div class="cfg-field">
+          <label class="cfg-lbl">Status atual</label>
+          <div id="ai-key-status" style="font-size:13px;padding:8px 0;color:var(--muted)">Carregando...</div>
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-lbl">Trocar chave da API Anthropic</label>
+          <div style="position:relative">
+            <input class="cfg-inp" id="ai-apikey-new" type="password" placeholder="Cole a NOVA chave sk-ant-api03-..." style="padding-right:80px">
+            <button onclick="var el=document.getElementById('ai-apikey-new');el.type=el.type==='password'?'text':'password';this.textContent=el.type==='password'?'Mostrar':'Ocultar'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--navy);font-size:11px;font-weight:600;cursor:pointer;padding:2px 4px;">Mostrar</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:5px">Gere uma nova em <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--navy)">console.anthropic.com</a>. Ao salvar, é aplicada no servidor na hora — não precisa me acionar.</div>
+        </div>
+        <button onclick="oeRotateAiKey()" id="ai-rotate-btn" style="width:100%;background:#7C3AED;border:none;color:#fff;padding:10px;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px">Salvar nova chave no servidor</button>
+        <div id="ai-rotate-result" style="font-size:12px;margin-top:8px;min-height:18px;text-align:center"></div>
       </div>
 
-      <button class="cfg-save" onclick="saveConfig()">Salvar e Reconectar</button>
-      <div class="cfg-note">Credenciais salvas apenas no navegador (localStorage). Nunca enviadas a terceiros.</div>
+      <button class="cfg-save" id="cfg-save-btn" onclick="saveConfig()">Salvar e Reconectar</button>
+      <div class="cfg-note">Credenciais do FlowUp/Trello salvas apenas neste navegador. A chave de IA fica no servidor (Worker), nunca em um navegador.</div>
     </div>
   </div>
 </div>
@@ -1796,6 +1803,7 @@ function oeValidateAndLogin(userInfo) {
   }
   if (typeof updateDriveBar === 'function') updateDriveBar();
   oeRenderUserInfo();
+  oeApplyAdminUI();
   oePostLoginSync();
 }
 
@@ -1849,6 +1857,7 @@ function oeCheckAuth() {
     return false;
   }
   oeRenderUserInfo();
+  oeApplyAdminUI();
   oeStartGoogleSessionMonitor();
   return true;
 }
@@ -3039,8 +3048,24 @@ function mkChartStacked(id, labels, done, open) {
 }
 
 // ═══════════════ CONFIG ═══════════════
+// Só administrativo@organizementoring.com pode abrir "Configurações Avançadas"
+// (chaves de integração). Espelha ADMIN_EMAILS do Worker — a checagem real e
+// que de fato protege os segredos acontece lá no servidor; isto aqui é só a
+// interface (esconder/bloquear a tela para quem não é admin).
+var OE_ADMIN_EMAILS = ['administrativo@organizementoring.com'];
+function oeIsAdmin() {
+  var u = oeGetUser();
+  return !!(u && u.email && OE_ADMIN_EMAILS.indexOf(u.email.toLowerCase()) >= 0);
+}
+// Mostra/esconde o bloco "Configurações avançadas" da sidebar conforme o e-mail logado.
+function oeApplyAdminUI() {
+  var el = document.getElementById('oe-cfg-advanced-block');
+  if (el) el.style.display = oeIsAdmin() ? '' : 'none';
+}
+
 let _cfgTab = 'flowup';
 function openConfig(tab='flowup') {
+  if (!oeIsAdmin()) { alert('Configurações Avançadas é uma área restrita ao administrador do painel.'); return; }
   const c = S.config;
   document.getElementById('fu-subdomain').value = c.fuSubdomain || '';
   document.getElementById('fu-apikey').value = c.fuKey || '';
@@ -3049,29 +3074,59 @@ function openConfig(tab='flowup') {
   document.getElementById('tr-org').value = c.trOrg || '';
   document.getElementById('cfg-refresh').value = c.refresh || 0;
   document.getElementById('tr-boards-filter').value = (c.boardsFilter||[]).join('\n');
-  document.getElementById('ai-apikey').value = localStorage.getItem('organize_anthropic_key') || '';
-  document.getElementById('ai-test-result').textContent = '';
+  document.getElementById('ai-apikey-new').value = '';
+  document.getElementById('ai-rotate-result').textContent = '';
+  oeLoadAiKeyStatus();
   // Update Trello auth link
   if (c.trKey) document.getElementById('trello-auth-link').href = `https://trello.com/1/authorize?expiration=never&scope=read&response_type=token&name=PainelOrganize&key=${c.trKey}`;
   switchCfgTab(tab);
   document.getElementById('cfg-overlay').classList.add('open');
 }
-function closeConfig() { document.getElementById('cfg-overlay').classList.remove('open'); }
-async function testAnthropicKey() {
-  var key = document.getElementById('ai-apikey').value.trim();
-  var res = document.getElementById('ai-test-result');
-  if (!key) { res.style.color='#B45309'; res.textContent='Cole a chave antes de testar.'; return; }
-  res.style.color='var(--muted)'; res.textContent='Testando…';
+
+// ── Status/rotação da chave da IA — via Worker, autenticado pelo login Google ──
+async function oeLoadAiKeyStatus() {
+  var el = document.getElementById('ai-key-status');
+  if (!el) return;
+  el.textContent = 'Carregando...'; el.style.color = 'var(--muted)';
+  if (!_gToken) { el.textContent = 'Sessão do Google expirada — atualize a página.'; el.style.color = '#DC2626'; return; }
   try {
-    var r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'oi'}]})
-    });
-    if (r.ok) { res.style.color='#15803D'; res.textContent='✓ Chave válida! Conexão OK.'; }
-    else { var d=await r.json(); res.style.color='#DC2626'; res.textContent='✗ Erro ' + r.status + ': ' + (d.error?.message||'chave inválida'); }
-  } catch(e) { res.style.color='#DC2626'; res.textContent='✗ Erro de rede: ' + e.message; }
+    var r = await fetch(PORTAL_WORKER + '/api/admin/status', { headers: { 'Authorization': 'Bearer ' + _gToken } });
+    var d = await r.json();
+    if (!r.ok || !d.ok) { el.textContent = d.error || ('Erro ' + r.status); el.style.color = '#DC2626'; return; }
+    var configurada = d.secrets && d.secrets.ANTHROPIC_API_KEY;
+    el.innerHTML = configurada
+      ? '<span style="color:#15803D;font-weight:700;">✓ Chave configurada no servidor</span>'
+      : '<span style="color:#B45309;font-weight:700;">⚠ Nenhuma chave configurada ainda — cole uma abaixo</span>';
+  } catch(e) { el.textContent = 'Erro de rede: ' + e.message; el.style.color = '#DC2626'; }
 }
+
+async function oeRotateAiKey() {
+  var input = document.getElementById('ai-apikey-new');
+  var resEl = document.getElementById('ai-rotate-result');
+  var val = (input.value || '').trim();
+  if (!val) { resEl.style.color = '#B45309'; resEl.textContent = 'Cole a nova chave antes de salvar.'; return; }
+  if (!_gToken) { resEl.style.color = '#DC2626'; resEl.textContent = 'Sessão do Google expirada — atualize a página.'; return; }
+  var btn = document.getElementById('ai-rotate-btn');
+  btn.disabled = true; var oldTxt = btn.textContent; btn.textContent = 'Salvando...';
+  resEl.style.color = 'var(--muted)'; resEl.textContent = 'Aplicando no servidor...';
+  try {
+    var r = await fetch(PORTAL_WORKER + '/api/admin/set-secret', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _gToken },
+      body: JSON.stringify({ name: 'ANTHROPIC_API_KEY', value: val })
+    });
+    var d = await r.json();
+    if (!r.ok || !d.ok) { resEl.style.color = '#DC2626'; resEl.textContent = '✗ ' + (d.error || ('Erro ' + r.status)); return; }
+    resEl.style.color = '#15803D'; resEl.textContent = '✓ Chave atualizada com sucesso.';
+    input.value = '';
+    oeLoadAiKeyStatus();
+  } catch(e) {
+    resEl.style.color = '#DC2626'; resEl.textContent = 'Erro de rede: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = oldTxt;
+  }
+}
+function closeConfig() { document.getElementById('cfg-overlay').classList.remove('open'); }
 function switchCfgTab(tab) {
   _cfgTab = tab;
   ['flowup','trello','general','ia'].forEach(t => {
@@ -3087,9 +3142,6 @@ function saveConfig() {
   S.config.trOrg       = document.getElementById('tr-org').value.trim();
   S.config.refresh     = parseInt(document.getElementById('cfg-refresh').value);
   S.config.boardsFilter = document.getElementById('tr-boards-filter').value.split('\n').map(s=>s.trim()).filter(Boolean);
-
-  var aiKey = document.getElementById('ai-apikey').value.trim();
-  if (aiKey) { _anthropicKey = aiKey; try { localStorage.setItem('organize_anthropic_key', aiKey); } catch(e) {} }
 
   try { localStorage.setItem('oe_cfg2', JSON.stringify(S.config)); } catch(e) {}
 
@@ -5590,6 +5642,10 @@ function buildAIContextForClient(cliente) {
   };
 }
 
+// A IA roda hoje através do proxy do Worker (PORTAL_WORKER + '/api/ai/messages') —
+// a chave real da Anthropic fica só lá no servidor, nunca no navegador. O parâmetro
+// `apiKey` é mantido só por compatibilidade de assinatura com chamadas antigas, mas
+// não é mais usado (o Worker autentica pelo login Google do painel, via _gToken).
 async function callClaude(apiKey, userPrompt, maxTokens, systemPrompt, forceJSON) {
   var messages = [{ role: 'user', content: userPrompt }];
   // Prefill: força a IA a começar a resposta com "{" - assim ela não pode responder com texto explicativo
@@ -5601,19 +5657,15 @@ async function callClaude(apiKey, userPrompt, maxTokens, systemPrompt, forceJSON
     messages: messages
   };
   if (systemPrompt) body.system = systemPrompt;
-  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+  if (!_gToken) throw new Error('Sessão do Google expirada. Atualize a página e faça login novamente para usar a IA.');
+  var resp = await fetch(PORTAL_WORKER + '/api/ai/messages', {
     method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
+    headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + _gToken },
     body: JSON.stringify(body)
   });
   if (!resp.ok) {
     var err = await resp.json().catch(function(){return{};});
-    throw new Error((err.error && err.error.message) || 'Erro na API: ' + resp.status);
+    throw new Error((err.error && (err.error.message || err.error)) || 'Erro na API: ' + resp.status);
   }
   var data = await resp.json();
   var text = (data.content[0].text || '').trim();
@@ -5753,13 +5805,7 @@ async function testarFontesIA(tipo) {
 
 // ═══════════════ MENSAL - IA preenche TUDO ═══════════════
 async function generateAnalysisWithAI() {
-  var apiKey = _anthropicKey;
-  if (!apiKey) {
-    apiKey = prompt('Cole aqui sua chave da API Anthropic (Claude):\n(será salva localmente para uso futuro)');
-    if (!apiKey) return;
-    setAnthropicKey(apiKey.trim());
-    apiKey = apiKey.trim();
-  }
+  var apiKey = null; // não é mais usado — a IA roda via proxy do Worker (login Google)
 
   // ── 1) LÊ FILTROS FRESCOS DO DOM (não confia em _rmf que pode estar desatualizado) ──
   var elCli = document.getElementById('rmf-cliente');
@@ -6003,13 +6049,7 @@ async function generateAnalysisWithAI() {
 
 // ═══════════════ ENCERRAMENTO - IA preenche TUDO ═══════════════
 async function generateAnalysisEncerramento() {
-  var apiKey = _anthropicKey;
-  if (!apiKey) {
-    apiKey = prompt('Cole aqui sua chave da API Anthropic (Claude):\n(será salva localmente para uso futuro)');
-    if (!apiKey) return;
-    _anthropicKey = apiKey;
-    try { localStorage.setItem('organize_anthropic_key', apiKey); } catch(e) {}
-  }
+  var apiKey = null; // não é mais usado — a IA roda via proxy do Worker (login Google)
 
   // ── Lê filtros frescos do DOM ──
   ['cliente','programa','modnum','modnom','dtini','dtfim','proxmod','nment'].forEach(function(k){
@@ -7122,6 +7162,9 @@ function ermRenderUploadList() {
 }
 
 // ── Chamada à IA (Claude) suportando anexos PDF nativos (document blocks) ──
+// Mesmo proxy do Worker que callClaude() (ver comentário acima) — suporta anexar
+// PDFs nativamente (document blocks). `apiKey` não é mais usado, mantido só por
+// compatibilidade de assinatura.
 async function callClaudeDocs(apiKey, userPrompt, maxTokens, systemPrompt, forceJSON, pdfFiles) {
   var contentArr = [];
   (pdfFiles || []).forEach(function(p){
@@ -7132,17 +7175,15 @@ async function callClaudeDocs(apiKey, userPrompt, maxTokens, systemPrompt, force
   if (forceJSON) messages.push({ role: 'assistant', content: '{' });
   var body = { model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens || 4000, temperature: 0, messages: messages };
   if (systemPrompt) body.system = systemPrompt;
-  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+  if (!_gToken) throw new Error('Sessão do Google expirada. Atualize a página e faça login novamente para usar a IA.');
+  var resp = await fetch(PORTAL_WORKER + '/api/ai/messages', {
     method: 'POST',
-    headers: {
-      'x-api-key': apiKey, 'anthropic-version': '2023-06-01',
-      'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true'
-    },
+    headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + _gToken },
     body: JSON.stringify(body)
   });
   if (!resp.ok) {
     var err = await resp.json().catch(function(){ return {}; });
-    throw new Error((err.error && err.error.message) || 'Erro na API: ' + resp.status);
+    throw new Error((err.error && (err.error.message || err.error)) || 'Erro na API: ' + resp.status);
   }
   var data = await resp.json();
   var text = (data.content[0].text || '').trim();
@@ -7173,13 +7214,7 @@ function _ermSanitizeDashes(val) {
 }
 
 async function generateAnalysisEncerramentoMentoria() {
-  var apiKey = _anthropicKey;
-  if (!apiKey) {
-    apiKey = prompt('Cole aqui sua chave da API Anthropic (Claude):\n(será salva localmente para uso futuro)');
-    if (!apiKey) return;
-    setAnthropicKey(apiKey.trim());
-    apiKey = apiKey.trim();
-  }
+  var apiKey = null; // não é mais usado — a IA roda via proxy do Worker (login Google)
 
   var elCli = document.getElementById('erm-cliente');
   if (elCli) _erm.cliente = elCli.value;
@@ -8097,13 +8132,7 @@ async function rgcRunAI() {
   var ok = _rgcData.filter(function(d){ return !d.error; });
   if (!ok.length) { alert('Nenhuma planilha processada com sucesso.'); return; }
 
-  var apiKey = _anthropicKey;
-  if (!apiKey) {
-    apiKey = prompt('Cole sua chave Anthropic (Claude):');
-    if (!apiKey) return;
-    _anthropicKey = apiKey;
-    try { localStorage.setItem('organize_anthropic_key', apiKey); } catch(e) {}
-  }
+  var apiKey = null; // não é mais usado — a IA roda via proxy do Worker (login Google)
 
   var btn = document.getElementById('rgc-btn-ai');
   btn.disabled = true; var oldTxt = btn.innerHTML; btn.innerHTML = 'Analisando...';
@@ -10117,17 +10146,15 @@ async function cvCallClaudeDoc(apiKey, file, fileText, perfil) {
     content = [{ type:'text', text:prompt }];
   }
 
-  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+  if (!_gToken) throw new Error('Sessão do Google expirada. Atualize a página e faça login novamente para usar a IA.');
+  var resp = await fetch(PORTAL_WORKER + '/api/ai/messages', {
     method:'POST',
-    headers:{
-      'x-api-key':apiKey, 'anthropic-version':'2023-06-01',
-      'content-type':'application/json', 'anthropic-dangerous-direct-browser-access':'true'
-    },
+    headers:{ 'content-type':'application/json', 'Authorization': 'Bearer ' + _gToken },
     body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:1500, temperature:0, system:sys, messages:[{role:'user',content:content}] })
   });
   if (!resp.ok) {
     var err = await resp.json().catch(function(){return{};});
-    throw new Error((err.error&&err.error.message)||'API '+resp.status);
+    throw new Error((err.error&&(err.error.message||err.error))||'API '+resp.status);
   }
   var data = await resp.json();
   return (data.content[0].text||'').trim();
@@ -10139,14 +10166,7 @@ async function cvRunAnalysis() {
   var perfil = perfilEl ? perfilEl.value.trim() : '';
   if (!perfil || perfil.length < 20) { alert('Descreva o perfil da vaga com mais detalhes antes de analisar.'); return; }
   if (!_cvFiles.length) { alert('Adicione ao menos um currículo.'); return; }
-
-  var apiKey = _anthropicKey;
-  if (!apiKey) {
-    apiKey = prompt('Cole sua chave Anthropic (Claude API key):');
-    if (!apiKey) return;
-    _anthropicKey = apiKey;
-    try { localStorage.setItem('organize_anthropic_key', apiKey); } catch(e) {}
-  }
+  var apiKey = null; // não é mais usado — a IA roda via proxy do Worker (login Google)
 
   _cvPerfil = perfil; _cvResults = [];
   var btn = document.getElementById('cv-btn-analyze');
