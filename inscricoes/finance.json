@@ -110,5 +110,20 @@
     "comprovante_confirmado": "true",
     "id": "rmtbupzfdlw627x",
     "ts": "2026-08-27T18:23:46.585Z"
+  },
+  {
+    "nome": "Taís Castelani Santos",
+    "whatsapp": "(69) 98435-9392",
+    "email": "castelani.tais@gmail.com",
+    "empresa": "Residencial Bem Viver",
+    "cargo": "Administradora",
+    "colaboradores": "Só eu",
+    "faturamento": "Até R$ 10 mil",
+    "plano": "completo",
+    "observacao": "",
+    "comprovante_confirmado": "true",
+    "valor": "R$ 97,90",
+    "id": "rmtxjruuhs921c3",
+    "ts": "2026-09-11T22:48:14.057Z"
   }
 ]
