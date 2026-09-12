@@ -125,21 +125,5 @@
     "valor": "R$ 97,90",
     "id": "rmtxjruuhs921c3",
     "ts": "2026-09-11T22:48:14.057Z"
-  },
-  {
-    "nome": "Teste Exclusao APAGAR",
-    "whatsapp": "11999999999",
-    "email": "testeexclusao@teste.com",
-    "empresa": "Empresa Teste",
-    "cargo": "Cargo Teste",
-    "colaboradores": "5",
-    "faturamento": "100mil",
-    "plano": "basico",
-    "observacao": "teste da funcao excluir - apagar",
-    "comprovante_confirmado": "true",
-    "forma_pagamento": "pix",
-    "valor": "R$ 57,90",
-    "id": "rmtyy05sblw06pi",
-    "ts": "2026-09-12T22:14:22.283Z"
   }
 ]
