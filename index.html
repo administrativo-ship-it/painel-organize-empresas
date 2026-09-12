@@ -9667,10 +9667,10 @@ var INSCRICOES_LINKS = [
     nome: 'Imersão Organize Finance',
     url: 'https://administrativo-ship-it.github.io/painel-organize-empresas/inscricao-finance.html',
     formato: '100% on-line, pelo Google Meet',
-    dataHorario: '12/09/2026, às 13h (horário de Rondônia e Mato Grosso)',
+    dataHorario: '24 de outubro (sábado), às 14h (horário de Rondônia e Mato Grosso)',
     investimento: 'R$ 57,90 (só inscrição) ou R$ 97,90 (completa)',
     vagas: 'Vagas limitadas',
-    prazo: 'Até 11/09/2026, às 00h',
+    prazo: 'Aberto, sem prazo definido',
     aberto: true
   }
 ];
@@ -9753,10 +9753,11 @@ async function inscLoadInscritos(formId, box) {
         '<td style="font-weight:600;color:var(--navy);">' + esc(e.nome || '-') + '</td>' +
         '<td>' + (comprovanteOk ? '<span style="color:var(--green);">✓ Comprovante</span>' : '<span style="color:var(--muted);">Pendente</span>') + '</td>' +
         '<td style="color:var(--muted);font-size:12px;">Ver detalhes →</td>' +
+        '<td><button class="portal-list-btn" style="color:var(--red);border-color:var(--red);padding:3px 9px;font-size:12px;" onclick="event.stopPropagation();deleteInscricao(\''+esc(formId)+'\',\''+esc(e.id||'')+'\')" title="Excluir esta inscrição">Excluir</button></td>' +
       '</tr>';
     }).join('');
     box.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">' + list.length + ' inscrição(ões) recebida(s) - clique numa linha para ver todos os dados</div>' +
-      '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Nome</th><th>Comprovante</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      '<div class="table-wrap"><table><thead><tr><th>Data</th><th>Nome</th><th>Comprovante</th><th></th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   } catch (e) {
     box.innerHTML = '<div style="color:var(--red);font-size:12.5px;padding:8px 0;">Erro ao carregar inscrições: ' + esc(e.message) + '</div>';
   }
@@ -9778,9 +9779,31 @@ function openInscricaoDetail(formId, entryId) {
     '<h3>' + esc(e.nome || 'Inscrição') + '</h3>' +
     '<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Inscrito em ' + esc(ts) + '</div>' +
     rowsHtml +
-    '<div class="modal-actions"><button class="btn-cancel" onclick="document.getElementById(\'insc-detail-modal\').remove()">Fechar</button></div>' +
+    '<div class="modal-actions">' +
+      '<button class="btn-cancel" onclick="document.getElementById(\'insc-detail-modal\').remove()">Fechar</button>' +
+      '<button class="portal-list-btn" style="color:var(--red);border-color:var(--red);" onclick="deleteInscricao(\''+esc(formId)+'\',\''+esc(entryId)+'\')">Excluir inscrição</button>' +
+    '</div>' +
   '</div>';
   document.body.appendChild(overlay);
+}
+
+async function deleteInscricao(formId, entryId) {
+  var list = _inscCache[formId] || [];
+  var e = list.find(function(x){ return String(x.id) === String(entryId); });
+  var nome = e ? (e.nome || 'esta inscrição') : 'esta inscrição';
+  if (!confirm('Excluir a inscrição de "' + nome + '"? Essa ação não pode ser desfeita.')) return;
+  try {
+    var r = await fetch(PORTAL_WORKER + '/portal/inscricoes/delete?formId=' + encodeURIComponent(formId) + '&id=' + encodeURIComponent(entryId), { method: 'DELETE', headers: portalHeaders() });
+    var res = await r.json().catch(function(){ return {}; });
+    if (!r.ok || !res.ok) throw new Error(res.error || ('HTTP ' + r.status));
+    _inscCache[formId] = (_inscCache[formId] || []).filter(function(x){ return String(x.id) !== String(entryId); });
+    var modal = document.getElementById('insc-detail-modal');
+    if (modal) modal.remove();
+    var box = document.getElementById('insc-inscritos-' + formId);
+    if (box && box.style.display !== 'none') inscLoadInscritos(formId, box);
+  } catch (e2) {
+    alert('Erro ao excluir inscrição: ' + e2.message);
+  }
 }
 function esc(s) { s = (s===undefined||s===null) ? '' : String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
