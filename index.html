@@ -9656,7 +9656,8 @@ var INSCRICOES_LINKS = [
     url: 'https://administrativo-ship-it.github.io/painel-organize-empresas/inscricao-disc.html',
     formato: '100% on-line, pelo Google Meet',
     cargaHoraria: '2 encontros de 2h - 4h no total',
-    dataHorario: '28 e 29 de setembro, às 18h (Brasília)',
+    dataHorario: '26 e 27 de outubro de 2026, das 18h às 20h (horário de Rondônia e Mato Grosso)',
+    ministradoPor: 'Thaís, psicóloga e mentora de Gestão de Pessoas',
     investimento: 'R$ 297,00',
     vagas: 'Vagas limitadas',
     prazo: 'Aberto, sem prazo definido',
@@ -9680,9 +9681,9 @@ function renderInscricoesPage() {
   if (!wrap) return;
   wrap.innerHTML = INSCRICOES_LINKS.map(function(f, idx) {
     var infoItems = '';
-    ['formato','cargaHoraria','dataHorario','investimento','vagas','prazo'].forEach(function(k) {
+    ['formato','cargaHoraria','dataHorario','ministradoPor','investimento','vagas','prazo'].forEach(function(k) {
       if (!f[k]) return;
-      var labels = { formato:'Formato', cargaHoraria:'Carga horária', dataHorario:'Data e horário', investimento:'Investimento', vagas:'Vagas', prazo:'Prazo de inscrição' };
+      var labels = { formato:'Formato', cargaHoraria:'Carga horária', dataHorario:'Data e horário', ministradoPor:'Ministrado por', investimento:'Investimento', vagas:'Vagas', prazo:'Prazo de inscrição' };
       infoItems += '<div class="insc-info-item"><div class="k">' + labels[k] + '</div><div class="v">' + f[k] + '</div></div>';
     });
     return '<div class="insc-card">' +
