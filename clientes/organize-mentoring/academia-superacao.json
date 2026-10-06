@@ -6,12 +6,12 @@
   "calendarId": "primary",
   "clienteEmail": "",
   "filtro": "",
-  "agendaBusca": "",
+  "agendaBusca": "https://calendar.google.com/calendar/u/0/r/search?q=academia%20supera%C3%A7%C3%A3o",
   "apostilas": "",
   "trello": "",
   "drive": "",
   "linkAdicional": "",
   "linkAdicionalLabel": "",
   "boasVindas": "",
-  "criadoEm": "2026-09-21T18:53:28.361Z"
+  "criadoEm": "2026-10-06T20:59:52.807Z"
 }
